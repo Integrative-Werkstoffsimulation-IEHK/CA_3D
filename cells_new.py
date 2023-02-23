@@ -198,30 +198,30 @@ class OxidantElem:
         self.current_count = 0
         self.fill_first_page()
 
-        self.microstructure = voronoi_3d_cells_test.Microstructure()
-        self.microstructure.voronoi_3d_cells(self.cells_per_axis, 5)
-        self.microstructure.show_microstructure(self.cells_per_axis)
+        # self.microstructure = voronoi_3d_cells_test.Microstructure()
+        # self.microstructure.voronoi_3d_cells(self.cells_per_axis, 50)
+        # self.microstructure.show_microstructure(self.cells_per_axis)
 
     def diffuse(self):
         """
         Outgoing diffusion from the inside.
         """
 
-        exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
-        # print(exists)
-        temp_ind = np.where(exists)[0]
-        # print(temp_ind)
-
-        in_gb = np.array(self.cells[:, temp_ind], dtype=np.short)
-        # print(in_gb)
-
-        destinations = np.array(self.microstructure.destinations[in_gb[0], in_gb[1], in_gb[2]],
-                                dtype=np.short).transpose()
+        # exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
+        # # print(exists)
+        # temp_ind = np.where(exists)[0]
+        # # print(temp_ind)
+        #
+        # in_gb = np.array(self.cells[:, temp_ind], dtype=np.short)
+        # # print(in_gb)
+        #
+        # destinations = np.array(self.microstructure.destinations[in_gb[0], in_gb[1], in_gb[2]],
+        #                         dtype=np.short).transpose()
         # print(destinations)
 
         # print(self.cells)
 
-        self.cells[:, temp_ind] += destinations
+        # self.cells[:, temp_ind] += destinations
         # print(self.cells)
 
         # mixing particles according to Chopard and Droz
@@ -282,7 +282,7 @@ class OxidantElem:
             self.dirs = np.concatenate((self.dirs, new_dirs), axis=1)
 
     def transform_to_3d(self, furthest_i):
-        self.cut_shape = (self.cells_per_axis, self.cells_per_axis, 1 + furthest_i)
+        self.cut_shape = (self.cells_per_axis, self.cells_per_axis, 1 + furthest_i + 1)
         self.c3d = np.full(self.cut_shape, 0, dtype=np.ubyte)
         self.i_ind = np.array(np.where(self.cells[2] <= furthest_i)[0], dtype=np.uint32)
         self.i_descards = self.cells[:, self.i_ind]

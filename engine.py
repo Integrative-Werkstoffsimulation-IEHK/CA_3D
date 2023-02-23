@@ -543,8 +543,8 @@ class CellularAutomata:
             all_arounds = self.utils.calc_sur_ind_formation(seeds, active.c3d.shape[2] - 1)
             neighbours = np.array([[active.c3d[point[0], point[1], point[2]] for point in seed_arrounds]
                                    for seed_arrounds in all_arounds], dtype=bool)
-            arr_len_in = np.array([np.sum(item) for item in neighbours], dtype=np.ubyte)
-            temp_ind = np.where(arr_len_in >= self.threshold_inward)[0]
+            arr_len_out = np.array([np.sum(item) for item in neighbours], dtype=np.ubyte)
+            temp_ind = np.where(arr_len_out >= self.threshold_outward)[0]
 
             # if len(index_in) > 0:
             #     seeds = seeds[index_in]
@@ -567,13 +567,13 @@ class CellularAutomata:
                 all_arounds = all_arounds[temp_ind]
                 in_to_del = np.array(np.nonzero(neighbours))
                 start_seed_index = np.unique(in_to_del[0], return_index=True)[1]
-                to_del = np.array([in_to_del[1, indx:indx + self.threshold_inward] for indx in start_seed_index],
+                to_del = np.array([in_to_del[1, indx:indx + self.threshold_outward] for indx in start_seed_index],
                                   dtype=int)
                 coord = np.array([all_arounds[seed_ind][point_ind] for seed_ind, point_ind in enumerate(to_del)],
                                  dtype=np.short)
                 # coord = np.reshape(coord, (len(coord) * self.threshold_inward, 3)).transpose()
 
-                coord = np.reshape(coord, (len(coord) * self.threshold_inward, 3))
+                coord = np.reshape(coord, (len(coord) * self.threshold_outward, 3))
                 exists = [product.full_c3d[point[0], point[1], point[2]] for point in coord]
                 temp_ind = np.where(exists)[0]
                 coord = np.delete(coord, temp_ind, 0)
@@ -593,6 +593,114 @@ class CellularAutomata:
                 product.fix_full_cells(coord)
 
                 oxidant.c3d[seeds[0], seeds[1], seeds[2]] -= 1
+
+        def check_intersections_mult_int(seeds):
+            """
+            Check intersections between the seeds neighbourhood and the coordinates of inward particles only.
+            Compute which seed will become a precipitation and which inward particles should be deleted
+            according to threshold_inward conditions. This is a simplified version of the check_intersection() function
+            where threshold_outward is equal to 1, so there is no need to check intersection with OUT arrays!
+
+            :param seeds: array of seeds coordinates
+            """
+            all_arounds = self.utils.calc_sur_ind_formation(seeds, active.c3d.shape[2] - 1)
+            neighbours = np.array([[active.c3d[point[0], point[1], point[2]] for point in seed_arrounds]
+                                   for seed_arrounds in all_arounds], dtype=bool)
+            arr_len_out = np.array([np.sum(item) for item in neighbours], dtype=np.ubyte)
+            temp_ind = np.where(arr_len_out >= self.threshold_outward)[0]
+
+            if len(temp_ind) > 0:
+                seeds = seeds[temp_ind]
+                neighbours = neighbours[temp_ind]
+                all_arounds = all_arounds[temp_ind]
+
+                out_to_del = np.array(np.nonzero(neighbours))
+                start_seed_index = np.unique(out_to_del[0], return_index=True)[1]
+                to_del = np.array([out_to_del[1, indx:indx + self.threshold_outward] for indx in start_seed_index],
+                                  dtype=int)
+                coord = np.array([all_arounds[seed_ind][point_ind] for seed_ind, point_ind in enumerate(to_del)],
+                                 dtype=np.short)
+                # coord = np.reshape(coord, (len(coord) * self.threshold_inward, 3)).transpose()
+                coord = np.reshape(coord, (len(coord) * self.threshold_outward, 3))
+                exists = [product.full_c3d[point[0], point[1], point[2]] for point in coord]
+                temp_ind = np.where(exists)[0]
+                coord = np.delete(coord, temp_ind, 0)
+                seeds = np.delete(seeds, temp_ind, 0)
+
+                if to_check_with is not None:
+                    exists = [to_check_with.c3d[point[0], point[1], point[2]] for point in coord]
+                    temp_ind = np.where(exists)[0]
+                    coord = np.delete(coord, temp_ind, 0)
+                    seeds = np.delete(seeds, temp_ind, 0)
+
+                if len(seeds) > 0:
+                    self_all_arounds = self.utils.calc_sur_ind_formation_noz(seeds, oxidant.c3d.shape[2] - 1)
+                    self_neighbours = np.array([[oxidant.c3d[point[0], point[1], point[2]] for point in seed_arrounds]
+                                           for seed_arrounds in self_all_arounds], dtype=bool)
+                    arr_len_in = np.array([np.sum(item) for item in self_neighbours], dtype=np.ubyte)
+                    temp_ind = np.where(arr_len_in >= self.threshold_inward)[0]
+                # if len(index_in) > 0:
+                #     seeds = seeds[index_in]
+                #     neighbours = neighbours[index_in]
+                #     all_arounds = all_arounds[index_in]
+                #     flat_arounds = all_arounds[:, 0:6]
+                #     flat_neighbours = np.array(
+                #         [[self.precipitations3d_init[point[0], point[1], point[2]] for point in seed_arrounds]
+                #          for seed_arrounds in flat_arounds], dtype=bool)
+                #     arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
+                #     homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
+                #     needed_prob = self.const_a * 2.718281828 ** (self.const_b * arr_len_in_flat)
+                #     needed_prob[homogeneous_ind] = self.scale_probability
+                #     randomise = np.random.random_sample(len(arr_len_in_flat))
+                #     temp_ind = np.where(randomise < needed_prob)[0]
+
+                    if len(temp_ind) > 0:
+                        seeds = seeds[temp_ind]
+                        coord = coord[temp_ind]
+
+                        # neighbours = neighbours[temp_ind]
+                        # all_arounds = all_arounds[temp_ind]
+
+                        self_neighbours = self_neighbours[temp_ind]
+                        self_all_arounds = self_all_arounds[temp_ind]
+
+                        in_to_del = np.array(np.nonzero(self_neighbours))
+                        in_start_seed_index = np.unique(in_to_del[0], return_index=True)[1]
+                        to_del_in = np.array([in_to_del[1, indx:indx + self.threshold_inward - 1] for indx in in_start_seed_index],
+                                             dtype=int)
+                        coord_in = np.array([self_all_arounds[seed_ind][point_ind] for seed_ind, point_ind in
+                                             enumerate(to_del_in)], dtype=np.short)
+                        coord_in = np.reshape(coord_in, (len(coord_in) * (self.threshold_inward - 1), 3)).transpose()
+
+
+                        # out_to_del = np.array(np.nonzero(neighbours))
+                        # start_seed_index = np.unique(out_to_del[0], return_index=True)[1]
+                        # to_del = np.array([out_to_del[1, indx:indx + self.threshold_outward] for indx in start_seed_index],
+                        #                   dtype=int)
+                        # coord = np.array([all_arounds[seed_ind][point_ind] for seed_ind, point_ind in enumerate(to_del)],
+                        #                  dtype=np.short)
+                        # # coord = np.reshape(coord, (len(coord) * self.threshold_inward, 3)).transpose()
+                        # coord = np.reshape(coord, (len(coord) * self.threshold_outward, 3))
+                        # exists = [product.full_c3d[point[0], point[1], point[2]] for point in coord]
+                        # temp_ind = np.where(exists)[0]
+                        # coord = np.delete(coord, temp_ind, 0)
+                        # seeds = np.delete(seeds, temp_ind, 0)
+                        #
+                        # if to_check_with is not None:
+                        #     exists = [to_check_with.c3d[point[0], point[1], point[2]] for point in coord]
+                        #     temp_ind = np.where(exists)[0]
+                        #     coord = np.delete(coord, temp_ind, 0)
+                        #     seeds = np.delete(seeds, temp_ind, 0)
+
+                        coord = coord.transpose()
+                        seeds = seeds.transpose()
+
+                        active.c3d[coord[0], coord[1], coord[2]] -= 1
+                        product.c3d[coord[0], coord[1], coord[2]] += 1
+                        product.fix_full_cells(coord)
+
+                        oxidant.c3d[seeds[0], seeds[1], seeds[2]] -= 1
+                        oxidant.c3d[coord_in[0], coord_in[1], coord_in[2]] -= 1
 
         # def sort_out_in_precip_int(fetch_i, plane_x_ind):
         #     seeds = oxidant.c3d[fetch_i[0], fetch_i[1], plane_x_ind]
@@ -618,8 +726,10 @@ class CellularAutomata:
                     # temp_ind = np.where(in_gb)[0]
                     # oxidant_cells = oxidant_cells[temp_ind]
 
-                    if self.threshold_outward < 2 and len(oxidant_cells) != 0:
+                    if self.threshold_inward < 2 and len(oxidant_cells) != 0:
                         check_intersections_single_int(oxidant_cells)
+                    else:
+                        check_intersections_mult_int(oxidant_cells)
 
     def diffusion_inward(self):
         self.primary_oxidant.diffuse()
@@ -746,10 +856,10 @@ class CellularAutomata:
                 break
 
     def save_results(self, iteration):
-        # if self.param["stride"] > self.param["n_iterations"]:
-        #     self.primary_active.transform_to_descards()
-        #     if self.param["secondary_active_element_exists"]:
-        #         self.secondary_active.transform_to_descards()
+        if self.param["stride"] > self.param["n_iterations"]:
+            self.primary_active.transform_to_descards()
+            if self.param["secondary_active_element_exists"]:
+                self.secondary_active.transform_to_descards()
 
         if self.param["inward_diffusion"]:
             self.utils.db.insert_particle_data("primary_oxidant", iteration, self.primary_oxidant.cells)
@@ -766,10 +876,10 @@ class CellularAutomata:
             if self.param["secondary_active_element_exists"]:
                 self.utils.db.insert_particle_data("secondary_product", iteration, self.secondary_product.transform_c3d())
 
-        # if self.param["stride"] > self.param["n_iterations"]:
-        #     self.primary_active.transform_to_3d(self.curr_max_furthest)
-        #     if self.param["secondary_active_element_exists"]:
-        #         self.secondary_active.transform_to_3d(self.curr_max_furthest)
+        if self.param["stride"] > self.param["n_iterations"]:
+            self.primary_active.transform_to_3d(self.curr_max_furthest)
+            if self.param["secondary_active_element_exists"]:
+                self.secondary_active.transform_to_3d(self.curr_max_furthest)
 
     def fix_init_precip(self, u_bound, product, shape):
         self.precipitations3d_init = np.full(shape, False)

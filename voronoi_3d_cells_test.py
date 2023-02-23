@@ -247,6 +247,7 @@ class Microstructure:
         # return np.array(ca_faces), np.array(ca_edges)
         # return destinations
         return np.nonzero(ca_faces), np.nonzero(ca_edges)
+        # return ca_faces
 
     def three(self, face_vert_coords):
         #  find the line closest to origin
@@ -571,89 +572,90 @@ class Microstructure:
 
 # # Some tests
 if __name__ == "__main__":
-    # _______Plot 3D______
-    begin = time.time()
-    micro = Microstructure()
-    cells_faces, cells_edges = micro.voronoi_3d_cells(100, 5, seeds='regular8')
-    x_edge = cells_edges[2]
-    y_edge = cells_edges[1]
-    z_edge = cells_edges[0]
-    x_face = cells_faces[2]
-    y_face = cells_faces[1]
-    z_face = cells_faces[0]
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(x_face, y_face, z_face, color='darkgoldenrod', marker=',', s=1)
-    ax.scatter(x_edge, y_edge, z_edge, color='b', marker=',', s=5)
-
-    ax.scatter(0, 50, 50, color='r', marker=',', s=50)
-
-    end = time.time()
-    elapsed_time = (end - begin)
-    print(f'elapsed time: {round(elapsed_time, 2)} s')
-    plt.show()
-
-    # _____Plot slices_______
+    # # _______Plot 3D______
     # begin = time.time()
-    # cells_faces = voronoi_3d_cells(100, 5)[0]
-    # cut1 = np.nonzero(cells_faces[5, :, :])
-    # x1 = cut1[0]
-    # y1 = cut1[1]
-    #
-    # cut2 = np.nonzero(cells_faces[90, :, :])
-    # x2 = cut2[0]
-    # y2 = cut2[1]
-    #
-    # cut3 = np.nonzero(cells_faces[90, :, :])
-    # x3 = cut3[0]
-    # y3 = cut3[1]
-    #
-    # cut4 = np.nonzero(cells_faces[90, :, :])
-    # x4 = cut4[0]
-    # y4 = cut4[1]
-    #
-    # cut5 = np.nonzero(cells_faces[90, :, :])
-    # x5 = cut5[0]
-    # y5 = cut5[1]
-    #
-    # cut6 = np.nonzero(cells_faces[90, :, :])
-    # x6 = cut6[0]
-    # y6 = cut6[1]
-    #
-    # cut7 = np.nonzero(cells_faces[90, :, :])
-    # x7 = cut7[0]
-    # y7 = cut7[1]
-    #
-    # cut8 = np.nonzero(cells_faces[90, :, :])
-    # x8 = cut8[0]
-    # y8 = cut8[1]
-    #
-    # cut9 = np.nonzero(cells_faces[90, :, :])
-    # x9 = cut9[0]
-    # y9 = cut9[1]
-    #
+    # micro = Microstructure()
+    # cells_faces, cells_edges = micro.voronoi_3d_cells(100, 50, seeds='regular8')
+    # x_edge = cells_edges[2]
+    # y_edge = cells_edges[1]
+    # z_edge = cells_edges[0]
+    # x_face = cells_faces[2]
+    # y_face = cells_faces[1]
+    # z_face = cells_faces[0]
     # fig = plt.figure()
-    # ax1 = fig.add_subplot(331)
-    # ax2 = fig.add_subplot(332)
-    # ax3 = fig.add_subplot(333)
-    # ax4 = fig.add_subplot(334)
-    # ax5 = fig.add_subplot(335)
-    # ax6 = fig.add_subplot(336)
-    # ax7 = fig.add_subplot(337)
-    # ax8 = fig.add_subplot(338)
-    # ax9 = fig.add_subplot(339)
+    # ax = fig.add_subplot(111, projection='3d')
+    # ax.scatter(x_face, y_face, z_face, color='darkgoldenrod', marker=',', s=1)
+    # ax.scatter(x_edge, y_edge, z_edge, color='b', marker=',', s=5)
     #
-    # ax1.scatter(x1, y1, color='b', marker='s', s=10)
-    # ax2.scatter(x2, y2, color='b', marker='s', s=10)
-    # ax3.scatter(x3, y3, color='b', marker='s', s=10)
-    # ax4.scatter(x4, y4, color='b', marker='s', s=10)
-    # ax5.scatter(x5, y5, color='b', marker='s', s=10)
-    # ax6.scatter(x6, y6, color='b', marker='s', s=10)
-    # ax7.scatter(x7, y7, color='b', marker='s', s=10)
-    # ax8.scatter(x8, y8, color='b', marker='s', s=10)
-    # ax9.scatter(x9, y9, color='b', marker='s', s=10)
+    # ax.scatter(0, 50, 50, color='r', marker=',', s=50)
     #
     # end = time.time()
     # elapsed_time = (end - begin)
-    # print(f'Elapsed time: {round(elapsed_time, 2)} s')
+    # print(f'elapsed time: {round(elapsed_time, 2)} s')
     # plt.show()
+
+    # _____Plot slices_______
+    begin = time.time()
+    micro = Microstructure()
+    cells_faces = micro.voronoi_3d_cells(100, 50)
+    cut1 = np.nonzero(cells_faces[5, :, :])
+    x1 = cut1[0]
+    y1 = cut1[1]
+
+    cut2 = np.nonzero(cells_faces[90, :, :])
+    x2 = cut2[0]
+    y2 = cut2[1]
+
+    cut3 = np.nonzero(cells_faces[90, :, :])
+    x3 = cut3[0]
+    y3 = cut3[1]
+
+    cut4 = np.nonzero(cells_faces[90, :, :])
+    x4 = cut4[0]
+    y4 = cut4[1]
+
+    cut5 = np.nonzero(cells_faces[90, :, :])
+    x5 = cut5[0]
+    y5 = cut5[1]
+
+    cut6 = np.nonzero(cells_faces[90, :, :])
+    x6 = cut6[0]
+    y6 = cut6[1]
+
+    cut7 = np.nonzero(cells_faces[90, :, :])
+    x7 = cut7[0]
+    y7 = cut7[1]
+
+    cut8 = np.nonzero(cells_faces[90, :, :])
+    x8 = cut8[0]
+    y8 = cut8[1]
+
+    cut9 = np.nonzero(cells_faces[90, :, :])
+    x9 = cut9[0]
+    y9 = cut9[1]
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(331)
+    ax2 = fig.add_subplot(332)
+    ax3 = fig.add_subplot(333)
+    ax4 = fig.add_subplot(334)
+    ax5 = fig.add_subplot(335)
+    ax6 = fig.add_subplot(336)
+    ax7 = fig.add_subplot(337)
+    ax8 = fig.add_subplot(338)
+    ax9 = fig.add_subplot(339)
+
+    ax1.scatter(x1, y1, color='b', marker='s', s=10)
+    ax2.scatter(x2, y2, color='b', marker='s', s=10)
+    ax3.scatter(x3, y3, color='b', marker='s', s=10)
+    ax4.scatter(x4, y4, color='b', marker='s', s=10)
+    ax5.scatter(x5, y5, color='b', marker='s', s=10)
+    ax6.scatter(x6, y6, color='b', marker='s', s=10)
+    ax7.scatter(x7, y7, color='b', marker='s', s=10)
+    ax8.scatter(x8, y8, color='b', marker='s', s=10)
+    ax9.scatter(x9, y9, color='b', marker='s', s=10)
+
+    end = time.time()
+    elapsed_time = (end - begin)
+    print(f'Elapsed time: {round(elapsed_time, 2)} s')
+    plt.show()

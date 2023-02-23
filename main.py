@@ -4,8 +4,8 @@ from engine import *
 if __name__ == '__main__':
 
     user_input = {"oxidant": {"primary": {"elem": "N",
-                                          "diffusion_condition": "Test",
-                                          "cells_concentration": 0.6},
+                                          "diffusion_condition": "O in Ni Krupp",
+                                          "cells_concentration": 0.001},
                               "secondary": {"elem": "None",
                                             "diffusion_condition": "Test_slower",
                                             "cells_concentration": 0.1}
@@ -13,8 +13,8 @@ if __name__ == '__main__':
 
                   "active_element": {"primary": {"elem": "Ti",
                                                  "diffusion_condition": "Test_slower",
-                                                 "mass_concentration": 0.0001,
-                                                 "cells_concentration": 0.5},
+                                                 "mass_concentration": 0.000001,
+                                                 "cells_concentration": 0.045},
                                      "secondary": {"elem": "None",
                                                    "diffusion_condition": "Test_slower",
                                                    "mass_concentration": 0.0001,
@@ -28,12 +28,12 @@ if __name__ == '__main__':
                   "full_cells": False,
                   "diff_in_precipitation": 3.05 * 10 ** -14,  # [m^2/sek]
                   "diff_out_precipitation": 3.05 * 10 ** -14,  # [m^2/sek]
-                  "temperature": 1000,  # °C
+                  "temperature": 1100,  # °C
                   "n_cells_per_axis": 102,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
-                  "n_iterations": 1000,  # must be >= n_cells_per_axis
+                  "n_iterations": 5000,  # must be >= n_cells_per_axis
                   "stride": 9000000,  # n_iterations / stride = n_iterations for outward diffusion
-                  "sim_time": 3600,  # [sek]
-                  "size": 1000 * (10**-6),  # [m]
+                  "sim_time": 36000,  # [sek]
+                  "size": 150 * (10**-6),  # [m]
 
                   "threshold_inward": 1,
                   "threshold_outward": 1,
@@ -48,11 +48,11 @@ if __name__ == '__main__':
                   "block_scale_factor": 2,
 
                   "inward_diffusion": True,
-                  "outward_diffusion": False,
-                  "compute_precipitations": False,
+                  "outward_diffusion": True,
+                  "compute_precipitations": True,
                   "diffusion_in_precipitation": False,
 
-                  "save_whole": True,
+                  "save_whole": False,
                   "save_path": 'W:/SIMCA/test_runs_data/',
 
                   "neigh_range": 1  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10

@@ -938,6 +938,9 @@ ELAPSED TIME: {message}
             # ax.plot(x, sinward, color='deeppink')
             ax.plot(x, soutward, color='darkorange')
 
+            ax.set_xlabel("Depth [m]")
+            ax.set_ylabel("Concentration")
+
             # ax.plot(x, outward,  color='g')
             # ax.plot(x, precipitations,  color='r')
 
