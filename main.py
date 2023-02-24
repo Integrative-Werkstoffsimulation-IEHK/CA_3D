@@ -3,22 +3,22 @@ from engine import *
 
 if __name__ == '__main__':
 
-    user_input = {"oxidant": {"primary": {"elem": "N",
+    user_input = {"oxidant": {"primary": {"elem": "O",
                                           "diffusion_condition": "O in Ni Krupp",
-                                          "cells_concentration": 0.001},
+                                          "cells_concentration": 0.01},
                               "secondary": {"elem": "None",
                                             "diffusion_condition": "Test_slower",
                                             "cells_concentration": 0.1}
                               },
 
-                  "active_element": {"primary": {"elem": "Ti",
+                  "active_element": {"primary": {"elem": "Cr",
                                                  "diffusion_condition": "Test_slower",
                                                  "mass_concentration": 0.000001,
-                                                 "cells_concentration": 0.045},
-                                     "secondary": {"elem": "None",
+                                                 "cells_concentration": 0.1},
+                                     "secondary": {"elem": "Al",
                                                    "diffusion_condition": "Test_slower",
-                                                   "mass_concentration": 0.0001,
-                                                   "cells_concentration": 0.2}
+                                                   "mass_concentration": 0.00001,
+                                                   "cells_concentration": 0.1}
                                      },
 
                   "matrix_elem": {"elem": "Ni",
@@ -33,13 +33,13 @@ if __name__ == '__main__':
                   "n_iterations": 5000,  # must be >= n_cells_per_axis
                   "stride": 9000000,  # n_iterations / stride = n_iterations for outward diffusion
                   "sim_time": 36000,  # [sek]
-                  "size": 150 * (10**-6),  # [m]
+                  "size": 400 * (10**-6),  # [m]
 
                   "threshold_inward": 1,
                   "threshold_outward": 1,
                   "sol_prod": 0,  # 5.621 * 10 ** -10
 
-                  "nucleation_probability": 1,
+                  "nucleation_probability": 0.5,
                   "het_factor": 7000,
 
                   "dissolution_p": 0.1,

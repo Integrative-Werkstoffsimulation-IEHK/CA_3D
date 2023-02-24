@@ -74,7 +74,7 @@ class CellularAutomata:
             self.generate_fetch_ind()
             self.array_keys = ["0", "1", "2", "3", "4", "5"]
             self.length_checker = np.vectorize(len, otypes=[int])
-            self.scale_probability = self.param["nucleation_probability"]
+            self.nucleation_probability = self.param["nucleation_probability"]
             self.dissol_pn = self.param["dissolution_p"] ** (1 / self.param["dissolution_n"])
             self.dissol_p_block = (self.dissol_pn * 2.718281828 ** (-self.param["exponent_power"] * 3)) \
                                   / self.param["block_scale_factor"]
@@ -87,8 +87,8 @@ class CellularAutomata:
                                    [12, 3, 4, 5, 20, 23, 25],
                                    [13, 3, 4, 2, 21, 24, 25]]
             self.scale_n = self.param["het_factor"]
-            self.const_a = (1 / (self.scale_n * self.scale_probability)) ** (-6 / 5)
-            self.const_b = log(1 / (self.scale_n * self.scale_probability)) * (1 / 5)
+            self.const_a = (1 / (self.scale_n * self.nucleation_probability)) ** (-6 / 5)
+            self.const_b = log(1 / (self.scale_n * self.nucleation_probability)) * (1 / 5)
 
     def simulation(self):
         """
@@ -109,7 +109,7 @@ class CellularAutomata:
 
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
             if self.param["compute_precipitations"]:
-                self.precipitation_0_cells()
+                self.precipitation_1_cells()
             if self.param["inward_diffusion"]:
                 self.diffusion_inward()
             if self.param["outward_diffusion"]:
@@ -519,7 +519,7 @@ class CellularAutomata:
 
         if len(primary_comb_indexes) > 0:
             self.precip_step(primary_comb_indexes, self.primary_oxidant, self.primary_active,
-                             self.primary_product, self.secondary_product)
+                             self.primary_product, self.secondary_product, self.nucleation_probability)
 
         if len(secondary_comb_indexes) > 0:
             self.precip_step(secondary_comb_indexes, self.primary_oxidant, self.secondary_active,
@@ -527,7 +527,7 @@ class CellularAutomata:
 
         self.primary_oxidant.transform_to_descards()
 
-    def precip_step(self, indexes, oxidant, active, product, to_check_with=None):
+    def precip_step(self, indexes, oxidant, active, product, to_check_with=None, nucleation_probability=1):
         """
         Precipitation formation function.
         """
@@ -557,7 +557,7 @@ class CellularAutomata:
             #     arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
             #     homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
             #     needed_prob = self.const_a * 2.718281828 ** (self.const_b * arr_len_in_flat)
-            #     needed_prob[homogeneous_ind] = self.scale_probability
+            #     needed_prob[homogeneous_ind] = self.nucleation_probability
             #     randomise = np.random.random_sample(len(arr_len_in_flat))
             #     temp_ind = np.where(randomise < needed_prob)[0]
 
@@ -717,6 +717,10 @@ class CellularAutomata:
             for fetch_ind in self.fetch_ind:
                 oxidant_cells = oxidant.c3d[fetch_ind[0], fetch_ind[1], plane_index]
                 oxidant_cells = fetch_ind[:, np.nonzero(oxidant_cells)[0]]
+
+                randomise = np.random.random_sample(len(oxidant_cells[0]))
+                temp_ind = np.where(randomise < nucleation_probability)[0]
+                oxidant_cells = oxidant_cells[:, temp_ind]
 
                 if len(oxidant_cells[0]) != 0:
                     oxidant_cells = np.vstack((oxidant_cells, np.full(len(oxidant_cells[0]), plane_index, dtype=np.short)))
