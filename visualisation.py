@@ -290,8 +290,8 @@ ELAPSED TIME: {message}
             ax_sprecip.set_ylim3d(0, self.axlim)
             ax_sprecip.set_zlim3d(0, self.axlim)
             if const_cam_pos:
-                azim = -70
-                elev = 30
+                azim = -92
+                elev = 0
                 dist = 8
                 ax_inward.azim = azim
                 ax_inward.elev = elev
@@ -305,9 +305,9 @@ ELAPSED TIME: {message}
                 ax_soutward.azim = azim
                 ax_soutward.elev = elev
                 ax_soutward.dist = dist
-                ax_sprecip.azim = azim
-                ax_sprecip.elev = elev
-                ax_sprecip.dist = dist
+                ax_precip.azim = azim
+                ax_precip.elev = elev
+                ax_precip.dist = dist
                 ax_sprecip.azim = azim
                 ax_sprecip.elev = elev
                 ax_sprecip.dist = dist

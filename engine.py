@@ -44,11 +44,18 @@ class CellularAutomata:
         # setting variables for precipitations
         if self.param["compute_precipitations"]:
             self.primary_product = cells.Product(self.param["product"]["primary"])
-            if self.param["secondary_active_element_exists"]:
+            if self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
                 self.secondary_product = cells.Product(self.param["product"]["secondary"])
                 self.precip_func = self.precipitation_1
                 self.calc_precip_front = self.calc_precip_front_1
                 self.decomposition = self.decomposition_both
+            elif self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
+                self.secondary_product = cells.Product(self.param["product"]["secondary"])
+                self.ternary_product = cells.Product(self.param["product"]["ternary"])
+                self.quaternary_product = cells.Product(self.param["product"]["quaternary"])
+
+                # + FUNCTIONS!!!
+
             else:
                 self.precip_func = self.precipitation_0
                 self.calc_precip_front = self.calc_precip_front_0
@@ -109,7 +116,7 @@ class CellularAutomata:
 
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
             if self.param["compute_precipitations"]:
-                self.precipitation_1_cells()
+                self.precipitation_0_cells()
             if self.param["inward_diffusion"]:
                 self.diffusion_inward()
             if self.param["outward_diffusion"]:

@@ -5,20 +5,20 @@ if __name__ == '__main__':
 
     user_input = {"oxidant": {"primary": {"elem": "O",
                                           "diffusion_condition": "O in Ni Krupp",
-                                          "cells_concentration": 0.01},
-                              "secondary": {"elem": "None",
-                                            "diffusion_condition": "Test_slower",
+                                          "cells_concentration": 0.7},
+                              "secondary": {"elem": "N",
+                                            "diffusion_condition": "N in Ni Krupp",
                                             "cells_concentration": 0.1}
                               },
 
                   "active_element": {"primary": {"elem": "Cr",
                                                  "diffusion_condition": "Test_slower",
-                                                 "mass_concentration": 0.000001,
-                                                 "cells_concentration": 0.1},
-                                     "secondary": {"elem": "Al",
+                                                 "mass_concentration": 0.25,
+                                                 "cells_concentration": 0.3},
+                                     "secondary": {"elem": "None",
                                                    "diffusion_condition": "Test_slower",
-                                                   "mass_concentration": 0.00001,
-                                                   "cells_concentration": 0.1}
+                                                   "mass_concentration": 0.025,
+                                                   "cells_concentration": 0.2}
                                      },
 
                   "matrix_elem": {"elem": "Ni",
@@ -30,10 +30,10 @@ if __name__ == '__main__':
                   "diff_out_precipitation": 3.05 * 10 ** -14,  # [m^2/sek]
                   "temperature": 1100,  # °C
                   "n_cells_per_axis": 102,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
-                  "n_iterations": 5000,  # must be >= n_cells_per_axis
-                  "stride": 9000000,  # n_iterations / stride = n_iterations for outward diffusion
-                  "sim_time": 36000,  # [sek]
-                  "size": 400 * (10**-6),  # [m]
+                  "n_iterations": 6000,  # must be >= n_cells_per_axis
+                  "stride": 9000,  # n_iterations / stride = n_iterations for outward diffusion
+                  "sim_time": 300,  # [sek]
+                  "size": 1200 * (10**-6),  # [m]
 
                   "threshold_inward": 1,
                   "threshold_outward": 1,

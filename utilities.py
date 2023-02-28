@@ -73,14 +73,24 @@ class Utils:
         self.n_cells_per_axis = self.param["n_cells_per_axis"]
 
     def calc_product_data(self):
-        self.param["product"] = {"primary": {}, "secondary": {}}
+        self.param["product"] = {"primary": {}, "secondary": {}, "ternary": {}, "quaternary": {}}
+
+        # Primary
         self.param["product"]["primary"]["mass_per_cell"] = self.param["oxidant"]["primary"]["mass_per_cell"] + \
                                                             self.param["active_element"]["primary"]["mass_per_cell"]
         self.param["product"]["primary"]["moles_per_cell"] = self.param["active_element"]["primary"]["moles_per_cell"]
-
+        # Secondary
         self.param["product"]["secondary"]["mass_per_cell"] = self.param["oxidant"]["primary"]["mass_per_cell"] + \
                                                               self.param["active_element"]["secondary"]["mass_per_cell"]
         self.param["product"]["secondary"]["moles_per_cell"] = self.param["active_element"]["secondary"]["moles_per_cell"]
+        # Ternary
+        self.param["product"]["ternary"]["mass_per_cell"] = self.param["oxidant"]["secondary"]["mass_per_cell"] + \
+                                                              self.param["active_element"]["primary"]["mass_per_cell"]
+        self.param["product"]["ternary"]["moles_per_cell"] = self.param["active_element"]["primary"]["moles_per_cell"]
+        # Quaternary
+        self.param["product"]["quaternary"]["mass_per_cell"] = self.param["oxidant"]["secondary"]["mass_per_cell"] + \
+                                                            self.param["active_element"]["secondary"]["mass_per_cell"]
+        self.param["product"]["quaternary"]["moles_per_cell"] = self.param["active_element"]["secondary"]["moles_per_cell"]
 
         t_1 = self.param["active_element"]["primary"]["molar_mass"] * self.param["matrix_elem"]["density"] / \
               (self.param["active_element"]["primary"]["density"] * self.param["matrix_elem"]["molar_mass"])
@@ -97,6 +107,8 @@ class Utils:
 
         self.param["product"]["primary"]["cells_per_axis"] = self.param["n_cells_per_axis"]
         self.param["product"]["secondary"]["cells_per_axis"] = self.param["n_cells_per_axis"]
+        self.param["product"]["ternary"]["cells_per_axis"] = self.param["n_cells_per_axis"]
+        self.param["product"]["quaternary"]["cells_per_axis"] = self.param["n_cells_per_axis"]
 
     def calc_oxidant_data(self):
         diff_coeff = self.param["oxidant"]["primary"]["diffusion_coefficient"]
@@ -112,8 +124,8 @@ class Utils:
         self.param["oxidant"]["secondary"]["n_per_page"] = round(self.param["oxidant"]["secondary"]["cells_concentration"] *
                                                                self.param["n_cells_per_axis"] ** 2)
 
-        self.param["oxidant"]["primary"]["moles_per_cell"] = self.param["active_element"]["primary"]["moles_per_cell"] /\
-                                                             self.param["threshold_inward"]
+        self.param["oxidant"]["primary"]["moles_per_cell"] = self.param["active_element"]["primary"]["moles_per_cell"] *\
+                                                             1.5 / self.param["threshold_inward"]
         self.param["oxidant"]["primary"]["mass_per_cell"] = self.param["oxidant"]["primary"]["moles_per_cell"] *\
                                                             self.param["oxidant"]["primary"]["molar_mass"]
 

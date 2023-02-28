@@ -71,7 +71,7 @@ class ActiveElem:
         del temp_ind
         gc.collect()
 
-        self.cells = np.add(self.cells, self.dirs, out=self.cells, casting="unsafe")
+        self.cells = np.add(self.cells, self.dirs, casting="unsafe")
 
         # adjusting a coordinates of side points for correct shifting
         ind = np.where(self.cells[2] == -1)[0]
@@ -198,30 +198,36 @@ class OxidantElem:
         self.current_count = 0
         self.fill_first_page()
 
-        # self.microstructure = voronoi_3d_cells_test.Microstructure()
-        # self.microstructure.voronoi_3d_cells(self.cells_per_axis, 50)
-        # self.microstructure.show_microstructure(self.cells_per_axis)
+        self.microstructure = voronoi_3d_cells_test.Microstructure()
+        self.microstructure.voronoi_3d_cells(self.cells_per_axis, 5, seeds='standard')
+        self.microstructure.show_microstructure(self.cells_per_axis)
+        self.cross_shifts = np.array([[1, 0, 0], [0, 1, 0],
+                                      [-1, 0, 0], [0, -1, 0]], dtype=np.byte)
 
     def diffuse(self):
         """
         Outgoing diffusion from the inside.
         """
 
-        # exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
+        exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
         # # print(exists)
-        # temp_ind = np.where(exists)[0]
+        temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
         # # print(temp_ind)
         #
-        # in_gb = np.array(self.cells[:, temp_ind], dtype=np.short)
+        in_gb = np.array(self.cells[:, temp_ind], dtype=np.short)
         # # print(in_gb)
         #
-        # destinations = np.array(self.microstructure.destinations[in_gb[0], in_gb[1], in_gb[2]],
-        #                         dtype=np.short).transpose()
-        # print(destinations)
+        shift_vector = np.array(self.microstructure.destinations[in_gb[0], in_gb[1], in_gb[2]],
+                                dtype=np.short).transpose()
+        # print(shift_vector)
 
         # print(self.cells)
+        cross_shifts = np.array(np.random.choice([0, 1, 2, 3], len(shift_vector[0])), dtype=np.ubyte)
+        cross_shifts = np.array(self.cross_shifts[cross_shifts], dtype=np.byte).transpose()
 
-        # self.cells[:, temp_ind] += destinations
+        shift_vector += cross_shifts
+
+        self.cells[:, temp_ind] += shift_vector
         # print(self.cells)
 
         # mixing particles according to Chopard and Droz
@@ -241,27 +247,27 @@ class OxidantElem:
         self.dirs[:, temp_ind] *= -1
         del temp_ind
         gc.collect()
-        self.cells = np.add(self.cells, self.dirs, out=self.cells, casting="unsafe")
+        self.cells = np.add(self.cells, self.dirs, casting="unsafe")
         # adjusting a coordinates of side points for correct shifting
-        ind = np.where(self.cells[2] == -1)[0]
+        ind = np.where(self.cells[2] <= -1)[0]
         self.cells[2, ind] = 0
         self.dirs[2, ind] = 1
-        self.cells[0, np.where(self.cells[0] == -1)] = self.cells_per_axis - 1
-        self.cells[0, np.where(self.cells[0] == self.cells_per_axis)] = 0
-        self.cells[1, np.where(self.cells[1] == -1)] = self.cells_per_axis - 1
-        self.cells[1, np.where(self.cells[1] == self.cells_per_axis)] = 0
+        self.cells[0, np.where(self.cells[0] <= -1)] = self.cells_per_axis - 1
+        self.cells[0, np.where(self.cells[0] >= self.cells_per_axis)] = 0
+        self.cells[1, np.where(self.cells[1] <= -1)] = self.cells_per_axis - 1
+        self.cells[1, np.where(self.cells[1] >= self.cells_per_axis)] = 0
 
-        ind = np.where(self.cells[2] >= self.cells_per_axis)
-        self.cells = np.delete(self.cells, ind, 1)
-        self.dirs = np.delete(self.dirs, ind, 1)
-
-        ind = np.where(self.cells[1] >= self.cells_per_axis)
-        self.cells = np.delete(self.cells, ind, 1)
-        self.dirs = np.delete(self.dirs, ind, 1)
-
-        ind = np.where(self.cells[0] >= self.cells_per_axis)
-        self.cells = np.delete(self.cells, ind, 1)
-        self.dirs = np.delete(self.dirs, ind, 1)
+        # ind = np.where(self.cells[2] >= self.cells_per_axis)
+        # self.cells = np.delete(self.cells, ind, 1)
+        # self.dirs = np.delete(self.dirs, ind, 1)
+        #
+        # ind = np.where(self.cells[1] >= self.cells_per_axis)
+        # self.cells = np.delete(self.cells, ind, 1)
+        # self.dirs = np.delete(self.dirs, ind, 1)
+        #
+        # ind = np.where(self.cells[0] >= self.cells_per_axis)
+        # self.cells = np.delete(self.cells, ind, 1)
+        # self.dirs = np.delete(self.dirs, ind, 1)
 
         del ind
         gc.collect()
