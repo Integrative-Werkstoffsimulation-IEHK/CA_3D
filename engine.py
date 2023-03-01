@@ -1,7 +1,7 @@
 from utilities import *
 import gc
 import progressbar
-import cells_new as cells
+import elements
 
 
 class CellularAutomata:
@@ -33,28 +33,29 @@ class CellularAutomata:
 
         # setting variables for inward diffusion
         if self.param["inward_diffusion"]:
-            self.primary_oxidant = cells.OxidantElem(self.param["oxidant"]["primary"])
+            self.primary_oxidant = elements.OxidantElem(self.param["oxidant"]["primary"])
             if self.param["secondary_oxidant_exists"]:
-                self.secondary_oxidant = cells.OxidantElem(self.param["oxidant"]["secondary"])
+                self.secondary_oxidant = elements.OxidantElem(self.param["oxidant"]["secondary"])
         # setting variables for outward diffusion
         if self.param["outward_diffusion"]:
-            self.primary_active = cells.ActiveElem(self.param["active_element"]["primary"])
+            self.primary_active = elements.ActiveElem(self.param["active_element"]["primary"])
             if self.param["secondary_active_element_exists"]:
-                self.secondary_active = cells.ActiveElem(self.param["active_element"]["secondary"])
+                self.secondary_active = elements.ActiveElem(self.param["active_element"]["secondary"])
         # setting variables for precipitations
         if self.param["compute_precipitations"]:
-            self.primary_product = cells.Product(self.param["product"]["primary"])
-            if self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
-                self.secondary_product = cells.Product(self.param["product"]["secondary"])
+            self.primary_product = elements.Product(self.param["product"]["primary"])
+            if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
+                self.secondary_product = elements.Product(self.param["product"]["secondary"])
+                self.ternary_product = elements.Product(self.param["product"]["ternary"])
+                self.quaternary_product = elements.Product(self.param["product"]["quaternary"])
+
+                # + FUNCTIONS!!!
+
+            elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
+                self.secondary_product = elements.Product(self.param["product"]["secondary"])
                 self.precip_func = self.precipitation_1
                 self.calc_precip_front = self.calc_precip_front_1
                 self.decomposition = self.decomposition_both
-            elif self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
-                self.secondary_product = cells.Product(self.param["product"]["secondary"])
-                self.ternary_product = cells.Product(self.param["product"]["ternary"])
-                self.quaternary_product = cells.Product(self.param["product"]["quaternary"])
-
-                # + FUNCTIONS!!!
 
             else:
                 self.precip_func = self.precipitation_0

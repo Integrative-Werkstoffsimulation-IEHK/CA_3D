@@ -100,7 +100,21 @@ class Utils:
         self.param["product"]["primary"]["oxidation_number"] =\
             round(self.param["matrix_elem"]["moles_per_cell"] / (self.param["active_element"]["primary"]["moles_per_cell"]
                                                                * t_1))
-        if self.param[f"secondary_active_element_exists"]:
+
+        if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
+            self.param["product"]["secondary"]["oxidation_number"] = \
+                round(self.param["matrix_elem"]["moles_per_cell"] / (self.param["active_element"]["secondary"]["moles_per_cell"]
+                                                                     * t_2))
+
+            self.param["product"]["ternary"]["oxidation_number"] = \
+                round(self.param["matrix_elem"]["moles_per_cell"] / (self.param["active_element"]["primary"]["moles_per_cell"]
+                                                                     * t_1))
+
+            self.param["product"]["quaternary"]["oxidation_number"] = \
+                round(self.param["matrix_elem"]["moles_per_cell"] / (self.param["active_element"]["secondary"]["moles_per_cell"]
+                                                                     * t_2))
+
+        elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
             self.param["product"]["secondary"]["oxidation_number"] = \
                 round(self.param["matrix_elem"]["moles_per_cell"] / (self.param["active_element"]["secondary"]["moles_per_cell"]
                                                                    * t_2))

@@ -9,18 +9,17 @@ import time
 class Microstructure:
     def __init__(self):
         self.grain_boundaries = None
-        self.destinations = None
         self.lines = np.array([[[0,0,0], [0,0,0]]])
         self.lines_faces = np.array([[[0,0,0], [0,0,0]]])
         self.n_cells_per_axis = None
         self.divisor = 150
         self.diff_jump = 0.1
-        self.diff_jump_cells = 2
-        self.destinations = None
+        self.jump_size = 2
+        self.jump_directions = None
         self.ca_edges = None
         self.ca_faces = None
 
-    def voronoi_3d_cells(self, n_cells_per_axis, number_of_grains, seeds=None):
+    def generate_voronoi_3d(self, n_cells_per_axis, number_of_grains, seeds=None):
         if seeds is None:
             seeds = np.random.random_sample((number_of_grains, 3))
             # print(seeds)
@@ -114,8 +113,8 @@ class Microstructure:
 
         shift = 10
         bresenham_s_edges = res_edges + shift
-        self.destinations = np.zeros((n_cells_per_axis + 2 * shift, n_cells_per_axis + 2 * shift,
-                                 n_cells_per_axis + 2 * shift, 3), dtype=np.short)
+        self.jump_directions = np.zeros((n_cells_per_axis + 2 * shift, n_cells_per_axis + 2 * shift,
+                                         n_cells_per_axis + 2 * shift, 3), dtype=np.short)
 
         # for line in bresenham_s_edges:
         #     if len(line) > 0:
@@ -128,12 +127,12 @@ class Microstructure:
             if len(line) > 0:
                 direction = line[-1] - line[0]
                 path_length = np.linalg.norm(direction)
-                vector_step = self.diff_jump_cells * direction / path_length
+                vector_step = self.jump_size * direction / path_length
                 vector_step = np.array(np.rint(vector_step), dtype=np.short)
 
                 # final_dest = line[-1] - shift
                 for coordinate in line:
-                    self.destinations[coordinate[0], coordinate[1], coordinate[2]] = vector_step
+                    self.jump_directions[coordinate[0], coordinate[1], coordinate[2]] = vector_step
 
         # bresenham_points_edges = np.array([point for array2 in res_edges for array1 in array2 for point in array1],
         # dtype=np.short)
@@ -177,12 +176,12 @@ class Microstructure:
             if len(line) > 0:
                 direction = line[-1] - line[0]
                 path_length = np.linalg.norm(direction)
-                vector_step = self.diff_jump_cells * direction / path_length
+                vector_step = self.jump_size * direction / path_length
                 vector_step = np.array(np.rint(vector_step), dtype=np.short)
 
                 # final_dest = line[-1] - shift
                 for coordinate in line:
-                    self.destinations[coordinate[0], coordinate[1], coordinate[2]] = vector_step
+                    self.jump_directions[coordinate[0], coordinate[1], coordinate[2]] = vector_step
 
         bresenham_points_s_faces = np.array([point for array2 in bresenham_s_faces for point in array2]).transpose()
         # shift = 10
@@ -197,7 +196,7 @@ class Microstructure:
                                     shift:(n_cells_per_axis + shift),
                                     shift:(n_cells_per_axis + shift)]
 
-        self.destinations = self.destinations[shift:(n_cells_per_axis + shift),
+        self.jump_directions = self.jump_directions[shift:(n_cells_per_axis + shift),
                                     shift:(n_cells_per_axis + shift),
                                     shift:(n_cells_per_axis + shift)]
 
@@ -231,17 +230,17 @@ class Microstructure:
 
         # destinations
         # removing plane Z = 0
-        self.destinations[0, :, :] = [0, 0, 0]
+        self.jump_directions[0, :, :] = [0, 0, 0]
         # removing plane Z = max
-        self.destinations[n_cells_per_axis - 1, :, :] = [0, 0, 0]
+        self.jump_directions[n_cells_per_axis - 1, :, :] = [0, 0, 0]
         # removing plane X = 0
-        self.destinations[:, 0, :] = [0, 0, 0]
+        self.jump_directions[:, 0, :] = [0, 0, 0]
         # removing plane X = max
-        self.destinations[:, n_cells_per_axis - 1, :] = [0, 0, 0]
+        self.jump_directions[:, n_cells_per_axis - 1, :] = [0, 0, 0]
         # removing plane Y = 0
-        self.destinations[:, :, 0] = [0, 0, 0]
+        self.jump_directions[:, :, 0] = [0, 0, 0]
         # removing plane Y = max
-        self.destinations[:, :, n_cells_per_axis - 1] = [0, 0, 0]
+        self.jump_directions[:, :, n_cells_per_axis - 1] = [0, 0, 0]
 
         # return ca_faces
         self.ca_edges = np.nonzero(ca_edges)
@@ -587,7 +586,7 @@ if __name__ == "__main__":
     # _______Plot 3D______
     begin = time.time()
     micro = Microstructure()
-    cells_faces, cells_edges = micro.voronoi_3d_cells(100, 6, seeds="standard")
+    cells_faces, cells_edges = micro.generate_voronoi_3d(100, 6, seeds="standard")
     x_edge = cells_edges[2]
     y_edge = cells_edges[1]
     z_edge = cells_edges[0]

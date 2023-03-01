@@ -1,7 +1,7 @@
 import numpy as np
 import gc
 import random
-import voronoi_3d_cells_test
+import voronoi
 
 
 class ActiveElem:
@@ -198,37 +198,37 @@ class OxidantElem:
         self.current_count = 0
         self.fill_first_page()
 
-        self.microstructure = voronoi_3d_cells_test.Microstructure()
-        self.microstructure.voronoi_3d_cells(self.cells_per_axis, 5, seeds='standard')
-        self.microstructure.show_microstructure(self.cells_per_axis)
-        self.cross_shifts = np.array([[1, 0, 0], [0, 1, 0],
-                                      [-1, 0, 0], [0, -1, 0]], dtype=np.byte)
+        # self.microstructure = voronoi.Microstructure()
+        # self.microstructure.generate_voronoi_3d(self.cells_per_axis, 5, seeds='standard')
+        # self.microstructure.show_microstructure(self.cells_per_axis)
+        # self.cross_shifts = np.array([[1, 0, 0], [0, 1, 0],
+        #                               [-1, 0, 0], [0, -1, 0]], dtype=np.byte)
 
     def diffuse(self):
         """
         Outgoing diffusion from the inside.
         """
 
-        exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
-        # # print(exists)
-        temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
-        # # print(temp_ind)
+        # exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
+        # # # print(exists)
+        # temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
+        # # # print(temp_ind)
+        # #
+        # in_gb = np.array(self.cells[:, temp_ind], dtype=np.short)
+        # # # print(in_gb)
+        # #
+        # shift_vector = np.array(self.microstructure.jump_directions[in_gb[0], in_gb[1], in_gb[2]],
+        #                         dtype=np.short).transpose()
+        # # print(shift_vector)
         #
-        in_gb = np.array(self.cells[:, temp_ind], dtype=np.short)
-        # # print(in_gb)
+        # # print(self.cells)
+        # cross_shifts = np.array(np.random.choice([0, 1, 2, 3], len(shift_vector[0])), dtype=np.ubyte)
+        # cross_shifts = np.array(self.cross_shifts[cross_shifts], dtype=np.byte).transpose()
         #
-        shift_vector = np.array(self.microstructure.destinations[in_gb[0], in_gb[1], in_gb[2]],
-                                dtype=np.short).transpose()
-        # print(shift_vector)
-
-        # print(self.cells)
-        cross_shifts = np.array(np.random.choice([0, 1, 2, 3], len(shift_vector[0])), dtype=np.ubyte)
-        cross_shifts = np.array(self.cross_shifts[cross_shifts], dtype=np.byte).transpose()
-
-        shift_vector += cross_shifts
-
-        self.cells[:, temp_ind] += shift_vector
-        # print(self.cells)
+        # shift_vector += cross_shifts
+        #
+        # self.cells[:, temp_ind] += shift_vector
+        # # print(self.cells)
 
         # mixing particles according to Chopard and Droz
         randomise = np.array(np.random.random_sample(len(self.cells[0])), dtype=np.single)
