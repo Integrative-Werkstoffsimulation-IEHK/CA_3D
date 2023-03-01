@@ -1,4 +1,4 @@
-from utilities import *
+from utils.utilities import *
 import gc
 import progressbar
 # import numpy as np

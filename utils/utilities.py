@@ -294,7 +294,7 @@ class Utils:
         return {"p": p, "p3": p3, "p0": p0}
 
     def calc_masses_solprod(self):
-        m_matrix = physical_data.DENSITY[self.param["matrix_elem"]] * self.param["l_ambda"]**3
+        m_matrix = physical_data.DENSITY[self.param["matrix_elem"]] * self.param["l_ambda"] ** 3
         m_act = self.param["active_elem_conc_real"] * m_matrix /\
                 (self.param["active_elem_conc"] * (1 - self.param["active_elem_conc_real"]))
         a = self.param["sol_prod"] * self.param["threshold_inward"]**2

@@ -3,11 +3,8 @@ import sqlite3 as sql
 from matplotlib.animation import FuncAnimation
 from scipy import special
 from math import *
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
-import mpl_toolkits.axisartist as AA
-import physical_data
-import utilities
+from utils import utilities, physical_data
 
 
 class Visualisation:
