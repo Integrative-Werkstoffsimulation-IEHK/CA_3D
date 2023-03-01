@@ -1,7 +1,7 @@
 import numpy as np
 import gc
 import random
-import voronoi
+from microstructure import voronoi
 
 
 class ActiveElem:
@@ -198,7 +198,7 @@ class OxidantElem:
         self.current_count = 0
         self.fill_first_page()
 
-        # self.microstructure = voronoi.Microstructure()
+        self.microstructure = voronoi.Microstructure()
         # self.microstructure.generate_voronoi_3d(self.cells_per_axis, 5, seeds='standard')
         # self.microstructure.show_microstructure(self.cells_per_axis)
         # self.cross_shifts = np.array([[1, 0, 0], [0, 1, 0],
