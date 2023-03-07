@@ -22,18 +22,18 @@ class ActiveElem:
         self.cut_shape = None
 
         # exact concentration space fill _____________
-        # self.cells = np.array([[], [], []], dtype=np.short)
-        # for plane_xind in range(self.cells_per_axis):
-        #     new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
-        #     new_cells = np.array(np.unravel_index(new_cells, (self.cells_per_axis, self.cells_per_axis)))
-        #     new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
-        #     self.cells = np.concatenate((self.cells, new_cells), 1)
-        # self.cells = np.array(self.cells, dtype=np.short)
+        self.cells = np.array([[], [], []], dtype=np.short)
+        for plane_xind in range(self.cells_per_axis):
+            new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
+            new_cells = np.array(np.unravel_index(new_cells, (self.cells_per_axis, self.cells_per_axis)))
+            new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
+            self.cells = np.concatenate((self.cells, new_cells), 1)
+        self.cells = np.array(self.cells, dtype=np.short)
         # ____________________________________________
 
         # approx concentration space fill ____________
-        self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
-                                       dtype=np.short)
+        # self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
+        #                                dtype=np.short)
         # ____________________________________________
 
         # half space fill ____________________________

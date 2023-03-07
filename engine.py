@@ -415,7 +415,7 @@ class CellularAutomata:
         solub_prod = (oxidant_mass * active_mass) / (whole ** 2)
 
         plane_indexes = np.array(np.where(solub_prod >= self.param["sol_prod"])[0])
-        # plane_indexes += 1
+
         if len(plane_indexes) > 0:
             # self.fix_init_precip(furthest_index, self.primary_product, self.primary_oxidant.cut_shape)
             self.precip_step(plane_indexes, self.primary_oxidant, self.primary_active,
@@ -442,7 +442,7 @@ class CellularAutomata:
         active = np.array([np.sum(self.primary_active.c3d[:, :, plane_ind]) for plane_ind
                            in range(furthest_index + 1)], dtype=np.uint32)
 
-        oxidant_indexes = np.where(oxidant > 5)[0]
+        oxidant_indexes = np.where(oxidant > 0)[0]
         active_indexes = np.where(active > 1)[0]
 
         min_act = active_indexes.min(initial=self.cells_per_axis + 10)
