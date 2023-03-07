@@ -1,11 +1,11 @@
 import pyvoro
 import matplotlib.pyplot as plt
-import bresenham
+from . import bresenham
 import numpy as np
 import time
 
 
-class Microstructure:
+class VoronoiMicrostructure:
     def __init__(self):
         self.grain_boundaries = None
         self.lines = np.array([[[0,0,0], [0,0,0]]])
@@ -13,7 +13,7 @@ class Microstructure:
         self.n_cells_per_axis = None
         self.divisor = 150
         self.diff_jump = 0.1
-        self.jump_size = 2
+        self.jump_size = 3
         self.jump_directions = None
         self.ca_edges = None
         self.ca_faces = None
@@ -584,7 +584,7 @@ class Microstructure:
 if __name__ == "__main__":
     # _______Plot 3D______
     begin = time.time()
-    micro = Microstructure()
+    micro = VoronoiMicrostructure()
     cells_faces, cells_edges = micro.generate_voronoi_3d(100, 6, seeds="standard")
     x_edge = cells_edges[2]
     y_edge = cells_edges[1]

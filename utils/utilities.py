@@ -1,8 +1,8 @@
-from math import *
-import numpy as np
-import physical_data
-from data_base import *
+from . import physical_data
+from . import data_base
 import sys
+import numpy as np
+from math import *
 
 
 class Utils:
@@ -42,7 +42,7 @@ class Utils:
         #             [-1, -1, -1], [-1, -1, 0], [-1, -1, 1]]
 
     def create_database(self):
-        self.db = Database(self.user_input)
+        self.db = data_base.Database(self.user_input)
 
     def generate_param(self):
         self.param = self.user_input
@@ -225,32 +225,32 @@ class Utils:
         denom = 1 + atomic_c_1 * (t_1 - 1) + atomic_c_2 * (t_2 - 1)
 
         min_cells1 = atomic_c_1 * t_1 / denom
-        if self.param["active_element"]["primary"]["cells_concentration"] < min_cells1:
+        if self.param["full_cells"]:
+            self.param["active_element"]["primary"]["cells_concentration"] = min_cells1
+            self.param["active_element"]["primary"]["n_per_page"] = round(min_cells1 * self.param["n_cells_per_axis"]**2)
+        elif self.param["active_element"]["primary"]["cells_concentration"] < min_cells1:
             print()
             print("______________________________________________________________")
             print("Cells Concentration For primary active_element Must Be >= ", min_cells1, "!!!")
             print("______________________________________________________________")
             sys.exit()
-        elif self.param["full_cells"]:
-            self.param["active_element"]["primary"]["cells_concentration"] = min_cells1
-            self.param["active_element"]["primary"]["n_per_page"] = round(min_cells1 * self.param["n_cells_per_axis"]**2)
         else:
             cells_conc = self.param["active_element"]["primary"]["cells_concentration"]
             self.param["active_element"]["primary"]["n_per_page"] = round(cells_conc * self.param["n_cells_per_axis"] ** 2)
 
         min_cells2 = atomic_c_2 * t_2 / denom
-        if self.param["active_element"]["secondary"]["cells_concentration"] < min_cells2:
-            print()
-            print("______________________________________________________________")
-            print("Cells Concentration For secondary active_element Must Be >= ", min_cells2, "!!!")
-            print("______________________________________________________________")
-            sys.exit()
-        elif self.param["full_cells"]:
+        if self.param["full_cells"]:
             if min_cells2 == 0:
                 self.param["active_element"]["secondary"]["n_per_page"] = 0
             else:
                 self.param["active_element"]["secondary"]["cells_concentration"] = min_cells2
                 self.param["active_element"]["secondary"]["n_per_page"] = round(min_cells2 * self.param["n_cells_per_axis"] ** 2)
+        elif self.param["active_element"]["secondary"]["cells_concentration"] < min_cells2:
+            print()
+            print("______________________________________________________________")
+            print("Cells Concentration For secondary active_element Must Be >= ", min_cells2, "!!!")
+            print("______________________________________________________________")
+            sys.exit()
         else:
             cells_conc = self.param["active_element"]["secondary"]["cells_concentration"]
             self.param["active_element"]["secondary"]["n_per_page"] = round(cells_conc * self.param["n_cells_per_axis"] ** 2)
@@ -498,9 +498,29 @@ Secondary Active: {self.param["active_element"]["secondary"]["elem"]}
 Primary Product: {self.param["active_element"]["primary"]["elem"]} + {self.param["oxidant"]["primary"]["elem"]}
     * Moles per cell: {self.param["product"]["primary"]["moles_per_cell"]} [mole]
     * Mass per cell: {self.param["product"]["primary"]["mass_per_cell"]} [kg]
-    * Primary oxidation number: {self.param["product"]["primary"]["oxidation_number"]}
+    * Oxidation number: {self.param["product"]["primary"]["oxidation_number"]}
     --------------------------------------------------------------------------""")
-        if self.param["secondary_active_element_exists"]:
+        if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
+            print(f"""
+Secondary Product: {self.param["active_element"]["secondary"]["elem"]} + {self.param["oxidant"]["primary"]["elem"]}
+    * Moles per cell: {self.param["product"]["secondary"]["moles_per_cell"]} [mole]
+    * Mass per cell: {self.param["product"]["secondary"]["mass_per_cell"]} [kg]
+    * Oxidation number: {self.param["product"]["secondary"]["oxidation_number"]}
+    --------------------------------------------------------------------------""", end="")
+            print(f"""
+Ternary Product: {self.param["active_element"]["primary"]["elem"]} + {self.param["oxidant"]["secondary"]["elem"]}
+    * Moles per cell: {self.param["product"]["ternary"]["moles_per_cell"]} [mole]
+    * Mass per cell: {self.param["product"]["ternary"]["mass_per_cell"]} [kg]
+    * Oxidation number: {self.param["product"]["ternary"]["oxidation_number"]}
+    --------------------------------------------------------------------------""", end="")
+            print(f"""
+Quaternary Product: {self.param["active_element"]["secondary"]["elem"]} + {self.param["oxidant"]["secondary"]["elem"]}
+    * Moles per cell: {self.param["product"]["quaternary"]["moles_per_cell"]} [mole]
+    * Mass per cell: {self.param["product"]["quaternary"]["mass_per_cell"]} [kg]
+    * Oxidation number: {self.param["product"]["quaternary"]["oxidation_number"]}
+    --------------------------------------------------------------------------""", end="")
+
+        elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
             print(f"""
 Secondary Product: {self.param["active_element"]["secondary"]["elem"]} + {self.param["oxidant"]["primary"]["elem"]}
     * Moles per cell: {self.param["product"]["secondary"]["moles_per_cell"]} [mole]

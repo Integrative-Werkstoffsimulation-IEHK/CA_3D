@@ -5,18 +5,18 @@ if __name__ == '__main__':
 
     user_input = {"oxidant": {"primary": {"elem": "O",
                                           "diffusion_condition": "O in Ni Krupp",
-                                          "cells_concentration": 0.1},
-                              "secondary": {"elem": "N",
+                                          "cells_concentration": 0.01},
+                              "secondary": {"elem": "None",
                                             "diffusion_condition": "N in Ni Krupp",
-                                            "cells_concentration": 0.1}
+                                            "cells_concentration": 0.01}
                               },
 
                   "active_element": {"primary": {"elem": "Cr",
-                                                 "diffusion_condition": "Test_slower",
+                                                 "diffusion_condition": "Cr in Ni Krupp",
                                                  "mass_concentration": 0.25,
-                                                 "cells_concentration": 0.3894230769},
-                                     "secondary": {"elem": "Al",
-                                                   "diffusion_condition": "Test_slower",
+                                                 "cells_concentration": 0.29372197},
+                                     "secondary": {"elem": "None",
+                                                   "diffusion_condition": "Al in Ni Krupp",
                                                    "mass_concentration": 0.025,
                                                    "cells_concentration": 0.075}
                                      },
@@ -25,21 +25,21 @@ if __name__ == '__main__':
                                   "diffusion_condition": "not_used",
                                   "concentration": 0},
 
-                  "full_cells": False,
+                  "full_cells": True,
                   "diff_in_precipitation": 3.05 * 10 ** -14,  # [m^2/sek]
                   "diff_out_precipitation": 3.05 * 10 ** -14,  # [m^2/sek]
                   "temperature": 1100,  # °C
                   "n_cells_per_axis": 102,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
-                  "n_iterations": 6000,  # must be >= n_cells_per_axis
-                  "stride": 9000,  # n_iterations / stride = n_iterations for outward diffusion
-                  "sim_time": 300,  # [sek]
-                  "size": 1200 * (10**-6),  # [m]
+                  "n_iterations": 30000,  # must be >= n_cells_per_axis
+                  "stride": 900000,  # n_iterations / stride = n_iterations for outward diffusion
+                  "sim_time": 36000,  # [sek]
+                  "size": 300 * (10**-6),  # [m]
 
                   "threshold_inward": 1,
                   "threshold_outward": 1,
                   "sol_prod": 0,  # 5.621 * 10 ** -10
 
-                  "nucleation_probability": 0.5,
+                  "nucleation_probability": 1,
                   "het_factor": 7000,
 
                   "dissolution_p": 0.1,
@@ -58,6 +58,7 @@ if __name__ == '__main__':
                   "neigh_range": 1  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
                                     #          and           |  |  |  |  |   |   |   |   |   |
                                     # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
+
                   }
 
     eng = CellularAutomata(user_input=user_input)

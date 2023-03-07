@@ -21,6 +21,7 @@ class ActiveElem:
         self.c3d = None
         self.cut_shape = None
 
+        # exact concentration space fill _____________
         # self.cells = np.array([[], [], []], dtype=np.short)
         # for plane_xind in range(self.cells_per_axis):
         #     new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
@@ -28,29 +29,31 @@ class ActiveElem:
         #     new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
         #     self.cells = np.concatenate((self.cells, new_cells), 1)
         # self.cells = np.array(self.cells, dtype=np.short)
+        # ____________________________________________
 
+        # approx concentration space fill ____________
         self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
                                        dtype=np.short)
+        # ____________________________________________
 
-        # ind = np.where(self.cells[2] < 150)
+        # half space fill ____________________________
+        # ind = np.where(self.cells[2] < int(self.cells_per_axis / 2))
         # self.cells = np.delete(self.cells, ind, 1)
+        # ____________________________________________
 
         self.dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(self.cells[0]))
         self.dirs = np.array(np.unravel_index(self.dirs, (3, 3, 3)), dtype=np.byte)
         self.dirs -= 1
 
-        # self.dirs = np.zeros((3, len(self.cells[0])), dtype=np.byte)
-        # self.dirs[2, :] = -1
         self.current_count = self.n_per_page
-        # self.transform_to_3d()
 
     def diffuse(self):
         """
         Outgoing diffusion from the inside.
         """
         # mixing particles according to Chopard and Droz
-        # randomise = np.array(np.random.random_sample(len(self.cells[0])), dtype=np.single)
-        randomise = np.array(np.random.random_sample(len(self.cells[0])))
+        randomise = np.array(np.random.random_sample(len(self.cells[0])), dtype=np.single)
+        # randomise = np.array(np.random.random_sample(len(self.cells[0])))
         # deflection 1
         temp_ind = np.array(np.where(randomise <= self.p1_range)[0], dtype=np.uint32)
         self.dirs[:, temp_ind] = np.roll(self.dirs[:, temp_ind], 1, axis=0)
@@ -79,11 +82,9 @@ class ActiveElem:
         self.cells[2, ind] = 1
         self.dirs[2, ind] = 1
         # _______________________
-
         # periodic____________________________________
         # self.cells[2, ind] = self.cells_per_axis - 1
         # ____________________________________________
-
         # open left bound___________________________
         # self.cells = np.delete(self.cells, ind, 1)
         # self.dirs = np.delete(self.dirs, ind, 1)
@@ -95,16 +96,15 @@ class ActiveElem:
         self.cells[1, np.where(self.cells[1] == self.cells_per_axis)] = 0
 
         ind = np.where(self.cells[2] == self.cells_per_axis)[0]
+
         # closed right bound (reflection)____________
         self.cells[2, ind] = self.cells_per_axis - 2
         self.dirs[2, ind] = -1
         # ___________________________________________
-
         # open right bound___________________________
         # self.cells = np.delete(self.cells, ind, 1)
         # self.dirs = np.delete(self.dirs, ind, 1)
         # ___________________________________________
-
         # periodic____________________________________
         # self.cells[2, ind] = 0
         # ____________________________________________
@@ -198,7 +198,7 @@ class OxidantElem:
         self.current_count = 0
         self.fill_first_page()
 
-        self.microstructure = voronoi.Microstructure()
+        # self.microstructure = voronoi.VoronoiMicrostructure()
         # self.microstructure.generate_voronoi_3d(self.cells_per_axis, 5, seeds='standard')
         # self.microstructure.show_microstructure(self.cells_per_axis)
         # self.cross_shifts = np.array([[1, 0, 0], [0, 1, 0],
@@ -212,10 +212,10 @@ class OxidantElem:
         # exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
         # # # print(exists)
         # temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
-        # # # print(temp_ind)
+        # # print(temp_ind)
         # #
         # in_gb = np.array(self.cells[:, temp_ind], dtype=np.short)
-        # # # print(in_gb)
+        # # print(in_gb)
         # #
         # shift_vector = np.array(self.microstructure.jump_directions[in_gb[0], in_gb[1], in_gb[2]],
         #                         dtype=np.short).transpose()
@@ -257,20 +257,10 @@ class OxidantElem:
         self.cells[1, np.where(self.cells[1] <= -1)] = self.cells_per_axis - 1
         self.cells[1, np.where(self.cells[1] >= self.cells_per_axis)] = 0
 
-        # ind = np.where(self.cells[2] >= self.cells_per_axis)
-        # self.cells = np.delete(self.cells, ind, 1)
-        # self.dirs = np.delete(self.dirs, ind, 1)
-        #
-        # ind = np.where(self.cells[1] >= self.cells_per_axis)
-        # self.cells = np.delete(self.cells, ind, 1)
-        # self.dirs = np.delete(self.dirs, ind, 1)
-        #
-        # ind = np.where(self.cells[0] >= self.cells_per_axis)
-        # self.cells = np.delete(self.cells, ind, 1)
-        # self.dirs = np.delete(self.dirs, ind, 1)
+        ind = np.where(self.cells[2] >= self.cells_per_axis)
+        self.cells = np.delete(self.cells, ind, 1)
+        self.dirs = np.delete(self.dirs, ind, 1)
 
-        del ind
-        gc.collect()
         self.current_count = len(np.where(self.cells[2] == 0)[0])
         self.fill_first_page()
 

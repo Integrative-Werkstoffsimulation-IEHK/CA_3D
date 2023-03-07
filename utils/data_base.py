@@ -91,7 +91,7 @@ class Database:
 
     def insert_particle_data(self, particle_type, iteration, data):
         """Particle types allowed: primary_oxidant, secondary_oxidant, primary_active, secondary_active,
-        primary_product, secondary_product"""
+        primary_product, secondary_product, ternary_product, quaternary_product"""
 
         query = """CREATE TABLE {}_iter_{} (z int, y int, x int)""".format(particle_type, str(iteration))
         self.c.execute(query)

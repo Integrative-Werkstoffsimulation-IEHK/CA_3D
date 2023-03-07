@@ -1,5 +1,4 @@
 from math import *
-import numpy as np
 
 
 DENSITY = {"Ni": 8908, "Fe": 7800, "Ti": 4506, "Cr": 7140, "Al": 2700, "N": 1.17, "O": 1, "None": 1}  # kg/m3
