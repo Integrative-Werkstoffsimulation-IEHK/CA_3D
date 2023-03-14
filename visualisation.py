@@ -88,29 +88,34 @@ ELAPSED TIME: {message}
     def animate_3d(self, animate_separate=False, const_cam_pos=False):
         if self.param["save_whole"]:
             def animate_sep(iteration):
+                ax_inward.cla()
+                ax_sinward.cla()
+                ax_outward.cla()
+                ax_soutward.cla()
+                ax_precip.cla()
+                ax_sprecip.cla()
+                ax_tprecip.cla()
+                ax_qtprecip.cla()
+
                 if self.param["inward_diffusion"]:
                     self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
                     items = np.array(self.c.fetchall())
                     if np.any(items):
-                        ax_inward.cla()
                         ax_inward.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b', s=1)
                     if self.param["secondary_oxidant_exists"]:
                         self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
                         items = np.array(self.c.fetchall())
                         if np.any(items):
-                            ax_sinward.cla()
                             ax_sinward.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='deeppink', s=1)
                 if self.param["outward_diffusion"]:
                     self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
                     items = np.array(self.c.fetchall())
                     if np.any(items):
-                        ax_outward.cla()
                         ax_outward.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='g', s=3)
                     if self.param["secondary_active_element_exists"]:
                         self.c.execute("SELECT * from secondary_active_iter_{}".format(iteration))
                         items = np.array(self.c.fetchall())
                         if np.any(items):
-                            ax_soutward.cla()
                             ax_soutward.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='darkorange', s=3)
                 if self.param["compute_precipitations"]:
                     self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
@@ -159,6 +164,12 @@ ELAPSED TIME: {message}
                 ax_sprecip.set_xlim3d(0, self.axlim)
                 ax_sprecip.set_ylim3d(0, self.axlim)
                 ax_sprecip.set_zlim3d(0, self.axlim)
+                ax_tprecip.set_xlim3d(0, self.axlim)
+                ax_tprecip.set_ylim3d(0, self.axlim)
+                ax_tprecip.set_zlim3d(0, self.axlim)
+                ax_qtprecip.set_xlim3d(0, self.axlim)
+                ax_qtprecip.set_ylim3d(0, self.axlim)
+                ax_qtprecip.set_zlim3d(0, self.axlim)
                 if const_cam_pos:
                     azim = -70
                     elev = 30
@@ -811,11 +822,12 @@ ELAPSED TIME: {message}
             if self.param["compute_precipitations"]:
                 self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
                 items = np.array(self.c.fetchall())
-                primary_product = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
-                primary_product_moles = primary_product * self.param["product"]["primary"]["moles_per_cell"]
-                primary_product_mass = primary_product * self.param["product"]["primary"]["mass_per_cell"]
-                primary_product_eq_mat_moles = primary_product * self.param["active_element"]["primary"][
-                    "eq_matrix_moles_per_cell"]
+                if np.any(items):
+                    primary_product = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
+                    primary_product_moles = primary_product * self.param["product"]["primary"]["moles_per_cell"]
+                    primary_product_mass = primary_product * self.param["product"]["primary"]["mass_per_cell"]
+                    primary_product_eq_mat_moles = primary_product * self.param["active_element"]["primary"][
+                        "eq_matrix_moles_per_cell"]
 
                 if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
                     self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))

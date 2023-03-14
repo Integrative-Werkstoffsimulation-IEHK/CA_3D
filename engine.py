@@ -1,3 +1,5 @@
+import numpy as np
+
 from utils.utilities import *
 import gc
 import progressbar
@@ -61,8 +63,8 @@ class CellularAutomata:
                 self.decomposition = self.decomposition_1
 
             else:
-                # self.precip_func = self.precipitation_0_cells
-                self.precip_func = self.precipitation_0
+                self.precip_func = self.precipitation_0_cells
+                # self.precip_func = self.precipitation_0
                 self.calc_precip_front = self.calc_precip_front_0
                 self.decomposition = self.decomposition_0
 
@@ -97,9 +99,9 @@ class CellularAutomata:
                                    [10, 3, 1, 5, 18, 23, 22],
                                    [12, 3, 4, 5, 20, 23, 25],
                                    [13, 3, 4, 2, 21, 24, 25]]
-            self.scale_n = self.param["het_factor"]
-            self.const_a = (1 / (self.scale_n * self.nucleation_probability)) ** (-6 / 5)
-            self.const_b = log(1 / (self.scale_n * self.nucleation_probability)) * (1 / 5)
+            self.het_factor = self.param["het_factor"]
+            self.const_a = (1 / (self.het_factor * self.nucleation_probability)) ** (-6 / 5)
+            self.const_b = log(1 / (self.het_factor * self.nucleation_probability)) * (1 / 5)
 
     def simulation(self):
         """
@@ -121,6 +123,7 @@ class CellularAutomata:
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
             if self.param["compute_precipitations"]:
                 self.precip_func()
+                self.decomposition_0()
             if self.param["inward_diffusion"]:
                 self.diffusion_inward()
             if self.param["outward_diffusion"]:
@@ -138,80 +141,83 @@ class CellularAutomata:
     def decomposition_0(self):
         self.precipitations = self.primary_product.transform_c3d()
         if len(self.precipitations[0] > 0):
+            dec_p_three_open = np.array([[], [], []], dtype=np.short)
+            dec_p_two_open = np.array([[], [], []], dtype=np.short)
+            dec_p_one_open = np.array([[], [], []], dtype=np.short)
+            dec_pn = np.array([[], [], []], dtype=np.short)
+            arr_len_flat_to_pn = np.array([[], [], []], dtype=np.ubyte)
+
             all_arounds = self.utils.calc_sur_ind_decompose(self.precipitations)
             neighbours = np.array([[self.primary_product.c3d[point[0], point[1], point[2]] for point in seed_arrounds]
                                    for seed_arrounds in all_arounds], dtype=bool)
-            del all_arounds
-            gc.collect()
-            arr_len_flat = np.array([np.sum(item[:6]) for item in neighbours], dtype=int)
-            arr_len_corners = np.array([np.sum(item[6:14]) for item in neighbours], dtype=int)
-            arr_len_side_corners = np.array([np.sum(item[14:]) for item in neighbours], dtype=int)
+
+            arr_len_flat = np.array([np.sum(item[:6]) for item in neighbours], dtype=np.ubyte)
+            arr_len_corners = np.array([np.sum(item[6:14]) for item in neighbours], dtype=np.ubyte)
+            arr_len_side_corners = np.array([np.sum(item[14:]) for item in neighbours], dtype=np.ubyte)
             arr_len_all = arr_len_flat + arr_len_corners + arr_len_side_corners
             # These are inside!
             # ------------------------------------------------
             index = np.where(arr_len_flat < 6)[0]
-            self.precipitations = self.precipitations[:, index]
-            arr_len_flat = arr_len_flat[index]
-            arr_len_corners = arr_len_corners[index]
-            arr_len_side_corners = arr_len_side_corners[index]
-            arr_len_all = arr_len_all[index]
-            neighbours = neighbours[index]
+            if len(index) < len(self.precipitations[0]):
+                self.precipitations = self.precipitations[:, index]
+                arr_len_flat = arr_len_flat[index]
+                arr_len_corners = arr_len_corners[index]
+                arr_len_side_corners = arr_len_side_corners[index]
+                arr_len_all = arr_len_all[index]
+                neighbours = neighbours[index]
             # ------------------------------------------------
             # These are not in a block => pn!
             # ------------------------------------------------
             index = np.where(arr_len_all >= 7)[0]
-            del arr_len_all
-            gc.collect()
             dec_pn = np.delete(self.precipitations, index, 1)
-            self.precipitations = self.precipitations[:, index]
             arr_len_flat_to_pn = np.delete(arr_len_flat, index)
-            arr_len_flat = arr_len_flat[index]
-            arr_len_corners = arr_len_corners[index]
-            arr_len_side_corners = arr_len_side_corners[index]
-            neighbours = neighbours[index]
-            # ------------------------------------------------
-            # These are not in a block => pn!
-            # ------------------------------------------------
-            index = np.where((arr_len_flat > 2) & (arr_len_corners > 0) & (arr_len_side_corners > 2))[0]
-            del arr_len_corners, arr_len_side_corners
-            gc.collect()
-            dec_pn = np.concatenate((dec_pn, np.delete(self.precipitations, index, 1)), axis=1)
-            arr_len_flat_to_pn = np.concatenate((arr_len_flat_to_pn, np.delete(arr_len_flat, index)))
-            self.precipitations = self.precipitations[:, index]
-            arr_len_flat = arr_len_flat[index]
-            neighbours = neighbours[index]
-            # ------------------------------------------------
-
-            if np.any(self.precipitations):
-                aggregation = np.array([[np.sum(item[step]) for step in self.aggregated_ind] for item in neighbours],
-                                       dtype=int)
-                del neighbours
-                gc.collect()
+            if len(index) > 0:
+                self.precipitations = self.precipitations[:, index]
+                # arr_len_flat_to_pn = np.delete(arr_len_flat, index)
+                arr_len_flat = arr_len_flat[index]
+                arr_len_corners = arr_len_corners[index]
+                arr_len_side_corners = arr_len_side_corners[index]
+                neighbours = neighbours[index]
+                # ------------------------------------------------
                 # These are not in a block => pn!
                 # ------------------------------------------------
-                where_blocks = np.unique(np.where(aggregation == 7)[0])
-                dec_pn = np.concatenate((dec_pn, np.delete(self.precipitations, where_blocks, 1)), axis=1)
-                arr_len_flat_to_pn = np.concatenate((arr_len_flat_to_pn, np.delete(arr_len_flat, where_blocks)))
+                index = np.where((arr_len_flat > 2) & (arr_len_corners > 0) & (arr_len_side_corners > 2))[0]
+                if len(index) > 0:
+                    dec_pn = np.concatenate((dec_pn, np.delete(self.precipitations, index, 1)), axis=1)
+                    arr_len_flat_to_pn = np.concatenate((arr_len_flat_to_pn, np.delete(arr_len_flat, index)))
+                    self.precipitations = self.precipitations[:, index]
+                    arr_len_flat = arr_len_flat[index]
+                    neighbours = neighbours[index]
                 # ------------------------------------------------
-                # These are in a block => p!
-                # ------------------------------------------------
-                self.precipitations = self.precipitations[:, where_blocks]
-                arr_len_flat = arr_len_flat[where_blocks]
-                one_open = np.where(arr_len_flat == 5)[0]
-                two_open = np.where(arr_len_flat == 4)[0]
-                three_open = np.where(arr_len_flat == 3)[0]
-                del arr_len_flat
-                gc.collect()
-                dec_p_three_open = self.precipitations[:, three_open]
-                dec_p_two_open = self.precipitations[:, two_open]
-                dec_p_one_open = self.precipitations[:, one_open]
-                # ------------------------------------------------
-            else:
-                dec_p_three_open = np.array([[], [], []], dtype=int)
-                dec_p_two_open = np.array([[], [], []], dtype=int)
-                dec_p_one_open = np.array([[], [], []], dtype=int)
 
-            self.precipitations = np.array([[], [], []], dtype=int)
+                if np.any(self.precipitations):
+                    aggregation = np.array([[np.sum(item[step]) for step in self.aggregated_ind] for item in neighbours],
+                                           dtype=int)
+
+                    # These are not in a block => pn!
+                    # ------------------------------------------------
+                    where_blocks = np.unique(np.where(aggregation == 7)[0])
+                    dec_pn = np.concatenate((dec_pn, np.delete(self.precipitations, where_blocks, 1)), axis=1)
+                    arr_len_flat_to_pn = np.concatenate((arr_len_flat_to_pn, np.delete(arr_len_flat, where_blocks)))
+                    # ------------------------------------------------
+                    # These are in a block => p!
+                    # ------------------------------------------------
+                    self.precipitations = self.precipitations[:, where_blocks]
+                    arr_len_flat = arr_len_flat[where_blocks]
+                    one_open = np.where(arr_len_flat == 5)[0]
+                    two_open = np.where(arr_len_flat == 4)[0]
+                    three_open = np.where(arr_len_flat == 3)[0]
+
+                    dec_p_three_open = self.precipitations[:, three_open]
+                    dec_p_two_open = self.precipitations[:, two_open]
+                    dec_p_one_open = self.precipitations[:, one_open]
+                    # ------------------------------------------------
+                # else:
+                #     dec_p_three_open = np.array([[], [], []], dtype=int)
+                #     dec_p_two_open = np.array([[], [], []], dtype=int)
+                #     dec_p_one_open = np.array([[], [], []], dtype=int)
+
+            self.precipitations = np.array([[], [], []], dtype=np.short)
             needed_prob = self.dissol_pn * 2.718281828 ** (-self.param["exponent_power"] * arr_len_flat_to_pn)
             randomise = np.random.random_sample(len(arr_len_flat_to_pn))
             temp_ind = np.where(randomise < needed_prob)[0]
@@ -233,6 +239,7 @@ class CellularAutomata:
             dec_p_one_open = dec_p_one_open[:, temp_ind]
 
             todec = np.concatenate((dec_pn, dec_p_three_open, dec_p_two_open, dec_p_one_open), axis=1)
+            # print(len(todec[0]))
 
             if len(todec[0] > 0):
                 self.primary_oxidant.cells = np.concatenate((self.primary_oxidant.cells, todec), axis=1)
@@ -247,8 +254,10 @@ class CellularAutomata:
 
                 self.primary_product.c3d[dec[0], dec[1], dec[2]] -= counts
                 self.primary_product.full_c3d[dec[0], dec[1], dec[2]] = False
-                dec[2] += 1
+                # dec[2] += 1
                 self.primary_active.c3d[dec[0], dec[1], dec[2]] += counts
+                if self.iteration == 0:
+                    self.primary_active.transform_to_descards()
 
     def decomposition_1(self):
         self.precipitations = self.secondary_product.transform_c3d()
@@ -453,7 +462,9 @@ class CellularAutomata:
             comb_indexes = [furthest_index]
 
         if len(comb_indexes) > 0:
+            self.fix_init_precip(furthest_index, self.primary_product, self.primary_active.cut_shape)
             self.precip_step(comb_indexes, self.primary_oxidant, self.primary_active, self.primary_product)
+            # print(len(np.nonzero(self.primary_product.c3d)[0]))
         self.primary_oxidant.transform_to_descards()
 
     def precipitation_1(self):
@@ -626,12 +637,6 @@ class CellularAutomata:
         """
         def check_intersections_single_int(seeds):
             """
-            Check intersections between the seeds neighbourhood and the coordinates of inward particles only.
-            Compute which seed will become a precipitation and which inward particles should be deleted
-            according to threshold_inward conditions. This is a simplified version of the check_intersection() function
-            where threshold_outward is equal to 1, so there is no need to check intersection with OUT arrays!
-
-            :param seeds: array of seeds coordinates
             """
             all_arounds = self.utils.calc_sur_ind_formation(seeds, active.c3d.shape[2] - 1)
             neighbours = np.array([[active.c3d[point[0], point[1], point[2]] for point in seed_arrounds]
@@ -639,57 +644,55 @@ class CellularAutomata:
             arr_len_out = np.array([np.sum(item) for item in neighbours], dtype=np.ubyte)
             temp_ind = np.where(arr_len_out >= self.threshold_outward)[0]
 
-            # if len(index_in) > 0:
-            #     seeds = seeds[index_in]
-            #     neighbours = neighbours[index_in]
-            #     all_arounds = all_arounds[index_in]
-            #     flat_arounds = all_arounds[:, 0:6]
-            #     flat_neighbours = np.array(
-            #         [[self.precipitations3d_init[point[0], point[1], point[2]] for point in seed_arrounds]
-            #          for seed_arrounds in flat_arounds], dtype=bool)
-            #     arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
-            #     homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
-            #     needed_prob = self.const_a * 2.718281828 ** (self.const_b * arr_len_in_flat)
-            #     needed_prob[homogeneous_ind] = self.nucleation_probability
-            #     randomise = np.random.random_sample(len(arr_len_in_flat))
-            #     temp_ind = np.where(randomise < needed_prob)[0]
-
             if len(temp_ind) > 0:
                 seeds = seeds[temp_ind]
                 neighbours = neighbours[temp_ind]
                 all_arounds = all_arounds[temp_ind]
-                in_to_del = np.array(np.nonzero(neighbours))
-                start_seed_index = np.unique(in_to_del[0], return_index=True)[1]
-                to_del = np.array([in_to_del[1, indx:indx + self.threshold_outward] for indx in start_seed_index],
-                                  dtype=int)
-                coord = np.array([all_arounds[seed_ind][point_ind] for seed_ind, point_ind in enumerate(to_del)],
-                                 dtype=np.short)
-                # coord = np.reshape(coord, (len(coord) * self.threshold_inward, 3)).transpose()
+                flat_arounds = all_arounds[:, 0:6]
+                flat_neighbours = np.array(
+                    [[self.precipitations3d_init[point[0], point[1], point[2]] for point in seed_arrounds]
+                     for seed_arrounds in flat_arounds], dtype=bool)
+                arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
+                homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
+                needed_prob = self.const_a * 2.718281828 ** (self.const_b * arr_len_in_flat)
+                needed_prob[homogeneous_ind] = self.nucleation_probability
+                randomise = np.random.random_sample(len(arr_len_in_flat))
+                temp_ind = np.where(randomise < needed_prob)[0]
 
-                coord = np.reshape(coord, (len(coord) * self.threshold_outward, 3))
-                exists = [product.full_c3d[point[0], point[1], point[2]] for point in coord]
-                temp_ind = np.where(exists)[0]
-                coord = np.delete(coord, temp_ind, 0)
-                seeds = np.delete(seeds, temp_ind, 0)
+                if len(temp_ind) > 0:
+                    seeds = seeds[temp_ind]
+                    neighbours = neighbours[temp_ind]
+                    all_arounds = all_arounds[temp_ind]
+                    out_to_del = np.array(np.nonzero(neighbours))
+                    start_seed_index = np.unique(out_to_del[0], return_index=True)[1]
+                    to_del = np.array([out_to_del[1, indx:indx + self.threshold_outward] for indx in start_seed_index],
+                                      dtype=int)
+                    coord = np.array([all_arounds[seed_ind][point_ind] for seed_ind, point_ind in enumerate(to_del)],
+                                     dtype=np.short)
+                    coord = np.reshape(coord, (len(coord) * self.threshold_outward, 3))
+                    exists = [product.full_c3d[point[0], point[1], point[2]] for point in seeds]
+                    temp_ind = np.where(exists)[0]
+                    coord = np.delete(coord, temp_ind, 0)
+                    seeds = np.delete(seeds, temp_ind, 0)
 
-                # if to_check_with is not None:
-                #     # to_check_min_self = np.array(self.cumul_product - product.c3d, dtype=np.ubyte)
-                #     exists = np.array([to_check_with.c3d[point[0], point[1], point[2]] for point in coord], dtype=np.ubyte)
-                #     # exists = np.array([to_check_min_self[point[0], point[1], point[2]] for point in coord],
-                #     #                   dtype=np.ubyte)
-                #     temp_ind = np.where(exists > 0)[0]
-                #     coord = np.delete(coord, temp_ind, 0)
-                #     seeds = np.delete(seeds, temp_ind, 0)
+                    # if to_check_with is not None:
+                    #     # to_check_min_self = np.array(self.cumul_product - product.c3d, dtype=np.ubyte)
+                    #     exists = np.array([to_check_with.c3d[point[0], point[1], point[2]] for point in coord], dtype=np.ubyte)
+                    #     # exists = np.array([to_check_min_self[point[0], point[1], point[2]] for point in coord],
+                    #     #                   dtype=np.ubyte)
+                    #     temp_ind = np.where(exists > 0)[0]
+                    #     coord = np.delete(coord, temp_ind, 0)
+                    #     seeds = np.delete(seeds, temp_ind, 0)
 
-                coord = coord.transpose()
-                seeds = seeds.transpose()
+                    coord = coord.transpose()
+                    seeds = seeds.transpose()
 
-                active.c3d[coord[0], coord[1], coord[2]] -= 1
-                oxidant.c3d[seeds[0], seeds[1], seeds[2]] -= 1
+                    active.c3d[coord[0], coord[1], coord[2]] -= 1
+                    oxidant.c3d[seeds[0], seeds[1], seeds[2]] -= 1
 
-                product.c3d[coord[0], coord[1], coord[2]] += 1
-                product.fix_full_cells(coord)
-                # self.cumul_product[coord[0], coord[1], coord[2]] += 1
+                    product.c3d[seeds[0], seeds[1], seeds[2]] += 1
+                    product.fix_full_cells(seeds)
+                    # self.cumul_product[coord[0], coord[1], coord[2]] += 1
 
         def check_intersections_mult_int(seeds):
             """

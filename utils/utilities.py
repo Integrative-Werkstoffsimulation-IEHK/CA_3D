@@ -16,10 +16,18 @@ class Utils:
                              [1, 1, -1], [1, 1, 1], [1, -1, -1], [1, -1, 1],      # 9  corners
                              [-1, 1, -1], [-1, 1, 1], [-1, -1, -1], [-1, -1, 1],  # 13
                              [1, 1, 0], [1, 0, -1], [1, 0, 1], [1, -1, 0], [0, 1, -1], [0, 1, 1],  # 19 side corners
-                             [0, -1, -1], [0, -1, 1], [-1, 1, 0], [-1, 0, -1], [-1, 0, 1], [-1, -1, 0],
-                                      [0, 0, 0]], dtype=np.byte)
+                             [0, -1, -1], [0, -1, 1], [-1, 1, 0], [-1, 0, -1], [-1, 0, 1], [-1, -1, 0]], dtype=np.byte)
 
-        self.ind_formation = self.generate_neigh_indexes()
+        if self.user_input["neigh_range"] > 1:
+            self.ind_formation = self.generate_neigh_indexes()
+        else:
+            self.ind_formation = np.array(
+                [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1],  # 5 flat
+                 [1, 1, -1], [1, 1, 1], [1, -1, -1], [1, -1, 1],  # 9  corners
+                 [-1, 1, -1], [-1, 1, 1], [-1, -1, -1], [0, 0, 0],   # 13
+                 [-1, -1, 1], [1, 1, 0], [1, 0, -1], [1, 0, 1], [1, -1, 0], [0, 1, -1], [0, 1, 1],  # 19 side corners
+                 [0, -1, -1], [0, -1, 1], [-1, 1, 0], [-1, 0, -1], [-1, 0, 1], [-1, -1, 0]], dtype=np.byte)
+
         self.ind_formation_noz = np.array(np.delete(self.ind_formation, 13, 0), dtype=np.byte)
 
         # self.ind_excl_side = [[1, 1, -1], [1, 1, 0], [1, 1, 1], [1, 0, -1], [1, 0, 1],

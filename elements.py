@@ -15,7 +15,7 @@ class ActiveElem:
         self.p4_range = 4 * self.p1_range
         self.p_r_range = self.p4_range + settings["probabilities"][1]
         self.n_per_page = settings["n_per_page"]
-        self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
+        self.precip_transform_depth = int(10)  # min self.neigh_range !!!
         self.i_descards = None
         self.i_ind = None
         self.c3d = None
@@ -148,19 +148,24 @@ class ActiveElem:
         for step in range(np.max(values)):
             self.i_ind = np.delete(self.i_ind, zero)
             self.i_descards = np.delete(self.i_descards, zero, 1)
+
             u_dec = np.array(np.unique(np.ravel_multi_index(self.i_descards, self.cut_shape), return_index=True)[1])
             self.c3d[self.i_descards[0], self.i_descards[1], self.i_descards[2]] -= 1
+
             self.i_ind = np.delete(self.i_ind, u_dec)
             self.i_descards = np.delete(self.i_descards, u_dec, 1)
+
             values = self.c3d[self.i_descards[0], self.i_descards[1], self.i_descards[2]]
             zero = np.array(np.where(values == 0)[0], dtype=np.uint32)
             ind_out = np.concatenate((ind_out, self.i_ind[zero]))
+
         self.cells = np.delete(self.cells, ind_out, 1)
         self.dirs = np.delete(self.dirs, ind_out, 1)
 
         decomposed = np.array(np.nonzero(self.c3d), dtype=np.short)
+        # print(len(decomposed[0]))
         if len(decomposed[0] > 0):
-            decomposed[2] -= 1
+            # decomposed[2] -= 1
             self.cells = np.concatenate((self.cells, decomposed), axis=1)
             new_dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(decomposed[0]))
             new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
@@ -327,7 +332,7 @@ class Product:
     def transform_c3d(self):
         precipitations = np.array(np.nonzero(self.c3d), dtype=np.short)
         counts = self.c3d[precipitations[0], precipitations[1], precipitations[2]]
-        return np.repeat(precipitations, counts, axis=1)
+        return np.array(np.repeat(precipitations, counts, axis=1), dtype=np.short)
 
     def transform_single_c3d(self):
         return np.array(np.nonzero(self.c3d), dtype=np.short)
