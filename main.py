@@ -40,10 +40,10 @@ if __name__ == '__main__':
                   "sol_prod": 0,  # 5.621 * 10 ** -10
 
                   "nucleation_probability": 0.001,
-                  "het_factor": 60,
+                  "het_factor": 300,
 
                   "dissolution_p": 0.001,
-                  "dissolution_n": 2,
+                  "dissolution_n": 5,
                   "exponent_power": 3,
                   "block_scale_factor": 2,
 

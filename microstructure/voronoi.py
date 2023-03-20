@@ -585,7 +585,7 @@ if __name__ == "__main__":
     # _______Plot 3D______
     begin = time.time()
     micro = VoronoiMicrostructure()
-    cells_faces, cells_edges = micro.generate_voronoi_3d(100, 8)
+    cells_faces, cells_edges = micro.generate_voronoi_3d(100, 8, seeds="standard")
     x_edge = cells_edges[2]
     y_edge = cells_edges[1]
     z_edge = cells_edges[0]

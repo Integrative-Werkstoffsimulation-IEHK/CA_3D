@@ -8,8 +8,8 @@ database_name = filedialog.askopenfilename()
 
 visualise = Visualisation(database_name)
 
-visualise.animate_3d(animate_separate=True)
-# visualise.plot_3d(plot_separate=True)
+# visualise.animate_3d(animate_separate=False, const_cam_pos=True)
+visualise.plot_3d(plot_separate=True)
 # visualise.animate_2d(plot_separate=False)
 # visualise.plot_2d(plot_separate=False)
 # visualise.animate_concentration(conc_type="cells", analytic_sol=True)
