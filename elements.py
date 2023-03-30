@@ -15,7 +15,7 @@ class ActiveElem:
         self.p4_range = 4 * self.p1_range
         self.p_r_range = self.p4_range + settings["probabilities"][1]
         self.n_per_page = settings["n_per_page"]
-        self.precip_transform_depth = int(20)  # min self.neigh_range !!!
+        self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
         self.i_descards = None
         self.i_ind = None
         self.c3d = None
@@ -23,19 +23,19 @@ class ActiveElem:
 
         # exact concentration space fill
         # ___________________________________________
-        # self.cells = np.array([[], [], []], dtype=np.short)
-        # for plane_xind in range(self.cells_per_axis):
-        #     new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
-        #     new_cells = np.array(np.unravel_index(new_cells, (self.cells_per_axis, self.cells_per_axis)))
-        #     new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
-        #     self.cells = np.concatenate((self.cells, new_cells), 1)
-        # self.cells = np.array(self.cells, dtype=np.short)
+        self.cells = np.array([[], [], []], dtype=np.short)
+        for plane_xind in range(self.cells_per_axis):
+            new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
+            new_cells = np.array(np.unravel_index(new_cells, (self.cells_per_axis, self.cells_per_axis)))
+            new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
+            self.cells = np.concatenate((self.cells, new_cells), 1)
+        self.cells = np.array(self.cells, dtype=np.short)
         # ____________________________________________
 
         # approx concentration space fill
         # ____________________________________________
-        self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
-                                       dtype=np.short)
+        # self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
+        #                                dtype=np.short)
         # ____________________________________________
 
         # half space fill
