@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import sqlite3 as sql
 from matplotlib.animation import FuncAnimation
+from mpl_toolkits.mplot3d import Axes3D
 from scipy import special
 from math import *
 import numpy as np
@@ -16,7 +17,8 @@ class Visualisation:
         self.axlim = None
         self.shape = None
         self.generate_param_from_db()
-        self.cell_size = 45
+        self.cell_size = 35
+        self.linewidth = 1
 
     def generate_param_from_db(self):
         user_input = physical_data.DEFAULT_PARAM
@@ -196,6 +198,7 @@ ELAPSED TIME: {message}
 
             def animate(iteration):
                 ax_all.cla()
+                ax_all.dist = 4
                 # if self.param["inward_diffusion"]:
                 #     self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
                 #     items = np.array(self.c.fetchall())
@@ -220,7 +223,13 @@ ELAPSED TIME: {message}
                     self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
                     items = np.array(self.c.fetchall())
                     if np.any(items):
-                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='r', s=self.cell_size)
+                        # items = items.transpose()
+                        # data = np.zeros(self.shape, dtype=bool)
+                        # data[items[0], items[1], items[2]] = True
+                        # ax_all.voxels(data, facecolors="r")
+                        # plt.savefig(f'W:/SIMCA/test_runs_data/{iteration}.jpeg')
+                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='r', s=self.cell_size,
+                                       edgecolor='black', linewidth=self.linewidth)
 
                     # if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
                     #     self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
@@ -266,11 +275,12 @@ ELAPSED TIME: {message}
                 ax_qtprecip = fig.add_subplot(3, 4, 12, projection='3d')
 
                 animation = FuncAnimation(fig, animate_sep)
+
             else:
                 ax_all = fig.add_subplot(111, projection='3d')
                 animation = FuncAnimation(fig, animate)
             plt.show()
-            # plt.savefig(f'W:/SIMCA/test_runs_data/{self.db_name}.jpeg')
+            # plt.savefig(f'W:/SIMCA/test_runs_data/{"_"}.jpeg')
         else:
             return print("No Data To Animate!")
 
@@ -548,53 +558,53 @@ ELAPSED TIME: {message}
                 items = np.array(self.c.fetchall())
                 if np.any(items):
                     ind = np.where(items[:, 0] == slice_pos)
-                    ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='b', s=1)
+                    ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='b', s=self.cell_size)
                 if self.param["secondary_oxidant_exists"]:
                     self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
                     items = np.array(self.c.fetchall())
                     if np.any(items):
                         ind = np.where(items[:, 0] == slice_pos)
-                        ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='deeppink', s=1)
+                        ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='deeppink', s=self.cell_size)
             if self.param["outward_diffusion"]:
                 self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
                 items = np.array(self.c.fetchall())
                 if np.any(items):
                     ind = np.where(items[:, 0] == slice_pos)
-                    ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='g', s=3)
+                    ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='g', s=self.cell_size)
                 if self.param["secondary_active_element_exists"]:
                     self.c.execute("SELECT * from secondary_active_iter_{}".format(iteration))
                     items = np.array(self.c.fetchall())
                     if np.any(items):
                         ind = np.where(items[:, 0] == slice_pos)
-                        ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='darkorange', s=1)
+                        ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='darkorange', s=self.cell_size)
             if self.param["compute_precipitations"]:
                 self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
                 items = np.array(self.c.fetchall())
                 if np.any(items):
                     ind = np.where(items[:, 0] == slice_pos)
-                    ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='r', s=3)
+                    ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='r', s=self.cell_size)
                 if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
                     self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
                     items = np.array(self.c.fetchall())
                     if np.any(items):
                         ind = np.where(items[:, 0] == slice_pos)
-                        ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='cyan', s=3)
+                        ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='cyan', s=self.cell_size)
                     self.c.execute("SELECT * from ternary_product_iter_{}".format(iteration))
                     items = np.array(self.c.fetchall())
                     if np.any(items):
                         ind = np.where(items[:, 0] == slice_pos)
-                        ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='darkgreen', s=3)
+                        ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='darkgreen', s=self.cell_size)
                     self.c.execute("SELECT * from quaternary_product_iter_{}".format(iteration))
                     items = np.array(self.c.fetchall())
                     if np.any(items):
                         ind = np.where(items[:, 0] == slice_pos)
-                        ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='steelblue', s=3)
+                        ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='steelblue', s=self.cell_size)
                 elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
                     self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
                     items = np.array(self.c.fetchall())
                     if np.any(items):
                         ind = np.where(items[:, 0] == slice_pos)
-                        ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='cyan', s=3)
+                        ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='cyan', s=self.cell_size)
             ax_all.set_xlim(0, self.axlim)
             ax_all.set_ylim(0, self.axlim)
         self.conn.commit()
@@ -860,11 +870,12 @@ ELAPSED TIME: {message}
                 elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
                     self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
                     items = np.array(self.c.fetchall())
-                    secondary_product = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
-                    secondary_product_moles = secondary_product * self.param["product"]["secondary"]["moles_per_cell"]
-                    secondary_product_mass = secondary_product * self.param["product"]["secondary"]["mass_per_cell"]
-                    secondary_product_eq_mat_moles = primary_product * self.param["active_element"]["secondary"][
-                        "eq_matrix_moles_per_cell"]
+                    if np.any(items):
+                        secondary_product = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
+                        secondary_product_moles = secondary_product * self.param["product"]["secondary"]["moles_per_cell"]
+                        secondary_product_mass = secondary_product * self.param["product"]["secondary"]["mass_per_cell"]
+                        secondary_product_eq_mat_moles = primary_product * self.param["active_element"]["secondary"][
+                            "eq_matrix_moles_per_cell"]
 
             self.conn.commit()
 

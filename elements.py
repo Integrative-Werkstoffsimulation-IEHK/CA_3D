@@ -15,28 +15,31 @@ class ActiveElem:
         self.p4_range = 4 * self.p1_range
         self.p_r_range = self.p4_range + settings["probabilities"][1]
         self.n_per_page = settings["n_per_page"]
-        self.precip_transform_depth = int(10)  # min self.neigh_range !!!
+        self.precip_transform_depth = int(20)  # min self.neigh_range !!!
         self.i_descards = None
         self.i_ind = None
         self.c3d = None
         self.cut_shape = None
 
-        # exact concentration space fill _____________
-        self.cells = np.array([[], [], []], dtype=np.short)
-        for plane_xind in range(self.cells_per_axis):
-            new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
-            new_cells = np.array(np.unravel_index(new_cells, (self.cells_per_axis, self.cells_per_axis)))
-            new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
-            self.cells = np.concatenate((self.cells, new_cells), 1)
-        self.cells = np.array(self.cells, dtype=np.short)
+        # exact concentration space fill
+        # ___________________________________________
+        # self.cells = np.array([[], [], []], dtype=np.short)
+        # for plane_xind in range(self.cells_per_axis):
+        #     new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
+        #     new_cells = np.array(np.unravel_index(new_cells, (self.cells_per_axis, self.cells_per_axis)))
+        #     new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
+        #     self.cells = np.concatenate((self.cells, new_cells), 1)
+        # self.cells = np.array(self.cells, dtype=np.short)
         # ____________________________________________
 
-        # approx concentration space fill ____________
-        # self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
-        #                                dtype=np.short)
+        # approx concentration space fill
+        # ____________________________________________
+        self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
+                                       dtype=np.short)
         # ____________________________________________
 
-        # half space fill ____________________________
+        # half space fill
+        # ____________________________________________
         # ind = np.where(self.cells[2] < int(self.cells_per_axis / 2))
         # self.cells = np.delete(self.cells, ind, 1)
         # ____________________________________________
@@ -112,15 +115,15 @@ class ActiveElem:
     def fill_first_page(self):
         # generating new particles on the diffusion surface (X = self.n_cells_per_axis)
         self.current_count = len(np.where(self.cells[2] == self.cells_per_axis - 1)[0])
-        adj_cells_pro_page = self.n_per_page - self.current_count
-        if adj_cells_pro_page > 0:
-            new_out_page = np.random.randint(self.cells_per_axis, size=(2, adj_cells_pro_page), dtype=np.short)
-            new_out_page = np.concatenate((new_out_page, np.full((1, adj_cells_pro_page),
+        cells_numb_diff = self.n_per_page - self.current_count
+        if cells_numb_diff > 0:
+            new_out_page = np.random.randint(self.cells_per_axis, size=(2, cells_numb_diff), dtype=np.short)
+            new_out_page = np.concatenate((new_out_page, np.full((1, cells_numb_diff),
                                                                  self.cells_per_axis - 1, dtype=np.short)))
             # appending new generated particles as a ballistic ones to cells
             self.cells = np.concatenate((self.cells, new_out_page), axis=1)
             # appending new direction vectors to dirs
-            new_dirs = np.zeros((3, adj_cells_pro_page), dtype=np.byte)
+            new_dirs = np.zeros((3, cells_numb_diff), dtype=np.byte)
             new_dirs[2, :] = -1
             self.dirs = np.concatenate((self.dirs, new_dirs), axis=1)
 
@@ -135,7 +138,7 @@ class ActiveElem:
         self.cut_shape = (self.cells_per_axis, self.cells_per_axis, depth)
         self.c3d = np.full(self.cut_shape, 0, dtype=np.ubyte)
         self.i_ind = np.array(np.where(self.cells[2] < last_i)[0], dtype=np.uint32)
-        self.i_descards = self.cells[:, self.i_ind]
+        self.i_descards = np.array(self.cells[:, self.i_ind], dtype=np.short)
         counts = np.unique(np.ravel_multi_index(self.i_descards, self.cut_shape), return_counts=True)
         dec = np.array(np.unravel_index(counts[0], self.cut_shape), dtype=np.short)
         counts = counts[1]
@@ -144,14 +147,14 @@ class ActiveElem:
     def transform_to_descards(self):
         values = np.array(self.c3d[self.i_descards[0], self.i_descards[1], self.i_descards[2]], dtype=np.ubyte)
         zero = np.array(np.where(values == 0)[0], dtype=np.uint32)
-        ind_out = self.i_ind[zero]
+        ind_out = np.array(self.i_ind[zero], dtype=np.uint32)
         for step in range(np.max(values)):
             self.i_ind = np.delete(self.i_ind, zero)
             self.i_descards = np.delete(self.i_descards, zero, 1)
 
-            u_dec = np.array(np.unique(np.ravel_multi_index(self.i_descards, self.cut_shape), return_index=True)[1])
             self.c3d[self.i_descards[0], self.i_descards[1], self.i_descards[2]] -= 1
 
+            u_dec = np.array(np.unique(np.ravel_multi_index(self.i_descards, self.cut_shape), return_index=True)[1])
             self.i_ind = np.delete(self.i_ind, u_dec)
             self.i_descards = np.delete(self.i_descards, u_dec, 1)
 
@@ -163,9 +166,7 @@ class ActiveElem:
         self.dirs = np.delete(self.dirs, ind_out, 1)
 
         decomposed = np.array(np.nonzero(self.c3d), dtype=np.short)
-        # print(len(decomposed[0]))
         if len(decomposed[0] > 0):
-            # decomposed[2] -= 1
             self.cells = np.concatenate((self.cells, decomposed), axis=1)
             new_dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(decomposed[0]))
             new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
@@ -325,7 +326,6 @@ class Product:
         cells_per_axis = settings["cells_per_axis"]
         shape = (cells_per_axis, cells_per_axis, cells_per_axis)
         self.oxidation_number = settings["oxidation_number"]
-        # self.oxidation_number = 1
         self.c3d = np.full(shape, 0, dtype=np.ubyte)
         self.full_c3d = np.full(shape, False)
 

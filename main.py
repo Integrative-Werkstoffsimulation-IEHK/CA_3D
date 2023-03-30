@@ -5,7 +5,7 @@ if __name__ == '__main__':
 
     user_input = {"oxidant": {"primary": {"elem": "O",
                                           "diffusion_condition": "O in Ni Krupp",
-                                          "cells_concentration": 0.3},
+                                          "cells_concentration": 0.001},
                               "secondary": {"elem": "None",
                                             "diffusion_condition": "N in Ni Krupp",
                                             "cells_concentration": 0.01}
@@ -13,12 +13,12 @@ if __name__ == '__main__':
 
                   "active_element": {"primary": {"elem": "Cr",
                                                  "diffusion_condition": "Cr in Ni Krupp",
-                                                 "mass_concentration": 0.2,
-                                                 "cells_concentration": 0.3},
+                                                 "mass_concentration": 0.08,
+                                                 "cells_concentration": 0.13},
                                      "secondary": {"elem": "None",
                                                    "diffusion_condition": "Al in Ni Krupp",
                                                    "mass_concentration": 0.025,
-                                                   "cells_concentration": 0.075}
+                                                   "cells_concentration": 0.078240741}
                                      },
 
                   "matrix_elem": {"elem": "Ni",
@@ -26,24 +26,24 @@ if __name__ == '__main__':
                                   "concentration": 0},
 
                   "full_cells": False,
-                  "diff_in_precipitation": 3.05 * 10 ** -14,  # [m^2/sek]
-                  "diff_out_precipitation": 3.05 * 10 ** -14,  # [m^2/sek]
+                  "diff_in_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
+                  "diff_out_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
                   "temperature": 1100,  # °C
-                  "n_cells_per_axis": 42,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
-                  "n_iterations": 100000,  # must be >= n_cells_per_axis
-                  "stride": 1,  # n_iterations / stride = n_iterations for outward diffusion
-                  "sim_time": 360000,  # [sek]
-                  "size": 300 * (10**-6),  # [m]
+                  "n_cells_per_axis": 231,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
+                  "n_iterations": 10000,  # must be >= n_cells_per_axis
+                  "stride": 5,  # n_iterations / stride = n_iterations for outward diffusion
+                  "sim_time": 72000,  # [sek]
+                  "size": 100 * (10**-6),  # [m]
 
                   "threshold_inward": 1,
                   "threshold_outward": 1,
                   "sol_prod": 0,  # 5.621 * 10 ** -10
 
-                  "nucleation_probability": 0.001,
-                  "het_factor": 300,
+                  "nucleation_probability": 1,
+                  "het_factor": 1,
 
-                  "dissolution_p": 0.001,
-                  "dissolution_n": 5,
+                  "dissolution_p": 0.3,
+                  "dissolution_n": 1000,
                   "exponent_power": 3,
                   "block_scale_factor": 2,
 
@@ -52,7 +52,7 @@ if __name__ == '__main__':
                   "compute_precipitations": True,
                   "diffusion_in_precipitation": False,
 
-                  "save_whole": True,
+                  "save_whole": False,
                   "save_path": 'W:/SIMCA/test_runs_data/',
 
                   "neigh_range": 1  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10

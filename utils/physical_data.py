@@ -58,6 +58,25 @@ DEFAULT_PARAM = {
 
     "neigh_range": 1}
 
+DEFAULT_OBJ_REF = {
+    0: {"oxidant": None,
+        "active": None,
+        "product": None,
+        "to_check_with": None},
+    1: {"oxidant": None,
+        "active": None,
+        "product": None,
+        "to_check_with": None},
+    2: {"oxidant": None,
+        "active": None,
+        "product": None,
+        "to_check_with": None},
+    3: {"oxidant": None,
+        "active": None,
+        "product": None,
+        "to_check_with": None}
+                   }
+
 
 def get_diff_coeff(temperature, cond):
     diff_coeff = {"N in Ni20Cr2Ti Krupp": 4.7 * 10 ** -6 * exp(-125720 / (8.314 * (273 + temperature))),

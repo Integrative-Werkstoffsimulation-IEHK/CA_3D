@@ -436,10 +436,21 @@ class Utils:
     def print_init_var(self):
         expn = 2.71828182845904523536
         nucl_prob = self.param["const_a"] * expn ** (self.param["const_b"] * np.array([1, 2, 3, 4, 5, 6]))
-        dissol_prob = self.param["dissolution_pn"] * \
-                      expn ** (-self.param["exponent_power"] * np.array([0, 1, 2, 3, 4, 5]))
-        dissol_p_block = dissol_prob[3] / self.param["block_scale_factor"]
-        dissol_prob_block = np.array([dissol_p_block, dissol_p_block / 10, dissol_p_block / 100])
+        # dissol_prob = self.param["dissolution_pn"] * \
+        #               expn ** (-self.param["exponent_power"] * np.array([0, 1, 2, 3, 4, 5]))
+        # dissol_p_block = dissol_prob[3] / self.param["block_scale_factor"]
+        # dissol_prob_block = np.array([dissol_p_block, dissol_p_block / 10, dissol_p_block / 100])
+
+        dissol_pn = self.param["dissolution_p"] ** (1 / self.param["dissolution_n"])
+        power = (self.param["dissolution_n"] - 1) / self.param["dissolution_n"]
+        const_b_dissol = (1 / 3) * log(self.param["block_scale_factor"] * (self.param["dissolution_p"] ** power))
+        p_b_3 = dissol_pn * 2.718281828 ** (const_b_dissol * 3) / self.param["block_scale_factor"]
+        p_b_2 = dissol_pn * 2.718281828 ** (const_b_dissol * 4) / (self.param["block_scale_factor"]**3)
+        p_b_1 = dissol_pn * 2.718281828 ** (const_b_dissol * 5) / (self.param["block_scale_factor"]**10)
+
+        dissol_prob = dissol_pn * expn ** (const_b_dissol * np.array([0, 1, 2, 3, 4, 5]))
+        dissol_prob_block = np.array([p_b_3, p_b_2, p_b_1])
+
         print()
         print(f"""-------------------------------------------------------""")
         print(f"""DATA BASE AT: {self.param["save_path"]}""")

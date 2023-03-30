@@ -6,6 +6,9 @@ import time
 
 
 class VoronoiMicrostructure:
+    """
+        TODO: 1 -> Write functions for 7 and more vertices!
+    """
     def __init__(self):
         self.grain_boundaries = None
         self.lines = np.array([[[0,0,0], [0,0,0]]])
