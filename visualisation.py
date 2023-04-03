@@ -199,26 +199,26 @@ ELAPSED TIME: {message}
             def animate(iteration):
                 ax_all.cla()
                 ax_all.dist = 4
-                # if self.param["inward_diffusion"]:
-                #     self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
-                #     items = np.array(self.c.fetchall())
-                #     if np.any(items):
-                #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b', s=1)
-                #     if self.param["secondary_oxidant_exists"]:
-                #         self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
-                #         items = np.array(self.c.fetchall())
-                #         if np.any(items):
-                #             ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='deeppink', s=1)
-                # if self.param["outward_diffusion"]:
-                #     self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
-                #     items = np.array(self.c.fetchall())
-                #     if np.any(items):
-                #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='g', s=3)
-                #     if self.param["secondary_active_element_exists"]:
-                #         self.c.execute("SELECT * from secondary_active_iter_{}".format(iteration))
-                #         items = np.array(self.c.fetchall())
-                #         if np.any(items):
-                #             ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='darkorange', s=3)
+                if self.param["inward_diffusion"]:
+                    self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
+                    items = np.array(self.c.fetchall())
+                    if np.any(items):
+                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b', s=1)
+                    if self.param["secondary_oxidant_exists"]:
+                        self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
+                        items = np.array(self.c.fetchall())
+                        if np.any(items):
+                            ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='deeppink', s=1)
+                if self.param["outward_diffusion"]:
+                    self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
+                    items = np.array(self.c.fetchall())
+                    if np.any(items):
+                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='g', s=3)
+                    if self.param["secondary_active_element_exists"]:
+                        self.c.execute("SELECT * from secondary_active_iter_{}".format(iteration))
+                        items = np.array(self.c.fetchall())
+                        if np.any(items):
+                            ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='darkorange', s=3)
                 if self.param["compute_precipitations"]:
                     self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
                     items = np.array(self.c.fetchall())
@@ -231,27 +231,27 @@ ELAPSED TIME: {message}
                         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='r', s=self.cell_size,
                                        edgecolor='black', linewidth=self.linewidth)
 
-                    # if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
-                    #     self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
-                    #     items = np.array(self.c.fetchall())
-                    #     if np.any(items):
-                    #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='cyan', s=3)
-                    #
-                    #     self.c.execute("SELECT * from ternary_product_iter_{}".format(iteration))
-                    #     items = np.array(self.c.fetchall())
-                    #     if np.any(items):
-                    #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='darkorange', s=3)
-                    #
-                    #     self.c.execute("SELECT * from quaternary_product_iter_{}".format(iteration))
-                    #     items = np.array(self.c.fetchall())
-                    #     if np.any(items):
-                    #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='steelblue', s=3)
-                    #
-                    # elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
-                    #     self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
-                    #     items = np.array(self.c.fetchall())
-                    #     if np.any(items):
-                    #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='cyan', s=3)
+                    if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
+                        self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
+                        items = np.array(self.c.fetchall())
+                        if np.any(items):
+                            ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='cyan', s=3)
+
+                        self.c.execute("SELECT * from ternary_product_iter_{}".format(iteration))
+                        items = np.array(self.c.fetchall())
+                        if np.any(items):
+                            ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='darkorange', s=3)
+
+                        self.c.execute("SELECT * from quaternary_product_iter_{}".format(iteration))
+                        items = np.array(self.c.fetchall())
+                        if np.any(items):
+                            ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='steelblue', s=3)
+
+                    elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
+                        self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
+                        items = np.array(self.c.fetchall())
+                        if np.any(items):
+                            ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='cyan', s=3)
 
                 ax_all.set_xlim3d(0, self.axlim)
                 ax_all.set_ylim3d(0, self.axlim)
@@ -432,33 +432,33 @@ ELAPSED TIME: {message}
                 if np.any(items):
                     ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='r', s=self.cell_size)
 
-                # if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
-                #     self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
-                #     items = np.array(self.c.fetchall())
-                #     if np.any(items):
-                #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='cyan', s=3)
-                #
-                #     self.c.execute("SELECT * from ternary_product_iter_{}".format(iteration))
-                #     items = np.array(self.c.fetchall())
-                #     if np.any(items):
-                #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='darkgreen', s=3)
-                #
-                #     self.c.execute("SELECT * from quaternary_product_iter_{}".format(iteration))
-                #     items = np.array(self.c.fetchall())
-                #     if np.any(items):
-                #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='steelblue', s=3)
-                #
-                # elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
-                #     self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
-                #     items = np.array(self.c.fetchall())
-                #     if np.any(items):
-                #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='cyan', s=3)
+                if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
+                    self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
+                    items = np.array(self.c.fetchall())
+                    if np.any(items):
+                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='cyan', s=3)
+
+                    self.c.execute("SELECT * from ternary_product_iter_{}".format(iteration))
+                    items = np.array(self.c.fetchall())
+                    if np.any(items):
+                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='darkgreen', s=3)
+
+                    self.c.execute("SELECT * from quaternary_product_iter_{}".format(iteration))
+                    items = np.array(self.c.fetchall())
+                    if np.any(items):
+                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='steelblue', s=3)
+
+                elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
+                    self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
+                    items = np.array(self.c.fetchall())
+                    if np.any(items):
+                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='cyan', s=3)
 
             ax_all.set_xlim3d(0, self.axlim)
             ax_all.set_ylim3d(0, self.axlim)
             ax_all.set_zlim3d(0, self.axlim)
             if const_cam_pos:
-                ax_all.azim = -70
+                ax_all.azim = -57
                 ax_all.elev = 30
                 ax_all.dist = 9
         self.conn.commit()

@@ -23,21 +23,17 @@ class CellularAutomata:
         self.utils.generate_param()
         self.utils.print_init_var()
         self.param = self.utils.param
-        self.iteration = None
-        self.curr_max_furthest = 0
-
-        self.begin = time.time()
         self.elapsed_time = 0
+
         # simulated space parameters
         self.cells_per_axis = self.param["n_cells_per_axis"]
-        self.n_iter = self.param["n_iterations"]
         self.shape = (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis)
-        self.cut_shape = (self.cells_per_axis, self.cells_per_axis, 3)
-        self.single_page_shape = (self.cells_per_axis, self.cells_per_axis)
-
+        self.n_iter = self.param["n_iterations"]
+        self.iteration = None
+        self.curr_max_furthest = 0
         self.objs = physical_data.DEFAULT_OBJ_REF
 
-        # setting variables for inward diffusion
+        # setting objects for inward diffusion
         if self.param["inward_diffusion"]:
             self.primary_oxidant = elements.OxidantElem(self.param["oxidant"]["primary"])
             self.objs[0]["oxidant"] = self.primary_oxidant
@@ -46,7 +42,8 @@ class CellularAutomata:
                 self.secondary_oxidant = elements.OxidantElem(self.param["oxidant"]["secondary"])
                 self.objs[2]["oxidant"] = self.primary_oxidant
                 self.objs[3]["oxidant"] = self.primary_oxidant
-        # setting variables for outward diffusion
+
+        # setting objects for outward diffusion
         if self.param["outward_diffusion"]:
             self.primary_active = elements.ActiveElem(self.param["active_element"]["primary"])
             self.objs[0]["active"] = self.primary_active
@@ -55,7 +52,8 @@ class CellularAutomata:
                 self.secondary_active = elements.ActiveElem(self.param["active_element"]["secondary"])
                 self.objs[1]["active"] = self.secondary_active
                 self.objs[3]["active"] = self.secondary_active
-        # setting variables for precipitations
+
+        # setting objects for precipitations
         if self.param["compute_precipitations"]:
             self.precipitations = None
             self.cumul_product = np.full(self.shape, 0, dtype=np.ubyte)
@@ -71,7 +69,6 @@ class CellularAutomata:
                 self.objs[2]["product"] = self.ternary_product
                 self.quaternary_product = elements.Product(self.param["product"]["quaternary"])
                 self.objs[3]["product"] = self.quaternary_product
-
                 self.objs[0]["to_check_with"] = self.cumul_product
                 self.objs[1]["to_check_with"] = self.cumul_product
                 self.objs[2]["to_check_with"] = self.cumul_product
@@ -108,7 +105,12 @@ class CellularAutomata:
             # self.precipitations3d = np.full(self.single_page_shape, False)
             # self.precipitations3d_sec = np.full(self.single_page_shape, False)
             self.threshold_inward = self.param["threshold_inward"]
+            if self.threshold_inward < 2:
+                self.check_intersection = self.ci_single
+            else:
+                self.check_intersection = self.ci_multi
             self.threshold_outward = self.param["threshold_outward"]
+
             self.fetch_ind = None
             self.generate_fetch_ind()
 
@@ -131,6 +133,7 @@ class CellularAutomata:
             self.het_factor = self.param["het_factor"]
             self.const_a = (1 / (self.het_factor * self.nucleation_probability)) ** (-6 / 5)
             self.const_b = log(1 / (self.het_factor * self.nucleation_probability)) * (1 / 5)
+        self.begin = time.time()
 
     def simulation(self):
         """
@@ -677,9 +680,9 @@ class CellularAutomata:
                     # else:
                     #     self.ci_mult_int_with_ref(oxidant_cells)
 
-                    self.ci_single_int_with_ref(oxidant_cells)
+                    self.check_intersection(oxidant_cells)
 
-    def ci_single_int_with_ref(self, seeds):
+    def ci_single(self, seeds):
         """
         """
         all_arounds = self.utils.calc_sur_ind_formation(seeds, self.objs[self.case]["active"].c3d.shape[2] - 1)
@@ -739,7 +742,7 @@ class CellularAutomata:
             self.objs[self.case]["product"].fix_full_cells(coord)
             # self.cumul_product[coord[0], coord[1], coord[2]] += 1
 
-    def ci_mult_int_with_ref(self, seeds):
+    def ci_multi(self, seeds):
         """
         Check intersections between the seeds neighbourhood and the coordinates of inward particles only.
         Compute which seed will become a precipitation and which inward particles should be deleted

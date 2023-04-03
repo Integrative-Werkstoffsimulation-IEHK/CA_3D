@@ -35,7 +35,7 @@ if __name__ == '__main__':
                   "sim_time": 72000,  # [sek]
                   "size": 1000 * (10**-6),  # [m]
 
-                  "threshold_inward": 1,
+                  "threshold_inward": 2,
                   "threshold_outward": 1,
                   "sol_prod": 0,  # 5.621 * 10 ** -10
 
