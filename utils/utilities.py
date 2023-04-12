@@ -87,18 +87,26 @@ class Utils:
         self.param["product"]["primary"]["mass_per_cell"] = self.param["oxidant"]["primary"]["mass_per_cell"] + \
                                                             self.param["active_element"]["primary"]["mass_per_cell"]
         self.param["product"]["primary"]["moles_per_cell"] = self.param["active_element"]["primary"]["moles_per_cell"]
+        self.param["product"]["primary"]["constitution"] = self.param["active_element"]["primary"]["elem"] + "+" +\
+                                                        self.param["oxidant"]["primary"]["elem"]
         # Secondary
         self.param["product"]["secondary"]["mass_per_cell"] = self.param["oxidant"]["primary"]["mass_per_cell"] + \
                                                               self.param["active_element"]["secondary"]["mass_per_cell"]
         self.param["product"]["secondary"]["moles_per_cell"] = self.param["active_element"]["secondary"]["moles_per_cell"]
+        self.param["product"]["secondary"]["constitution"] = self.param["active_element"]["secondary"]["elem"] + "+" + \
+                                                           self.param["oxidant"]["primary"]["elem"]
         # Ternary
         self.param["product"]["ternary"]["mass_per_cell"] = self.param["oxidant"]["secondary"]["mass_per_cell"] + \
                                                               self.param["active_element"]["primary"]["mass_per_cell"]
         self.param["product"]["ternary"]["moles_per_cell"] = self.param["active_element"]["primary"]["moles_per_cell"]
+        self.param["product"]["ternary"]["constitution"] = self.param["active_element"]["primary"]["elem"] + "+" + \
+                                                             self.param["oxidant"]["secondary"]["elem"]
         # Quaternary
         self.param["product"]["quaternary"]["mass_per_cell"] = self.param["oxidant"]["secondary"]["mass_per_cell"] + \
                                                             self.param["active_element"]["secondary"]["mass_per_cell"]
         self.param["product"]["quaternary"]["moles_per_cell"] = self.param["active_element"]["secondary"]["moles_per_cell"]
+        self.param["product"]["quaternary"]["constitution"] = self.param["active_element"]["secondary"]["elem"] + "+" + \
+                                                           self.param["oxidant"]["secondary"]["elem"]
 
         t_1 = self.param["active_element"]["primary"]["molar_mass"] * self.param["matrix_elem"]["density"] / \
               (self.param["active_element"]["primary"]["density"] * self.param["matrix_elem"]["molar_mass"])
@@ -205,8 +213,10 @@ class Utils:
 
         t_1 = self.param["active_element"]["primary"]["molar_mass"] * self.param["matrix_elem"]["density"] / \
               (self.param["active_element"]["primary"]["density"] * self.param["matrix_elem"]["molar_mass"])
+        self.param["active_element"]["primary"]["n_ELEM"] = 1 - t_1
         t_2 = self.param["active_element"]["secondary"]["molar_mass"] * self.param["matrix_elem"]["density"] / \
               (self.param["active_element"]["secondary"]["density"] * self.param["matrix_elem"]["molar_mass"])
+        self.param["active_element"]["secondary"]["n_ELEM"] = 1 - t_2
         denom = 1 + atomic_c_1 * (t_1 - 1) + atomic_c_2 * (t_2 - 1)
 
         moles_per_cell1 = atomic_c_1 * matrix_moles / (cells_conc1 * denom)

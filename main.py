@@ -5,7 +5,7 @@ if __name__ == '__main__':
 
     user_input = {"oxidant": {"primary": {"elem": "O",
                                           "diffusion_condition": "O in Ni Krupp",
-                                          "cells_concentration": 0.03},
+                                          "cells_concentration": 0.475},
                               "secondary": {"elem": "None",
                                             "diffusion_condition": "N in Ni Krupp",
                                             "cells_concentration": 0.01}
@@ -13,12 +13,12 @@ if __name__ == '__main__':
 
                   "active_element": {"primary": {"elem": "Cr",
                                                  "diffusion_condition": "Cr in Ni Krupp",
-                                                 "mass_concentration": 0.08,
-                                                 "cells_concentration": 0.13},
+                                                 "mass_concentration": 0.25,
+                                                 "cells_concentration": 0.4},
                                      "secondary": {"elem": "None",
                                                    "diffusion_condition": "Al in Ni Krupp",
                                                    "mass_concentration": 0.025,
-                                                   "cells_concentration": 0.078240741}
+                                                   "cells_concentration": 0.077037037}
                                      },
 
                   "matrix_elem": {"elem": "Ni",
@@ -31,28 +31,28 @@ if __name__ == '__main__':
                   "temperature": 1100,  # °C
                   "n_cells_per_axis": 102,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
                   "n_iterations": 10000,  # must be >= n_cells_per_axis
-                  "stride": 9999999,  # n_iterations / stride = n_iterations for outward diffusion
+                  "stride": 10,  # n_iterations / stride = n_iterations for outward diffusion
                   "sim_time": 72000,  # [sek]
-                  "size": 1000 * (10**-6),  # [m]
+                  "size": 2000 * (10**-6),  # [m]
 
-                  "threshold_inward": 2,
+                  "threshold_inward": 1,
                   "threshold_outward": 1,
                   "sol_prod": 0,  # 5.621 * 10 ** -10
 
-                  "nucleation_probability": 1,
-                  "het_factor": 1,
+                  "nucleation_probability": 0.001,
+                  "het_factor": 900,
 
-                  "dissolution_p": 0.3,
-                  "dissolution_n": 1000,
-                  "exponent_power": 3,
-                  "block_scale_factor": 2,
+                  "dissolution_p": 0.001,
+                  "dissolution_n": 100,
+                  "exponent_power": 3,  # not used anymore
+                  "block_scale_factor": 1.5,
 
                   "inward_diffusion": True,
                   "outward_diffusion": True,
                   "compute_precipitations": True,
                   "diffusion_in_precipitation": False,
 
-                  "save_whole": False,
+                  "save_whole": True,
                   "save_path": 'W:/SIMCA/test_runs_data/',
 
                   "neigh_range": 1  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10

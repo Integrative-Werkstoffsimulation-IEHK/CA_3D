@@ -15,7 +15,7 @@ class ActiveElem:
         self.p4_range = 4 * self.p1_range
         self.p_r_range = self.p4_range + settings["probabilities"][1]
         self.n_per_page = settings["n_per_page"]
-        self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
+        self.precip_transform_depth = int(12)  # min self.neigh_range !!!
         self.i_descards = None
         self.i_ind = None
         self.c3d = None
@@ -23,19 +23,19 @@ class ActiveElem:
 
         # exact concentration space fill
         # ___________________________________________
-        self.cells = np.array([[], [], []], dtype=np.short)
-        for plane_xind in range(self.cells_per_axis):
-            new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
-            new_cells = np.array(np.unravel_index(new_cells, (self.cells_per_axis, self.cells_per_axis)))
-            new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
-            self.cells = np.concatenate((self.cells, new_cells), 1)
-        self.cells = np.array(self.cells, dtype=np.short)
+        # self.cells = np.array([[], [], []], dtype=np.short)
+        # for plane_xind in range(self.cells_per_axis):
+        #     new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
+        #     new_cells = np.array(np.unravel_index(new_cells, (self.cells_per_axis, self.cells_per_axis)))
+        #     new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
+        #     self.cells = np.concatenate((self.cells, new_cells), 1)
+        # self.cells = np.array(self.cells, dtype=np.short)
         # ____________________________________________
 
         # approx concentration space fill
         # ____________________________________________
-        # self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
-        #                                dtype=np.short)
+        self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
+                                       dtype=np.short)
         # ____________________________________________
 
         # half space fill
@@ -197,6 +197,8 @@ class OxidantElem:
         self.i_ind = None
         self.cut_shape = None
         self.c3d = None
+        self.scale = None
+        self.diffuse = None
 
         self.cells = np.array([[], [], []], dtype=np.short)
         self.dirs = np.zeros((3, len(self.cells[0])), dtype=np.byte)
@@ -210,10 +212,16 @@ class OxidantElem:
         # self.cross_shifts = np.array([[1, 0, 0], [0, 1, 0],
         #                               [-1, 0, 0], [0, -1, 0]], dtype=np.byte)
 
-    def diffuse(self):
+    def diffuse_bulk(self):
         """
-        Outgoing diffusion from the inside.
+        Inward diffusion through bulk.
         """
+        # Diffusion along grain boundaries
+        # ______________________________________________________________________________________________________________
+        # exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
+        # # # print(exists)
+        # temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
+        # # print(temp_ind)
 
         # exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
         # # # print(exists)
@@ -235,10 +243,8 @@ class OxidantElem:
         #
         # self.cells[:, temp_ind] += shift_vector
         # # print(self.cells)
-
-        # mixing particles according to Chopard and Droz
+        # ______________________________________________________________________________________________________________
         randomise = np.array(np.random.random_sample(len(self.cells[0])), dtype=np.single)
-        # deflection 1
         temp_ind = np.array(np.where(randomise <= self.p1_range)[0], dtype=np.uint32)
         self.dirs[:, temp_ind] = np.roll(self.dirs[:, temp_ind], 1, axis=0)
         temp_ind = np.array(np.where((randomise > self.p1_range) & (randomise <= self.p2_range))[0], dtype=np.uint32)
@@ -251,8 +257,79 @@ class OxidantElem:
         self.dirs[:, temp_ind] *= -1
         temp_ind = np.array(np.where((randomise > self.p4_range) & (randomise <= self.p_r_range))[0], dtype=np.uint32)
         self.dirs[:, temp_ind] *= -1
-        del temp_ind
-        gc.collect()
+
+        self.cells = np.add(self.cells, self.dirs, casting="unsafe")
+        # adjusting a coordinates of side points for correct shifting
+        ind = np.where(self.cells[2] <= -1)[0]
+        self.cells[2, ind] = 0
+        self.dirs[2, ind] = 1
+        self.cells[0, np.where(self.cells[0] <= -1)] = self.cells_per_axis - 1
+        self.cells[0, np.where(self.cells[0] >= self.cells_per_axis)] = 0
+        self.cells[1, np.where(self.cells[1] <= -1)] = self.cells_per_axis - 1
+        self.cells[1, np.where(self.cells[1] >= self.cells_per_axis)] = 0
+
+        ind = np.where(self.cells[2] >= self.cells_per_axis)
+        self.cells = np.delete(self.cells, ind, 1)
+        self.dirs = np.delete(self.dirs, ind, 1)
+
+        self.current_count = len(np.where(self.cells[2] == 0)[0])
+        self.fill_first_page()
+
+    def diffuse_with_scale(self):
+        """
+        Inward diffusion through bulk + scale.
+        """
+        # # Diffusion through the scale. If the current particle is inside the product particle
+        # # it gets a new diffusion probabilities
+        exist = self.scale.c3d[self.cells[0], self.cells[1], self.cells[2]]
+        in_scale = np.array(np.where(exist > 0)[0], dtype=np.uint32)
+        out_scale = np.array(np.where(exist == 0)[0], dtype=np.uint32)
+        self.dirs[:, in_scale] *= -1
+
+        # Diffusion along grain boundaries
+        # ______________________________________________________________________________________________________________
+        # exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
+        # # # print(exists)
+        # temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
+        # # print(temp_ind)
+
+        # exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
+        # # # print(exists)
+        # temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
+        # # print(temp_ind)
+        # #
+        # in_gb = np.array(self.cells[:, temp_ind], dtype=np.short)
+        # # print(in_gb)
+        # #
+        # shift_vector = np.array(self.microstructure.jump_directions[in_gb[0], in_gb[1], in_gb[2]],
+        #                         dtype=np.short).transpose()
+        # # print(shift_vector)
+        #
+        # # print(self.cells)
+        # cross_shifts = np.array(np.random.choice([0, 1, 2, 3], len(shift_vector[0])), dtype=np.ubyte)
+        # cross_shifts = np.array(self.cross_shifts[cross_shifts], dtype=np.byte).transpose()
+        #
+        # shift_vector += cross_shifts
+        #
+        # self.cells[:, temp_ind] += shift_vector
+        # # print(self.cells)
+        # ______________________________________________________________________________________________________________
+
+        # mixing particles according to Chopard and Droz
+        randomise = np.array(np.random.random_sample(out_scale.size), dtype=np.single)
+        temp_ind = np.array(np.where(randomise <= self.p1_range)[0], dtype=np.uint32)
+        self.dirs[:, out_scale[temp_ind]] = np.roll(self.dirs[:, out_scale[temp_ind]], 1, axis=0)
+        temp_ind = np.array(np.where((randomise > self.p1_range) & (randomise <= self.p2_range))[0], dtype=np.uint32)
+        self.dirs[:, out_scale[temp_ind]] = np.roll(self.dirs[:, out_scale[temp_ind]], 1, axis=0)
+        self.dirs[:, out_scale[temp_ind]] *= -1
+        temp_ind = np.array(np.where((randomise > self.p2_range) & (randomise <= self.p3_range))[0], dtype=np.uint32)
+        self.dirs[:, out_scale[temp_ind]] = np.roll(self.dirs[:, out_scale[temp_ind]], 2, axis=0)
+        temp_ind = np.array(np.where((randomise > self.p3_range) & (randomise <= self.p4_range))[0], dtype=np.uint32)
+        self.dirs[:, out_scale[temp_ind]] = np.roll(self.dirs[:, out_scale[temp_ind]], 2, axis=0)
+        self.dirs[:, out_scale[temp_ind]] *= -1
+        temp_ind = np.array(np.where((randomise > self.p4_range) & (randomise <= self.p_r_range))[0], dtype=np.uint32)
+        self.dirs[:, out_scale[temp_ind]] *= -1
+
         self.cells = np.add(self.cells, self.dirs, casting="unsafe")
         # adjusting a coordinates of side points for correct shifting
         ind = np.where(self.cells[2] <= -1)[0]
@@ -323,6 +400,7 @@ class OxidantElem:
 
 class Product:
     def __init__(self, settings):
+        self.constitution = settings["constitution"]
         cells_per_axis = settings["cells_per_axis"]
         shape = (cells_per_axis, cells_per_axis, cells_per_axis)
         self.oxidation_number = settings["oxidation_number"]
