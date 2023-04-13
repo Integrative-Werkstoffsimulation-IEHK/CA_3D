@@ -165,7 +165,7 @@ class CellularAutomata:
                 self.diffusion_outward()
             self.utils.db.insert_last_iteration(self.iteration)
             if self.param["save_whole"] and self.iteration != self.n_iter - 1:
-                self.save_results(self.iteration)
+                self.save_results_only_prod(self.iteration)
 
         self.save_results(self.n_iter - 1)
         end = time.time()
@@ -484,7 +484,7 @@ class CellularAutomata:
 
         # print()
         # print(product_fraction.max(initial=0))
-        # if product_fraction.max(initial=0) > 0.4:
+        # if product_fraction.max(initial=0) > 0.9:
         #     print()
         # print(closed)
         # print()

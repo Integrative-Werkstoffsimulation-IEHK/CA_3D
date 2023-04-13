@@ -39,8 +39,8 @@ if __name__ == '__main__':
                   "threshold_outward": 1,
                   "sol_prod": 0,  # 5.621 * 10 ** -10
 
-                  "nucleation_probability": 0.001,
-                  "het_factor": 900,
+                  "nucleation_probability": 0.0001,
+                  "het_factor": 9000,
 
                   "dissolution_p": 0.001,
                   "dissolution_n": 100,

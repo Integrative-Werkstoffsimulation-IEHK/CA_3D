@@ -97,6 +97,9 @@ def get_diff_coeff(temperature, cond):
                   "N in FeAlMn": 2.1 * 10 ** -8 * exp(-93517 / (8.314 * (273 + temperature))),
                   "Al in FeAlMn": 2.1 * 10 ** -10 * exp(-93517 / (8.314 * (273 + temperature))),
                   "Cr in NiCr": 0.03 * exp(-40800/(8.314 * (273 + temperature))),
-                  "N in NiCr at 800°C": 6.7 * 10 ** -11
+                  "N in NiCr at 800°C": 6.7 * 10 ** -11,
+                  # scales_______________________________________________
+                  "O in Cr2O3 from [O in Cr2O3]": 15.9 * 10 ** -4 * exp((-100800 * 4.184) / (8.314 * (273 + temperature))),
+                  "Cr in Cr2O3 from [Cr in Cr2O3]": 0.137 * 10 ** -4 * exp((-61100 * 4.184) / (8.314 * (273 + temperature))),
                   }
     return diff_coeff[cond]
