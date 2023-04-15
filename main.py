@@ -5,7 +5,7 @@ if __name__ == '__main__':
 
     user_input = {"oxidant": {"primary": {"elem": "O",
                                           "diffusion_condition": "O in Ni Krupp",
-                                          "cells_concentration": 0.475},
+                                          "cells_concentration": 0.04},
                               "secondary": {"elem": "None",
                                             "diffusion_condition": "N in Ni Krupp",
                                             "cells_concentration": 0.01}
@@ -33,14 +33,14 @@ if __name__ == '__main__':
                   "n_iterations": 10000,  # must be >= n_cells_per_axis
                   "stride": 10,  # n_iterations / stride = n_iterations for outward diffusion
                   "sim_time": 72000,  # [sek]
-                  "size": 2000 * (10**-6),  # [m]
+                  "size": 1000 * (10**-6),  # [m]
 
                   "threshold_inward": 1,
                   "threshold_outward": 1,
                   "sol_prod": 0,  # 5.621 * 10 ** -10
 
-                  "nucleation_probability": 0.0001,
-                  "het_factor": 9000,
+                  "nucleation_probability": 1,
+                  "het_factor": 1000,
 
                   "dissolution_p": 0.001,
                   "dissolution_n": 100,
@@ -52,7 +52,7 @@ if __name__ == '__main__':
                   "compute_precipitations": True,
                   "diffusion_in_precipitation": False,
 
-                  "save_whole": True,
+                  "save_whole": False,
                   "save_path": 'W:/SIMCA/test_runs_data/',
 
                   "neigh_range": 1  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
