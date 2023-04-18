@@ -1,7 +1,27 @@
+import time
+
 import numpy as np
 import gc
 import random
+import numba
 from microstructure import voronoi
+
+
+@numba.njit
+def insert_counts(array_3d, points):
+    for point in points.transpose():
+        array_3d[point[0], point[1], point[2]] += 1
+
+
+@numba.njit
+def decrease_counts(array_3d, points):
+    zero_positions = []
+    for ind, point in enumerate(points.transpose()):
+        if array_3d[point[0], point[1], point[2]] > 0:
+            array_3d[point[0], point[1], point[2]] -= 1
+        else:
+            zero_positions.append(ind)
+    return zero_positions
 
 
 class ActiveElem:
@@ -15,27 +35,31 @@ class ActiveElem:
         self.p4_range = 4 * self.p1_range
         self.p_r_range = self.p4_range + settings["probabilities"][1]
         self.n_per_page = settings["n_per_page"]
-        self.precip_transform_depth = int(12)  # min self.neigh_range !!!
+        self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
+
+        self.extended_axis = self.cells_per_axis + self.neigh_range
+        self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
+
         self.i_descards = None
         self.i_ind = None
-        self.c3d = None
+        self.c3d = np.full(self.extended_shape, 0, dtype=np.ubyte)
         self.cut_shape = None
 
         # exact concentration space fill
         # ___________________________________________
-        # self.cells = np.array([[], [], []], dtype=np.short)
-        # for plane_xind in range(self.cells_per_axis):
-        #     new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
-        #     new_cells = np.array(np.unravel_index(new_cells, (self.cells_per_axis, self.cells_per_axis)))
-        #     new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
-        #     self.cells = np.concatenate((self.cells, new_cells), 1)
-        # self.cells = np.array(self.cells, dtype=np.short)
+        self.cells = np.array([[], [], []], dtype=np.short)
+        for plane_xind in range(self.cells_per_axis):
+            new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
+            new_cells = np.array(np.unravel_index(new_cells, (self.cells_per_axis, self.cells_per_axis)))
+            new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
+            self.cells = np.concatenate((self.cells, new_cells), 1)
+        self.cells = np.array(self.cells, dtype=np.short)
         # ____________________________________________
 
         # approx concentration space fill
         # ____________________________________________
-        self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
-                                       dtype=np.short)
+        # self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
+        #                                dtype=np.short)
         # ____________________________________________
 
         # half space fill
@@ -136,32 +160,13 @@ class ActiveElem:
             last_i = depth - 1
 
         self.cut_shape = (self.cells_per_axis, self.cells_per_axis, depth)
-        self.c3d = np.full(self.cut_shape, 0, dtype=np.ubyte)
+        self.c3d[:, :, :depth] = 0
         self.i_ind = np.array(np.where(self.cells[2] < last_i)[0], dtype=np.uint32)
         self.i_descards = np.array(self.cells[:, self.i_ind], dtype=np.short)
-        counts = np.unique(np.ravel_multi_index(self.i_descards, self.cut_shape), return_counts=True)
-        dec = np.array(np.unravel_index(counts[0], self.cut_shape), dtype=np.short)
-        counts = counts[1]
-        self.c3d[dec[0], dec[1], dec[2]] = counts
+        insert_counts(self.c3d, self.i_descards)
 
     def transform_to_descards(self):
-        values = np.array(self.c3d[self.i_descards[0], self.i_descards[1], self.i_descards[2]], dtype=np.ubyte)
-        zero = np.array(np.where(values == 0)[0], dtype=np.uint32)
-        ind_out = np.array(self.i_ind[zero], dtype=np.uint32)
-        for step in range(np.max(values)):
-            self.i_ind = np.delete(self.i_ind, zero)
-            self.i_descards = np.delete(self.i_descards, zero, 1)
-
-            self.c3d[self.i_descards[0], self.i_descards[1], self.i_descards[2]] -= 1
-
-            u_dec = np.array(np.unique(np.ravel_multi_index(self.i_descards, self.cut_shape), return_index=True)[1])
-            self.i_ind = np.delete(self.i_ind, u_dec)
-            self.i_descards = np.delete(self.i_descards, u_dec, 1)
-
-            values = self.c3d[self.i_descards[0], self.i_descards[1], self.i_descards[2]]
-            zero = np.array(np.where(values == 0)[0], dtype=np.uint32)
-            ind_out = np.concatenate((ind_out, self.i_ind[zero]))
-
+        ind_out = decrease_counts(self.c3d, self.i_descards)
         self.cells = np.delete(self.cells, ind_out, 1)
         self.dirs = np.delete(self.dirs, ind_out, 1)
 
@@ -172,11 +177,6 @@ class ActiveElem:
             new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
             new_dirs -= 1
             self.dirs = np.concatenate((self.dirs, new_dirs), axis=1)
-
-        self.i_ind = None
-        self.cut_shape = None
-        self.i_descards = None
-        self.c3d = None
 
     def count_cells_at_index(self, index):
         return len(np.where(self.cells[2] == index)[0])
@@ -191,12 +191,16 @@ class OxidantElem:
         self.p4_range = 4 * self.p1_range
         self.p_r_range = self.p4_range + settings["probabilities"][1]
         self.n_per_page = settings["n_per_page"]
+        self.neigh_range = settings["neigh_range"]
         self.current_count = 0
         self.furthest_index = None
         self.i_descards = None
         self.i_ind = None
         self.cut_shape = None
-        self.c3d = None
+
+        self.extended_axis = self.cells_per_axis + self.neigh_range
+        self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
+        self.c3d = np.full(self.extended_shape, 0, dtype=np.ubyte)
         self.scale = None
         self.diffuse = None
 
@@ -360,36 +364,17 @@ class OxidantElem:
             new_dirs[2, :] = 1
             self.dirs = np.concatenate((self.dirs, new_dirs), axis=1)
 
-    def transform_to_3d(self, furthest_i):
+    def transform_to_3d(self, furthest_i, depth):
         self.cut_shape = (self.cells_per_axis, self.cells_per_axis, 1 + furthest_i + 1)
-        self.c3d = np.full(self.cut_shape, 0, dtype=np.ubyte)
+        self.c3d[:, :, :depth] = 0
         self.i_ind = np.array(np.where(self.cells[2] <= furthest_i)[0], dtype=np.uint32)
         self.i_descards = self.cells[:, self.i_ind]
-        counts = np.unique(np.ravel_multi_index(self.i_descards, self.cut_shape), return_counts=True)
-        dec = np.array(np.unravel_index(counts[0], self.cut_shape), dtype=np.short)
-        counts = counts[1]
-        self.c3d[dec[0], dec[1], dec[2]] = counts
+        insert_counts(self.c3d, self.i_descards)
 
     def transform_to_descards(self):
-        values = np.array(self.c3d[self.i_descards[0], self.i_descards[1], self.i_descards[2]], dtype=np.ubyte)
-        zero = np.array(np.where(values == 0)[0], dtype=np.uint32)
-        ind_out = self.i_ind[zero]
-        for step in range(np.max(values, initial=0)):
-            self.i_ind = np.delete(self.i_ind, zero)
-            self.i_descards = np.delete(self.i_descards, zero, 1)
-            u_dec = np.array(np.unique(np.ravel_multi_index(self.i_descards, self.cut_shape), return_index=True)[1])
-            self.c3d[self.i_descards[0], self.i_descards[1], self.i_descards[2]] -= 1
-            self.i_ind = np.delete(self.i_ind, u_dec)
-            self.i_descards = np.delete(self.i_descards, u_dec, 1)
-            values = self.c3d[self.i_descards[0], self.i_descards[1], self.i_descards[2]]
-            zero = np.array(np.where(values == 0)[0], dtype=np.uint32)
-            ind_out = np.concatenate((ind_out, self.i_ind[zero]))
+        ind_out = decrease_counts(self.c3d, self.i_descards)
         self.cells = np.delete(self.cells, ind_out, 1)
         self.dirs = np.delete(self.dirs, ind_out, 1)
-        self.i_ind = None
-        self.cut_shape = None
-        self.i_descards = None
-        self.c3d = None
 
     def count_cells_at_index(self, index):
         return len(np.where(self.cells[2] == index)[0])

@@ -37,7 +37,6 @@ class Database:
                     query = query + str(item[1]) + ", "
         query = query[:-2] + ")"
         self.c.execute(query)
-        self.conn.commit()
 
     def save_elements_data(self, user_input):
         # 0 - primary active element; 1 - secondary active element;
@@ -87,7 +86,6 @@ class Database:
         concentration = user_input["matrix_elem"]["concentration"]
         query = f"""INSERT INTO element_4 VALUES ('{str(elem)}', '{str(condition)}', {concentration})"""
         self.c.execute(query)
-        self.conn.commit()
 
     def insert_particle_data(self, particle_type, iteration, data):
         """Particle types allowed: primary_oxidant, secondary_oxidant, primary_active, secondary_active,
@@ -99,35 +97,28 @@ class Database:
         data = data.transpose()
         data = self.to_tuple(data)
         self.c.executemany(query, data)
-        self.conn.commit()
 
     def create_precipitation_front_table(self, user_input):
         self.c.execute(f"""CREATE TABLE precip_front_p (sqrt_time int, position int)""")
         if user_input["active_element"]["secondary"]["elem"] != "None":
             self.c.execute("""CREATE TABLE precip_front_s (sqrt_time int, position int)""")
-        self.conn.commit()
 
     def insert_precipitation_front(self, sqrt_time, position, sign):
         """sign p for primary product
             sign s for secondary product"""
         self.c.execute("INSERT INTO precip_front_{} VALUES ({}, {})".format(sign, sqrt_time, position))
-        self.conn.commit()
 
     def create_time_parameters_table(self):
         self.c.execute("""CREATE TABLE time_parameters (last_i int, elapsed_time float)""")
-        self.conn.commit()
 
         query = """INSERT INTO time_parameters VALUES(?, ?);"""
         self.c.execute(query, (0, 0,))
-        self.conn.commit()
 
     def insert_time(self, elapsed_time):
         self.c.execute("""UPDATE time_parameters set elapsed_time = {}""".format(elapsed_time))
-        self.conn.commit()
 
     def insert_last_iteration(self, last_i):
         self.c.execute("""UPDATE time_parameters set last_i = {}""".format(last_i))
-        self.conn.commit()
 
     @staticmethod
     def to_tuple(points):

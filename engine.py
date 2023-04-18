@@ -28,8 +28,10 @@ class CellularAutomata:
         # simulated space parameters
         self.cells_per_axis = self.param["n_cells_per_axis"]
         self.cells_per_page = self.cells_per_axis ** 2
+        self.extended_axis = self.cells_per_axis + self.param["neigh_range"]
         self.matrix_mass = np.full(self.cells_per_axis, self.cells_per_page) * self.param["matrix_elem"]["mass_per_cell"]
         self.shape = (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis)
+        self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
         self.n_iter = self.param["n_iterations"]
         self.iteration = None
         self.curr_max_furthest = 0
@@ -62,7 +64,8 @@ class CellularAutomata:
         if self.param["compute_precipitations"]:
             self.precipitations = None
             self.cumul_product = np.full(self.shape, 0, dtype=np.ubyte)
-            self.precipitations3d_init = None
+            self.precipitations3d_init = np.full((self.cells_per_axis, self.cells_per_axis, self.cells_per_axis),
+                                                 False, dtype=bool)
             self.case = 0
 
             self.primary_product = elements.Product(self.param["product"]["primary"])
@@ -144,18 +147,6 @@ class CellularAutomata:
     def simulation(self):
         """
         """
-        # self.primary_oxidant.transform_to_3d(0)
-        # self.primary_active.transform_to_3d(0)
-        # self.precip_step([0], self.primary_oxidant, self.primary_active, self.primary_product)
-        # self.precip_step([0], self.primary_oxidant, self.primary_active, self.primary_product)
-        # self.precip_step([0], self.primary_oxidant, self.primary_active, self.primary_product)
-        # self.precip_step([0], self.primary_oxidant, self.primary_active, self.primary_product)
-        # self.precip_step([0], self.primary_oxidant, self.primary_active, self.primary_product)
-        # self.precip_step([0], self.primary_oxidant, self.primary_active, self.primary_product)
-        # self.precip_step([0], self.primary_oxidant, self.primary_active, self.primary_product)
-        # self.precip_step([0], self.primary_oxidant, self.primary_active, self.primary_product)
-        # self.precip_step([0], self.primary_oxidant, self.primary_active, self.primary_product)
-        # return np.sum(self.primary_product.c3d)
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
             if self.param["compute_precipitations"]:
                 self.precip_func()
@@ -164,11 +155,10 @@ class CellularAutomata:
                 self.diffusion_inward()
             if self.param["outward_diffusion"]:
                 self.diffusion_outward()
-            self.utils.db.insert_last_iteration(self.iteration)
             if self.param["save_whole"] and self.iteration != self.n_iter - 1:
-                self.save_results_only_prod(self.iteration)
+                self.save_results()
 
-        self.save_results(self.n_iter - 1)
+        # self.save_results()
         end = time.time()
         self.elapsed_time = (end - self.begin)
         self.utils.db.insert_time(self.elapsed_time)
@@ -336,7 +326,8 @@ class CellularAutomata:
         furthest_index = self.primary_oxidant.calc_furthest_index()
         if furthest_index > self.curr_max_furthest:
             self.curr_max_furthest = furthest_index
-        self.primary_oxidant.transform_to_3d(furthest_index)
+
+        self.primary_oxidant.transform_to_3d(furthest_index, self.curr_max_furthest)
         if self.iteration % self.param["stride"] == 0:
             self.primary_active.transform_to_3d(self.curr_max_furthest)
 
@@ -368,8 +359,9 @@ class CellularAutomata:
             comb_indexes = [furthest_index]
 
         if len(comb_indexes) > 0:
-            self.fix_init_precip(furthest_index, self.primary_product, self.primary_active.cut_shape)
+            # self.fix_init_precip(furthest_index, self.primary_product)
             self.precip_step(comb_indexes)
+            # print(np.sum(self.primary_product.c3d))
 
         self.primary_oxidant.transform_to_descards()
 
@@ -947,35 +939,35 @@ class CellularAutomata:
                 self.utils.db.insert_precipitation_front(sqr_time, position, "p")
                 break
 
-    def save_results(self, iteration):
+    def save_results(self):
         if self.param["stride"] > self.param["n_iterations"]:
             self.primary_active.transform_to_descards()
             if self.param["secondary_active_element_exists"]:
                 self.secondary_active.transform_to_descards()
 
         if self.param["inward_diffusion"]:
-            self.utils.db.insert_particle_data("primary_oxidant", iteration, self.primary_oxidant.cells)
+            self.utils.db.insert_particle_data("primary_oxidant", self.iteration, self.primary_oxidant.cells)
             if self.param["secondary_oxidant_exists"]:
-                self.utils.db.insert_particle_data("secondary_oxidant", iteration, self.secondary_oxidant.cells)
+                self.utils.db.insert_particle_data("secondary_oxidant", self.iteration, self.secondary_oxidant.cells)
 
         if self.param["outward_diffusion"]:
-            self.utils.db.insert_particle_data("primary_active", iteration, self.primary_active.cells)
+            self.utils.db.insert_particle_data("primary_active", self.iteration, self.primary_active.cells)
             if self.param["secondary_active_element_exists"]:
-                self.utils.db.insert_particle_data("secondary_active", iteration, self.secondary_active.cells)
+                self.utils.db.insert_particle_data("secondary_active", self.iteration, self.secondary_active.cells)
 
         if self.param["compute_precipitations"]:
-            self.utils.db.insert_particle_data("primary_product", iteration, self.primary_product.transform_c3d())
+            self.utils.db.insert_particle_data("primary_product", self.iteration, self.primary_product.transform_c3d())
 
             if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
-                self.utils.db.insert_particle_data("secondary_product", iteration,
+                self.utils.db.insert_particle_data("secondary_product", self.iteration,
                                                    self.secondary_product.transform_c3d())
-                self.utils.db.insert_particle_data("ternary_product", iteration,
+                self.utils.db.insert_particle_data("ternary_product", self.iteration,
                                                    self.ternary_product.transform_c3d())
-                self.utils.db.insert_particle_data("quaternary_product", iteration,
+                self.utils.db.insert_particle_data("quaternary_product", self.iteration,
                                                    self.quaternary_product.transform_c3d())
 
             elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
-                self.utils.db.insert_particle_data("secondary_product", iteration, self.secondary_product.transform_c3d())
+                self.utils.db.insert_particle_data("secondary_product", self.iteration, self.secondary_product.transform_c3d())
 
         if self.param["stride"] > self.param["n_iterations"]:
             self.primary_active.transform_to_3d(self.curr_max_furthest)
@@ -999,15 +991,18 @@ class CellularAutomata:
                 self.utils.db.insert_particle_data("secondary_product", iteration,
                                                    self.secondary_product.transform_c3d())
 
-    def fix_init_precip(self, u_bound, product, shape):
-        self.precipitations3d_init = np.full(shape, False)
+    def fix_init_precip(self, u_bound, product):
         if u_bound == self.cells_per_axis - 1:
             u_bound = self.cells_per_axis - 2
-        current_precip = np.array(product.c3d[:, :, 0:u_bound + 2], dtype=np.ubyte)
-        current_precip = np.array(np.nonzero(current_precip), dtype=np.short)
-        if len(current_precip[0]) > 0:
-            # current_precip[2] += 1
-            self.precipitations3d_init[current_precip[0], current_precip[1], current_precip[2]] = True
+        self.precipitations3d_init[:, :, 0:u_bound + 2] = False
+        self.precipitations3d_init[:, :, 0:u_bound + 2] = product.c3d[:, :, 0:u_bound + 2]
+        #     self.precipitations3d_init = np.full(shape, False)
+        #     if u_bound == self.cells_per_axis - 1:
+        #         u_bound = self.cells_per_axis - 2
+        #     current_precip = np.array(product.c3d[:, :, 0:u_bound + 2], dtype=np.ubyte)
+        #     current_precip = np.array(np.nonzero(current_precip), dtype=np.short)
+        #     if len(current_precip[0]) > 0:
+        #         self.precipitations3d_init[current_precip[0], current_precip[1], current_precip[2]] = True
 
     def generate_fetch_ind(self):
         size = 3 + (self.param["neigh_range"] - 1) * 2
@@ -1035,3 +1030,6 @@ class CellularAutomata:
         # for step, t in enumerate(iter_shifts):
         #     t_ind = np.where(((all_coord[0] - t[1]) % 3 == 0) & ((all_coord[1] - t[0]) % 3 == 0))[0]
         #     self.fetch_ind[step] = all_coord[:, t_ind]
+
+    def insert_last_it(self):
+        self.utils.db.insert_last_iteration(self.iteration)

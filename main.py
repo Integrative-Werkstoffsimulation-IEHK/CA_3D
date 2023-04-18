@@ -1,11 +1,12 @@
 import copy
 from engine import *
+import traceback
 
 if __name__ == '__main__':
 
     user_input = {"oxidant": {"primary": {"elem": "O",
                                           "diffusion_condition": "O in Ni Krupp",
-                                          "cells_concentration": 0.04},
+                                          "cells_concentration": 0.03},
                               "secondary": {"elem": "None",
                                             "diffusion_condition": "N in Ni Krupp",
                                             "cells_concentration": 0.01}
@@ -31,7 +32,7 @@ if __name__ == '__main__':
                   "temperature": 1100,  # °C
                   "n_cells_per_axis": 102,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
                   "n_iterations": 10000,  # must be >= n_cells_per_axis
-                  "stride": 10,  # n_iterations / stride = n_iterations for outward diffusion
+                  "stride": 9999999999,  # n_iterations / stride = n_iterations for outward diffusion
                   "sim_time": 72000,  # [sek]
                   "size": 1000 * (10**-6),  # [m]
 
@@ -62,9 +63,20 @@ if __name__ == '__main__':
                   }
 
     eng = CellularAutomata(user_input=user_input)
-    eng.simulation()
+    try:
+        eng.simulation()
+    finally:
+        eng.save_results()
+        eng.insert_last_it()
+        eng.utils.db.conn.commit()
+        print()
+        print("____________________________________________________________")
+        print("Simulation was closed at Iteration: ", eng.iteration)
+        print("____________________________________________________________")
+        print()
+        traceback.print_exc()
 
-    # # inw_sec = [0.001, 0.002, 0.003, 0.004, 0.005, 0.1, 0.3, 0.6, 1]
+# # inw_sec = [0.001, 0.002, 0.003, 0.004, 0.005, 0.1, 0.3, 0.6, 1]
     #
     # # outw_sec = [0.001, 0.002, 0.003, 0.004, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.15, 0.2, 0.25,
     # #             0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1]

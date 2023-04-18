@@ -1,7 +1,8 @@
-matplotlib     
+matplotlib
 numpy
 pandas
-progressbar==2.5      
+progressbar
 progressbar2==4.0.0   
 pyvoro
 scipy
+numba

@@ -11,7 +11,7 @@ visualise = Visualisation(database_name)
 # visualise.animate_3d(animate_separate=False, const_cam_pos=False)
 #
 # visualise.plot_3d(plot_separate=True, const_cam_pos=False)
-# visualise.plot_3d(plot_separate=True, const_cam_pos=False, iteration=800)
+# visualise.plot_3d(plot_separate=True, const_cam_pos=False, iteration=956)
 
 # visualise.animate_2d(plot_separate=False)
 
@@ -20,6 +20,7 @@ visualise = Visualisation(database_name)
 
 # visualise.animate_concentration(conc_type="cells", analytic_sol=False)
 
-visualise.plot_concentration(plot_separate=False, conc_type="atomic", analytic_sol=False)
+visualise.plot_concentration(plot_separate=False, conc_type="cells", analytic_sol=False)
+# visualise.plot_concentration(plot_separate=False, conc_type="cells", analytic_sol=False, iteration=956)
 
 # visualise.plot_h()
