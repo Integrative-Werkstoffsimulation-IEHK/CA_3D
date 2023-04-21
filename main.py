@@ -6,7 +6,7 @@ if __name__ == '__main__':
 
     user_input = {"oxidant": {"primary": {"elem": "O",
                                           "diffusion_condition": "O in Ni Krupp",
-                                          "cells_concentration": 0.03},
+                                          "cells_concentration": 0.01},
                               "secondary": {"elem": "None",
                                             "diffusion_condition": "N in Ni Krupp",
                                             "cells_concentration": 0.01}
@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
                   "active_element": {"primary": {"elem": "Cr",
                                                  "diffusion_condition": "Cr in Ni Krupp",
-                                                 "mass_concentration": 0.25,
+                                                 "mass_concentration": 0.0001,
                                                  "cells_concentration": 0.4},
                                      "secondary": {"elem": "None",
                                                    "diffusion_condition": "Al in Ni Krupp",
@@ -32,7 +32,7 @@ if __name__ == '__main__':
                   "temperature": 1100,  # °C
                   "n_cells_per_axis": 102,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
                   "n_iterations": 10000,  # must be >= n_cells_per_axis
-                  "stride": 9999999999,  # n_iterations / stride = n_iterations for outward diffusion
+                  "stride": 999999999,  # n_iterations / stride = n_iterations for outward diffusion
                   "sim_time": 72000,  # [sek]
                   "size": 1000 * (10**-6),  # [m]
 
@@ -43,10 +43,10 @@ if __name__ == '__main__':
                   "nucleation_probability": 1,
                   "het_factor": 1000,
 
-                  "dissolution_p": 0.001,
-                  "dissolution_n": 100,
+                  "dissolution_p": 0.01,
+                  "dissolution_n": 10,
                   "exponent_power": 3,  # not used anymore
-                  "block_scale_factor": 1.5,
+                  "block_scale_factor": 20,
 
                   "inward_diffusion": True,
                   "outward_diffusion": True,

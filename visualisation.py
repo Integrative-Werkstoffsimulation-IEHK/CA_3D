@@ -16,6 +16,7 @@ class Visualisation:
         self.param = None
         self.axlim = None
         self.shape = None
+        self.last_i = None
         self.generate_param_from_db()
         self.cell_size = 1
         self.linewidth = 1
@@ -58,6 +59,8 @@ class Visualisation:
         utils = utilities.Utils(user_input)
         utils.generate_param()
         utils.print_init_var()
+        self.c.execute("SELECT last_i from time_parameters")
+        self.last_i = self.c.fetchone()[0]
         self.compute_elapsed_time()
         self.param = utils.param
         self.axlim = self.param["n_cells_per_axis"]
@@ -79,9 +82,7 @@ class Visualisation:
             s = elapsed_time_sek - h * 3600 - m * 60
             message = f'{int(h)}h:{int(m)}m:{int(s)}s'
         else:
-            self.c.execute("SELECT last_i from time_parameters")
-            last_i = self.c.fetchone()[0]
-            message = f'Simulation was interrupted at iteration = {last_i}'
+            message = f'Simulation was interrupted at iteration = {self.last_i}'
 
         print(f"""
 TIME:------------------------------------------------------------
@@ -99,17 +100,17 @@ ELAPSED TIME: {message}
                 ax_sprecip.cla()
                 ax_tprecip.cla()
                 ax_qtprecip.cla()
-
-                if self.param["inward_diffusion"]:
-                    self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
-                    items = np.array(self.c.fetchall())
-                    if np.any(items):
-                        ax_inward.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b', s=1)
-                    if self.param["secondary_oxidant_exists"]:
-                        self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
-                        items = np.array(self.c.fetchall())
-                        if np.any(items):
-                            ax_sinward.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='deeppink', s=1)
+                #
+                # if self.param["inward_diffusion"]:
+                #     self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
+                #     items = np.array(self.c.fetchall())
+                #     if np.any(items):
+                #         ax_inward.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b', s=1)
+                #     if self.param["secondary_oxidant_exists"]:
+                #         self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
+                #         items = np.array(self.c.fetchall())
+                #         if np.any(items):
+                #             ax_sinward.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='deeppink', s=1)
                 # if self.param["outward_diffusion"]:
                 #     self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
                 #     items = np.array(self.c.fetchall())
@@ -287,7 +288,7 @@ ELAPSED TIME: {message}
 
     def plot_3d(self, plot_separate=False, iteration=None, const_cam_pos=False):
         if iteration is None:
-            iteration = self.param["n_iterations"] - 1
+            iteration = self.last_i
         fig = plt.figure()
         if plot_separate:
             ax_inward = fig.add_subplot(341, projection='3d')
@@ -468,7 +469,7 @@ ELAPSED TIME: {message}
 
     def plot_2d(self, plot_separate=False, iteration=None, slice_pos=None):
         if iteration is None:
-            iteration = self.param["n_iterations"] - 1
+            iteration = self.last_i
         if slice_pos is None:
             slice_pos = int(self.param["n_cells_per_axis"] / 2)
         fig = plt.figure()
@@ -802,35 +803,35 @@ ELAPSED TIME: {message}
             quaternary_product_mass = np.zeros(self.axlim, dtype=int)
             quaternary_product_eq_mat_moles = np.zeros(self.axlim, dtype=int)
 
-            if self.param["inward_diffusion"]:
-                self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
-                items = np.array(self.c.fetchall())
-                inward = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
-                inward_moles = inward * self.param["oxidant"]["primary"]["moles_per_cell"]
-                inward_mass = inward * self.param["oxidant"]["primary"]["mass_per_cell"]
-
-                if self.param["secondary_oxidant_exists"]:
-                    self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
-                    items = np.array(self.c.fetchall())
-                    sinward = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
-                    sinward_moles = sinward * self.param["oxidant"]["secondary"]["moles_per_cell"]
-                    sinward_mass = sinward * self.param["oxidant"]["secondary"]["mass_per_cell"]
-
-            if self.param["outward_diffusion"]:
-                self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
-                items = np.array(self.c.fetchall())
-                outward = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
-                outward_moles = outward * self.param["active_element"]["primary"]["moles_per_cell"]
-                outward_mass = outward * self.param["active_element"]["primary"]["mass_per_cell"]
-                outward_eq_mat_moles = outward * self.param["active_element"]["primary"]["eq_matrix_moles_per_cell"]
-                if self.param["secondary_active_element_exists"]:
-                    self.c.execute("SELECT * from secondary_active_iter_{}".format(iteration))
-                    items = np.array(self.c.fetchall())
-                    soutward = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
-                    soutward_moles = soutward * self.param["active_element"]["secondary"]["moles_per_cell"]
-                    soutward_mass = soutward * self.param["active_element"]["secondary"]["mass_per_cell"]
-                    soutward_eq_mat_moles = soutward * self.param["active_element"]["secondary"][
-                        "eq_matrix_moles_per_cell"]
+            # if self.param["inward_diffusion"]:
+            #     self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
+            #     items = np.array(self.c.fetchall())
+            #     inward = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
+            #     inward_moles = inward * self.param["oxidant"]["primary"]["moles_per_cell"]
+            #     inward_mass = inward * self.param["oxidant"]["primary"]["mass_per_cell"]
+            #
+            #     if self.param["secondary_oxidant_exists"]:
+            #         self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
+            #         items = np.array(self.c.fetchall())
+            #         sinward = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
+            #         sinward_moles = sinward * self.param["oxidant"]["secondary"]["moles_per_cell"]
+            #         sinward_mass = sinward * self.param["oxidant"]["secondary"]["mass_per_cell"]
+            #
+            # if self.param["outward_diffusion"]:
+            #     self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
+            #     items = np.array(self.c.fetchall())
+            #     outward = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
+            #     outward_moles = outward * self.param["active_element"]["primary"]["moles_per_cell"]
+            #     outward_mass = outward * self.param["active_element"]["primary"]["mass_per_cell"]
+            #     outward_eq_mat_moles = outward * self.param["active_element"]["primary"]["eq_matrix_moles_per_cell"]
+            #     if self.param["secondary_active_element_exists"]:
+            #         self.c.execute("SELECT * from secondary_active_iter_{}".format(iteration))
+            #         items = np.array(self.c.fetchall())
+            #         soutward = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
+            #         soutward_moles = soutward * self.param["active_element"]["secondary"]["moles_per_cell"]
+            #         soutward_mass = soutward * self.param["active_element"]["secondary"]["mass_per_cell"]
+            #         soutward_eq_mat_moles = soutward * self.param["active_element"]["secondary"][
+            #             "eq_matrix_moles_per_cell"]
 
             if self.param["compute_precipitations"]:
                 self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
@@ -1016,7 +1017,7 @@ ELAPSED TIME: {message}
 
     def plot_concentration(self, plot_separate=True, iteration=None, conc_type="atomic", analytic_sol=False):
         if iteration is None:
-            iteration = self.param["n_iterations"] - 1
+            iteration = self.last_i
 
         inward = np.zeros(self.axlim, dtype=int)
         inward_moles = np.zeros(self.axlim, dtype=int)

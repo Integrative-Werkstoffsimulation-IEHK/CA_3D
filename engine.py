@@ -1,10 +1,23 @@
 import numpy as np
-
+import numba
 from utils.utilities import *
 import gc
 import progressbar
 import elements
 import time
+
+
+@numba.njit(nopython=True)
+def go_around(array_3d, arrounds):
+    all_neighbours = []
+    # trick to initialize an empty list with known type
+    single_neighbours = [np.ubyte(x) for x in range(0)]
+    for seed_arrounds in arrounds:
+        for point in seed_arrounds:
+            single_neighbours.append(array_3d[point[0], point[1], point[2]])
+        all_neighbours.append(single_neighbours)
+        single_neighbours = [np.ubyte(x) for x in range(0)]
+    return np.array(all_neighbours, dtype=np.bool_)
 
 
 class CellularAutomata:
@@ -102,17 +115,19 @@ class CellularAutomata:
                 self.decomposition = self.decomposition_0
                 self.primary_oxidant.scale = self.primary_product
 
+            # self.precipitations3d = np.full(self.shape, False)
             # self.half_thickness = 20
             # middle = int(self.cells_per_axis / 2)
             # minus = middle - self.half_thickness
             # plus = middle + self.half_thickness
             # self.primary_product.c3d = np.zeros(self.shape, dtype=int)
             # self.primary_product.c3d[minus:plus, minus:plus, minus:plus] = 1
-            # shift = 20
-            # self.precipitations[minus + shift:plus + shift, minus + shift:plus + shift, minus + shift:plus + shift] = 1
+            # shift = 0
+            # self.precipitations3d[minus + shift:plus + shift, minus + shift:plus + shift, minus + shift:plus + shift] = True
             # self.precipitations = np.array(np.nonzero(self.precipitations), dtype=int)
             # self.precipitations3d = np.full(self.single_page_shape, False)
             # self.precipitations3d_sec = np.full(self.single_page_shape, False)
+
             self.threshold_inward = self.param["threshold_inward"]
             if self.threshold_inward < 2:
                 self.check_intersection = self.ci_single
@@ -149,14 +164,20 @@ class CellularAutomata:
         """
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
             if self.param["compute_precipitations"]:
+                # b = time.time()
                 self.precip_func()
-                # self.decomposition_0()
+                # print("Precip: ", time.time() - b)
+                self.decomposition_0()
             if self.param["inward_diffusion"]:
+                # b = time.time()
                 self.diffusion_inward()
+                # print("Inward diff: ", time.time() - b)
             if self.param["outward_diffusion"]:
+                # b = time.time()
                 self.diffusion_outward()
+                # print("Outward diff: ", time.time() - b)
             if self.param["save_whole"] and self.iteration != self.n_iter - 1:
-                self.save_results()
+                self.save_results_only_prod()
 
         # self.save_results()
         end = time.time()
@@ -172,9 +193,9 @@ class CellularAutomata:
             dec_p_one_open = np.array([[], [], []], dtype=np.short)
 
             all_arounds = self.utils.calc_sur_ind_decompose(self.precipitations)
-            neighbours = np.array([[self.primary_product.c3d[point[0], point[1], point[2]] for point in seed_arrounds]
-                                   for seed_arrounds in all_arounds], dtype=bool)
-
+            # neighbours = np.array([[self.primary_product.c3d[point[0], point[1], point[2]] for point in seed_arrounds]
+            #                        for seed_arrounds in all_arounds], dtype=bool)
+            neighbours = go_around(self.primary_product.c3d, all_arounds)
             arr_len_flat = np.array([np.sum(item[:6]) for item in neighbours], dtype=np.ubyte)
             arr_len_corners = np.array([np.sum(item[6:14]) for item in neighbours], dtype=np.ubyte)
             arr_len_side_corners = np.array([np.sum(item[14:]) for item in neighbours], dtype=np.ubyte)
@@ -280,7 +301,7 @@ class CellularAutomata:
         furthest_index = self.primary_oxidant.calc_furthest_index()
         if furthest_index > self.curr_max_furthest:
             self.curr_max_furthest = furthest_index
-        self.primary_oxidant.transform_to_3d(furthest_index)
+        self.primary_oxidant.transform_to_3d(furthest_index, self.curr_max_furthest)
         if self.iteration % self.param["stride"] == 0:
             self.primary_active.transform_to_3d(self.curr_max_furthest)
 
@@ -594,9 +615,13 @@ class CellularAutomata:
     def ci_single(self, seeds):
         """
         """
+
         all_arounds = self.utils.calc_sur_ind_formation(seeds, self.objs[self.case]["active"].c3d.shape[2] - 1)
-        neighbours = np.array([[self.objs[self.case]["active"].c3d[point[0], point[1], point[2]]
-                                for point in seed_arrounds] for seed_arrounds in all_arounds], dtype=bool)
+
+        neighbours = go_around(self.objs[self.case]["active"].c3d, all_arounds)
+        # neighbours = np.array([[self.objs[self.case]["active"].c3d[point[0], point[1], point[2]]
+        #                         for point in seed_arrounds] for seed_arrounds in all_arounds], dtype=bool)
+
         arr_len_out = np.array([np.sum(item) for item in neighbours], dtype=np.ubyte)
         temp_ind = np.where(arr_len_out >= self.threshold_outward)[0]
 
@@ -769,7 +794,7 @@ class CellularAutomata:
             self.secondary_oxidant.diffuse()
 
     def diffusion_outward(self):
-        if (self.iteration + 1) % self.param["stride"] == 0 and self.iteration != 0:
+        if (self.iteration + 1) % self.param["stride"] == 0:
             self.primary_active.transform_to_descards()
             self.primary_active.diffuse()
             if self.param["secondary_active_element_exists"]:
@@ -974,21 +999,21 @@ class CellularAutomata:
             if self.param["secondary_active_element_exists"]:
                 self.secondary_active.transform_to_3d(self.curr_max_furthest)
 
-    def save_results_only_prod(self, iteration):
+    def save_results_only_prod(self):
         if self.param["compute_precipitations"]:
-            self.utils.db.insert_particle_data("primary_product", iteration,
+            self.utils.db.insert_particle_data("primary_product", self.iteration,
                                                self.primary_product.transform_c3d())
 
             if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
-                self.utils.db.insert_particle_data("secondary_product", iteration,
+                self.utils.db.insert_particle_data("secondary_product", self.iteration,
                                                    self.secondary_product.transform_c3d())
-                self.utils.db.insert_particle_data("ternary_product", iteration,
+                self.utils.db.insert_particle_data("ternary_product", self.iteration,
                                                    self.ternary_product.transform_c3d())
-                self.utils.db.insert_particle_data("quaternary_product", iteration,
+                self.utils.db.insert_particle_data("quaternary_product", self.iteration,
                                                    self.quaternary_product.transform_c3d())
 
             elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
-                self.utils.db.insert_particle_data("secondary_product", iteration,
+                self.utils.db.insert_particle_data("secondary_product", self.iteration,
                                                    self.secondary_product.transform_c3d())
 
     def fix_init_precip(self, u_bound, product):
