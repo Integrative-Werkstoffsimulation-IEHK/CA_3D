@@ -59,8 +59,8 @@ class ActiveElem:
         self.p4_range = 4 * self.p1_range
         self.p_r_range = self.p4_range + settings["probabilities"][1]
         self.n_per_page = settings["n_per_page"]
-        self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
-        # self.precip_transform_depth = int(1)  # min self.neigh_range !!!
+        # self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
+        self.precip_transform_depth = int(21)  # min self.neigh_range !!!
 
         self.extended_axis = self.cells_per_axis + self.neigh_range
         self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
@@ -68,7 +68,7 @@ class ActiveElem:
         self.i_descards = None
         self.i_ind = None
         self.c3d = np.full(self.extended_shape, 0, dtype=np.ubyte)
-        self.cut_shape = None
+        # self.cut_shape = None
 
         # exact concentration space fill
         # ___________________________________________
@@ -187,20 +187,16 @@ class ActiveElem:
             depth = furthest_i + 1 + self.precip_transform_depth + 1
             last_i = depth - 1
 
-        self.cut_shape = (self.cells_per_axis, self.cells_per_axis, depth)
-        self.c3d[:, :, :depth] = 0
-        # print("Outward sum after flush", np.sum(self.c3d))
-
+        # self.cut_shape = (self.cells_per_axis, self.cells_per_axis, depth)
+        # self.c3d[:, :, :depth] = 0
         self.i_ind = np.array(np.where(self.cells[2] < last_i)[0], dtype=np.uint32)
         self.i_descards = np.array(self.cells[:, self.i_ind], dtype=np.short)
         insert_counts(self.c3d, self.i_descards)
-        # print("Outward sum after insert", np.sum(self.c3d))
-        # print()
 
     def transform_to_descards(self):
         ind_out = decrease_counts(self.c3d, self.i_descards)
-        self.cells = np.delete(self.cells, ind_out, 1)
-        self.dirs = np.delete(self.dirs, ind_out, 1)
+        self.cells = np.delete(self.cells, self.i_ind[ind_out], 1)
+        self.dirs = np.delete(self.dirs, self.i_ind[ind_out], 1)
 
         decomposed = np.array(np.nonzero(self.c3d), dtype=np.short)
         if len(decomposed[0] > 0):
@@ -398,7 +394,7 @@ class OxidantElem:
 
     def transform_to_3d(self, furthest_i, depth):
         self.cut_shape = (self.cells_per_axis, self.cells_per_axis, 1 + furthest_i + 1)
-        self.c3d[:, :, :depth] = 0
+        # self.c3d[:, :, :depth] = 0
         # print("Inward sum after flush", np.sum(self.c3d))
         self.i_ind = np.array(np.where(self.cells[2] <= furthest_i)[0], dtype=np.uint32)
         self.i_descards = self.cells[:, self.i_ind]

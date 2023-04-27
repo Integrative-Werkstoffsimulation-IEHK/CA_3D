@@ -294,7 +294,6 @@ class Utils:
         else:
             new_tau = self.param["sim_time"] / (self.param["n_iterations"] / self.param["stride"])
             coeff = 6 * (new_tau * diff_coeff) / (self.param["l_ambda"] ** 2)
-
         c = (1 - coeff) / (1 + coeff)
         if -(c + 1) / 8 > (c - 1) / 8:
             t = -(c + 1) / 16

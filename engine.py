@@ -167,7 +167,7 @@ class CellularAutomata:
                 # b = time.time()
                 self.precip_func()
                 # print("Precip: ", time.time() - b)
-                self.decomposition_0()
+                # self.decomposition_0()
             if self.param["inward_diffusion"]:
                 # b = time.time()
                 self.diffusion_inward()
@@ -177,7 +177,7 @@ class CellularAutomata:
                 self.diffusion_outward()
                 # print("Outward diff: ", time.time() - b)
             if self.param["save_whole"] and self.iteration != self.n_iter - 1:
-                self.save_results_only_prod()
+                self.save_results()
 
         # self.save_results()
         end = time.time()

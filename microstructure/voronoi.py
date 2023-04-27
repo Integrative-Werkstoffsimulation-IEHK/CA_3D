@@ -1,6 +1,6 @@
 import pyvoro
 import matplotlib.pyplot as plt
-from . import bresenham
+# from . import bresenham
 import numpy as np
 import time
 
@@ -585,6 +585,7 @@ class VoronoiMicrostructure:
 
 # # Some tests
 if __name__ == "__main__":
+    import bresenham
     # _______Plot 3D______
     begin = time.time()
     micro = VoronoiMicrostructure()
