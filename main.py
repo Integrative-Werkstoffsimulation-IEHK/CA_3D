@@ -30,9 +30,9 @@ if __name__ == '__main__':
                   "diff_in_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
                   "diff_out_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
                   "temperature": 1100,  # °C
-                  "n_cells_per_axis": 60,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
-                  "n_iterations": 10000,  # must be >= n_cells_per_axis
-                  "stride": 20,  # n_iterations / stride = n_iterations for outward diffusion
+                  "n_cells_per_axis": 12,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
+                  "n_iterations": 1,  # must be >= n_cells_per_axis
+                  "stride": 100,  # n_iterations / stride = n_iterations for outward diffusion
                   "sim_time": 72000,  # [sek]
                   "size": 1000 * (10**-6),  # [m]
 
@@ -44,29 +44,29 @@ if __name__ == '__main__':
                   "het_factor": 1000,
 
                   "dissolution_p": 0.01,
-                  "dissolution_n": 10,
+                  "dissolution_n": 100,
                   "exponent_power": 3,  # not used anymore
-                  "block_scale_factor": 20,
+                  "block_scale_factor": 5,
 
                   "inward_diffusion": True,
-                  "outward_diffusion": True,
-                  "compute_precipitations": True,
+                  "outward_diffusion": False,
+                  "compute_precipitations": False,
                   "diffusion_in_precipitation": False,
 
                   "save_whole": False,
                   "save_path": 'W:/SIMCA/test_runs_data/',
 
-                  "neigh_range": 1  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
-                                    #          and           |  |  |  |  |   |   |   |   |   |
-                                    # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
-
+                  "neigh_range": 1,  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
+                                     #          and           |  |  |  |  |   |   |   |   |   |
+                                     # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
+                  "decompose_precip": False
                   }
 
     eng = CellularAutomata(user_input=user_input)
     try:
         eng.simulation()
     finally:
-        eng.save_results()
+        # eng.save_results()
         eng.insert_last_it()
         eng.utils.db.conn.commit()
         print()

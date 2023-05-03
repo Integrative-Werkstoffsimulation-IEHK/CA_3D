@@ -465,18 +465,22 @@ class Utils:
         print(f"""DATA BASE AT: {self.param["save_path"]}""")
         print(f"""-------------------------------------------------------""", end="")
         print(f"""
-SYSTEM PARAMETERS:--------------------------------------------------PRECIPITATION:--------------------------------------------------------------------------------------
-            * Number of Cells Per Axis: {self.param["n_cells_per_axis"]}                        /        * Solubility product: {self.param["sol_prod"]}                    Zhou and Wei Parameters:
-            * Total Iterations:         {self.param["n_iterations"]} (Stirde: {self.param["stride"]})        /        * Threshold Inward: {self.param["threshold_inward"]}                             * p: {self.param["dissolution_p"]}
-            * Time:                     {self.param["sim_time"]} [sek] ({self.param["sim_time"] / 3600} [h])   /        * Threshold Outward: {self.param["threshold_outward"]}                            * n: {self.param["dissolution_n"]}
-            * Length:                   {self.param["size"]} [m]                 /        * Heterogeneous Factor:  {self.param["het_factor"]}                      * exponent power: {self.param["exponent_power"]}    
-                                                                   /        * Nucleation probability: {self.param["nucleation_probability"]}                   * block factor: {self.param["block_scale_factor"]}
-                                                                   /        * Neighbourhood distance: {self.param["neigh_range"]}
-                                                                   /        
-                                                                   /        Number of sides covered:              0       1       2        3        4        5       6
-                                                                   /        Nucleation Probabilities:           {self.param["nucleation_probability"]}    {nucl_prob[0]:.2f}    {nucl_prob[1]:.2f}     {nucl_prob[2]:.2f}     {nucl_prob[3]:.2f}     {nucl_prob[4]:.2f}     1
-                                                                   /        Dissolution Probabilities:          {dissol_prob[0]:.4f}  {dissol_prob[1]:.4f}  {dissol_prob[2]:.4f}   {dissol_prob[3]:.4f}   {dissol_prob[4]:.4f}   {dissol_prob[5]:.4f}    0
-                                                                   /        Dissolution Probabilities in block:   -       -       -      {dissol_prob_block[0]:.4f}   {dissol_prob_block[1]:.4f}   {dissol_prob_block[2]:.4f}    -""", end="")
+SYSTEM PARAMETERS:----------------------------------------------------/PRECIPITATION:--------------------------------------------------------------------------------------
+            * Number of Cells Per Axis: {self.param["n_cells_per_axis"]:<30}/    * Solubility product: {self.param["sol_prod"]:<20}Zhou and Wei Parameters:
+            * Total Iterations: _______ {self.param["n_iterations"]:<30}/    * Threshold Inward:   {self.param["threshold_inward"]:<20}* p: {self.param["dissolution_p"]}
+            * Stirde: _________________ {self.param["stride"]:<30}/    * Threshold Outward:  {self.param["threshold_outward"]:<20}* n: {self.param["dissolution_n"]}
+            * Time [sek]: _____________ {self.param["sim_time"]:<30}/    * Neighbourhood distance: {self.param["neigh_range"]:<20}* block factor: {self.param["block_scale_factor"]}
+            * Time [h]: _______________ {self.param["sim_time"] / 3600:<30}/
+            * Length [m]: _____________ {self.param["size"]:<30}/    * Heterogeneous Factor:  {self.param["het_factor"]}
+                                                                      /    * Nucleation probability: {self.param["nucleation_probability"]}                   
+            Modules:                                                  /    * Neighbourhood distance: {self.param["neigh_range"]}
+            * inward_diffusion: _______ {self.param["inward_diffusion"]:<30}/        
+            * outward_diffusion: ______ {self.param["outward_diffusion"]:<30}/    * Number of sides covered:              0       1       2        3        4        5       6
+            * compute_precipitations: _ {self.param["compute_precipitations"]:<30}/    * Nucleation Probabilities:           {self.param["nucleation_probability"]}    {nucl_prob[0]:.2f}    {nucl_prob[1]:.2f}     {nucl_prob[2]:.2f}     {nucl_prob[3]:.2f}     {nucl_prob[4]:.2f}     1
+            * diffusion_in_precip: ____ {self.param["diffusion_in_precipitation"]:<30}/    * Dissolution Probabilities:          {dissol_prob[0]:.4f}  {dissol_prob[1]:.4f}  {dissol_prob[2]:.4f}   {dissol_prob[3]:.4f}   {dissol_prob[4]:.4f}   {dissol_prob[5]:.4f}    0
+            * decompose_precip: _______ {self.param["decompose_precip"]:<30}/    * Dissolution Probabilities in block:   -       -       -      {dissol_prob_block[0]:.4f}   {dissol_prob_block[1]:.4f}   {dissol_prob_block[2]:.4f}    -
+            * full_cells: _____________ {self.param["full_cells"]:<30}
+""", end="")
         print(f"""
 ELEMENTS:---------------------------------------------------------------------------------------------------------------------------------------------------------------
 Primary Oxidant: {self.param["oxidant"]["primary"]["elem"]}                                                                        Primary Active: {self.param["active_element"]["primary"]["elem"]}

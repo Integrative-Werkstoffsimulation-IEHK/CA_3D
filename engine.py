@@ -164,22 +164,16 @@ class CellularAutomata:
         """
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
             if self.param["compute_precipitations"]:
-                # b = time.time()
                 self.precip_func()
-                # print("Precip: ", time.time() - b)
-                # self.decomposition_0()
+            if self.param["compute_precipitations"]:
+                self.decomposition_0()
             if self.param["inward_diffusion"]:
-                # b = time.time()
                 self.diffusion_inward()
-                # print("Inward diff: ", time.time() - b)
             if self.param["outward_diffusion"]:
-                # b = time.time()
                 self.diffusion_outward()
-                # print("Outward diff: ", time.time() - b)
             if self.param["save_whole"] and self.iteration != self.n_iter - 1:
                 self.save_results()
 
-        # self.save_results()
         end = time.time()
         self.elapsed_time = (end - self.begin)
         self.utils.db.insert_time(self.elapsed_time)

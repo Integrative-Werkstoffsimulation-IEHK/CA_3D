@@ -59,8 +59,8 @@ class ActiveElem:
         self.p4_range = 4 * self.p1_range
         self.p_r_range = self.p4_range + settings["probabilities"][1]
         self.n_per_page = settings["n_per_page"]
-        # self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
-        self.precip_transform_depth = int(21)  # min self.neigh_range !!!
+        self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
+        # self.precip_transform_depth = int(21)  # min self.neigh_range !!!
 
         self.extended_axis = self.cells_per_axis + self.neigh_range
         self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
@@ -68,23 +68,22 @@ class ActiveElem:
         self.i_descards = None
         self.i_ind = None
         self.c3d = np.full(self.extended_shape, 0, dtype=np.ubyte)
-        # self.cut_shape = None
 
         # exact concentration space fill
         # ___________________________________________
-        # self.cells = np.array([[], [], []], dtype=np.short)
-        # for plane_xind in range(self.cells_per_axis):
-        #     new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
-        #     new_cells = np.array(np.unravel_index(new_cells, (self.cells_per_axis, self.cells_per_axis)))
-        #     new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
-        #     self.cells = np.concatenate((self.cells, new_cells), 1)
-        # self.cells = np.array(self.cells, dtype=np.short)
+        self.cells = np.array([[], [], []], dtype=np.short)
+        for plane_xind in range(self.cells_per_axis):
+            new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
+            new_cells = np.array(np.unravel_index(new_cells, (self.cells_per_axis, self.cells_per_axis)))
+            new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
+            self.cells = np.concatenate((self.cells, new_cells), 1)
+        self.cells = np.array(self.cells, dtype=np.short)
         # ____________________________________________
 
         # approx concentration space fill
         # ____________________________________________
-        self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
-                                       dtype=np.short)
+        # self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
+        #                                dtype=np.short)
         # ____________________________________________
 
         # half space fill
@@ -99,10 +98,7 @@ class ActiveElem:
 
         self.current_count = self.n_per_page
 
-        self.rng = np.random.default_rng()
-
     def diffuse(self):
-        # diff_single(self.cells, self.dirs, self.rng)
         """
         Outgoing diffusion from the inside.
         """
@@ -181,14 +177,11 @@ class ActiveElem:
 
     def transform_to_3d(self, furthest_i):
         if furthest_i + 1 + self.precip_transform_depth + self.neigh_range > self.cells_per_axis:
-            depth = self.cells_per_axis + self.neigh_range
             last_i = self.cells_per_axis
         else:
             depth = furthest_i + 1 + self.precip_transform_depth + 1
             last_i = depth - 1
 
-        # self.cut_shape = (self.cells_per_axis, self.cells_per_axis, depth)
-        # self.c3d[:, :, :depth] = 0
         self.i_ind = np.array(np.where(self.cells[2] < last_i)[0], dtype=np.uint32)
         self.i_descards = np.array(self.cells[:, self.i_ind], dtype=np.short)
         insert_counts(self.c3d, self.i_descards)
@@ -205,6 +198,7 @@ class ActiveElem:
             new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
             new_dirs -= 1
             self.dirs = np.concatenate((self.dirs, new_dirs), axis=1)
+            self.c3d[:] = 0
 
     def count_cells_at_index(self, index):
         return len(np.where(self.cells[2] == index)[0])
@@ -224,7 +218,7 @@ class OxidantElem:
         self.furthest_index = None
         self.i_descards = None
         self.i_ind = None
-        self.cut_shape = None
+        # self.cut_shape = None
 
         self.extended_axis = self.cells_per_axis + self.neigh_range
         self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
@@ -392,15 +386,10 @@ class OxidantElem:
             new_dirs[2, :] = 1
             self.dirs = np.concatenate((self.dirs, new_dirs), axis=1)
 
-    def transform_to_3d(self, furthest_i, depth):
-        self.cut_shape = (self.cells_per_axis, self.cells_per_axis, 1 + furthest_i + 1)
-        # self.c3d[:, :, :depth] = 0
-        # print("Inward sum after flush", np.sum(self.c3d))
+    def transform_to_3d(self, furthest_i):
         self.i_ind = np.array(np.where(self.cells[2] <= furthest_i)[0], dtype=np.uint32)
         self.i_descards = self.cells[:, self.i_ind]
         insert_counts(self.c3d, self.i_descards)
-        # print("Inward sum after insert", np.sum(self.c3d))
-        # print()
 
     def transform_to_descards(self):
         ind_out = decrease_counts(self.c3d, self.i_descards)
@@ -420,8 +409,23 @@ class Product:
         cells_per_axis = settings["cells_per_axis"]
         shape = (cells_per_axis, cells_per_axis, cells_per_axis)
         self.oxidation_number = settings["oxidation_number"]
+
+        if self.oxidation_number == 1:
+            self.fix_full_cells = self.fix_full_cells_ox_numb_single
+        else:
+            self.fix_full_cells = self.fix_full_cells_ox_numb_mult
+
         self.c3d = np.full(shape, 0, dtype=np.ubyte)
         self.full_c3d = np.full(shape, False)
+
+    def fix_full_cells_ox_numb_single(self, new_precip):
+        self.full_c3d[new_precip[0], new_precip[1], new_precip[2]] = True
+
+    def fix_full_cells_ox_numb_mult(self, new_precip):
+        current_precip = np.array(self.c3d[new_precip[0], new_precip[1], new_precip[2]])
+        indexes = np.where(current_precip == self.oxidation_number)[0]
+        full_precip = new_precip[:, indexes]
+        self.full_c3d[full_precip[0], full_precip[1], full_precip[2]] = True
 
     def transform_c3d(self):
         precipitations = np.array(np.nonzero(self.c3d), dtype=np.short)
@@ -431,8 +435,4 @@ class Product:
     def transform_single_c3d(self):
         return np.array(np.nonzero(self.c3d), dtype=np.short)
 
-    def fix_full_cells(self, new_precip):
-        current_precip = np.array(self.c3d[new_precip[0], new_precip[1], new_precip[2]])
-        indexes = np.where(current_precip == self.oxidation_number)[0]
-        full_precip = new_precip[:, indexes]
-        self.full_c3d[full_precip[0], full_precip[1], full_precip[2]] = True
+
