@@ -620,20 +620,21 @@ class CellularAutomata:
         temp_ind = np.where(arr_len_out >= self.threshold_outward)[0]
 
         # activate for dependent growth___________________________________________________________________
-        # if len(temp_ind) > 0:
-        #     seeds = seeds[temp_ind]
-        #     neighbours = neighbours[temp_ind]
-        #     all_arounds = all_arounds[temp_ind]
-        #     flat_arounds = all_arounds[:, 0:6]
-        #     flat_neighbours = np.array(
-        #         [[self.precipitations3d_init[point[0], point[1], point[2]] for point in seed_arrounds]
-        #          for seed_arrounds in flat_arounds], dtype=bool)
-        #     arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
-        #     homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
-        #     needed_prob = self.const_a * 2.718281828 ** (self.const_b * arr_len_in_flat)
-        #     needed_prob[homogeneous_ind] = self.nucleation_probability[seeds[0][2]]  # seeds[0][2] - current plane index
-        #     randomise = np.random.random_sample(arr_len_in_flat.size)
-        #     temp_ind = np.where(randomise < needed_prob)[0]
+        if len(temp_ind) > 0:
+            seeds = seeds[temp_ind]
+            neighbours = neighbours[temp_ind]
+            all_arounds = all_arounds[temp_ind]
+            flat_arounds = all_arounds[:, 0:6]
+            flat_neighbours = go_around(self.precipitations3d_init, flat_arounds)
+            # flat_neighbours = np.array(
+            #     [[self.precipitations3d_init[point[0], point[1], point[2]] for point in seed_arrounds]
+            #      for seed_arrounds in flat_arounds], dtype=bool)
+            arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
+            homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
+            needed_prob = self.const_a * 2.718281828 ** (self.const_b * arr_len_in_flat)
+            needed_prob[homogeneous_ind] = self.nucleation_probability[seeds[0][2]]  # seeds[0][2] - current plane index
+            randomise = np.random.random_sample(arr_len_in_flat.size)
+            temp_ind = np.where(randomise < needed_prob)[0]
         # _________________________________________________________________________________________________
 
         if len(temp_ind) > 0:
