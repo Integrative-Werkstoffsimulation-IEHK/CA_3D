@@ -1,7 +1,5 @@
-import numpy as np
 import numba
 from utils.utilities import *
-import gc
 import progressbar
 import elements
 import time
@@ -20,6 +18,15 @@ def go_around(array_3d, arrounds):
     return np.array(all_neighbours, dtype=np.bool_)
 
 
+@numba.njit(nopython=True)
+def check_at_coord(array_3d, coordinates):
+    # trick to initialize an empty list with known type
+    result_coords = [np.bool_(x) for x in range(0)]
+    for single_coordinate in coordinates:
+        result_coords.append(array_3d[single_coordinate[0], single_coordinate[1], single_coordinate[2]])
+    return np.array(result_coords, dtype=np.bool_)
+
+
 class CellularAutomata:
     """
     TODO: 1 -> Write comments.
@@ -30,7 +37,7 @@ class CellularAutomata:
         # pre settings
         if user_input is None:
             # setting default parameters if no user input is given
-            user_input = physical_data.DEFAULT_PARAM
+            user_input = templates.DEFAULT_PARAM
         self.utils = Utils(user_input)
         self.utils.create_database()
         self.utils.generate_param()
@@ -48,7 +55,7 @@ class CellularAutomata:
         self.n_iter = self.param["n_iterations"]
         self.iteration = None
         self.curr_max_furthest = 0
-        self.objs = physical_data.DEFAULT_OBJ_REF
+        self.objs = templates.DEFAULT_OBJ_REF
 
         # setting objects for inward diffusion
         if self.param["inward_diffusion"]:
@@ -56,7 +63,7 @@ class CellularAutomata:
             self.objs[0]["oxidant"] = self.primary_oxidant
             self.objs[1]["oxidant"] = self.primary_oxidant
             # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
-            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk
+            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
 
             if self.param["secondary_oxidant_exists"]:
                 self.secondary_oxidant = elements.OxidantElem(self.param["oxidant"]["secondary"])
@@ -80,6 +87,7 @@ class CellularAutomata:
             self.precipitations3d_init = np.full((self.cells_per_axis, self.cells_per_axis, self.cells_per_axis),
                                                  False, dtype=bool)
             self.case = 0
+            # self.dependent_growth = True
 
             self.primary_product = elements.Product(self.param["product"]["primary"])
             self.objs[0]["product"] = self.primary_product
@@ -157,22 +165,29 @@ class CellularAutomata:
             self.het_factor = self.param["het_factor"]
             self.const_a = (1 / (self.het_factor * self.nucleation_probability[0])) ** (-6 / 5)
             self.const_b = log(1 / (self.het_factor * self.nucleation_probability[0])) * (1 / 5)
+
+            self.probabilities = probabilities.NucleationProbabilities(self.param)
+
         self.begin = time.time()
 
     def simulation(self):
         """
         """
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
-            if self.param["compute_precipitations"]:
+            for _ in range(10):
                 self.precip_func()
-            if self.param["compute_precipitations"]:
                 self.decomposition_0()
+            # if self.param["compute_precipitations"]:
+            #     self.precip_func()
+            # if self.param["decompose_precip"]:
+            #     self.decomposition_0()
+
             if self.param["inward_diffusion"]:
                 self.diffusion_inward()
             if self.param["outward_diffusion"]:
                 self.diffusion_outward()
-            if self.param["save_whole"] and self.iteration != self.n_iter - 1:
-                self.save_results()
+            if self.param["save_whole"]:
+                self.save_results_only_prod()
 
         end = time.time()
         self.elapsed_time = (end - self.begin)
@@ -181,7 +196,7 @@ class CellularAutomata:
 
     def decomposition_0(self):
         self.precipitations = self.primary_product.transform_c3d()
-        if len(self.precipitations[0] > 0):
+        if len(self.precipitations[0]) > 0:
             dec_p_three_open = np.array([[], [], []], dtype=np.short)
             dec_p_two_open = np.array([[], [], []], dtype=np.short)
             dec_p_one_open = np.array([[], [], []], dtype=np.short)
@@ -272,23 +287,24 @@ class CellularAutomata:
 
             todec = np.concatenate((dec_pn, dec_p_three_open, dec_p_two_open, dec_p_one_open), axis=1)
 
-            if len(todec[0] > 0):
-                self.primary_oxidant.cells = np.concatenate((self.primary_oxidant.cells, todec), axis=1)
-                new_dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(todec[0]))
-                new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
-                new_dirs -= 1
-                self.primary_oxidant.dirs = np.concatenate((self.primary_oxidant.dirs, new_dirs), axis=1)
-
+            if len(todec[0]) > 0:
                 counts = np.unique(np.ravel_multi_index(todec, self.shape), return_counts=True)
                 dec = np.array(np.unravel_index(counts[0], self.shape), dtype=np.short)
                 counts = np.array(counts[1], dtype=np.ubyte)
 
                 self.primary_product.c3d[dec[0], dec[1], dec[2]] -= counts
                 self.primary_product.full_c3d[dec[0], dec[1], dec[2]] = False
-                dec[2] += 1
                 self.primary_active.c3d[dec[0], dec[1], dec[2]] += counts
-                # if self.iteration == 0:
-                #     self.primary_active.transform_to_descards()
+
+                # push back the oxidant cells to avoid nucl + disol jumps
+                to_shift_back = np.where(todec[2] > 0)
+                todec[2, to_shift_back] -= 1
+
+                self.primary_oxidant.cells = np.concatenate((self.primary_oxidant.cells, todec), axis=1)
+                new_dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(todec[0]))
+                new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
+                new_dirs -= 1
+                self.primary_oxidant.dirs = np.concatenate((self.primary_oxidant.dirs, new_dirs), axis=1)
 
     def precipitation_0(self):
         # Only one oxidant and one active elements exist. Only one product can be created
@@ -339,11 +355,11 @@ class CellularAutomata:
     def precipitation_0_cells(self):
         # Only one oxidant and one active elements exist. Only one product can be created
         furthest_index = self.primary_oxidant.calc_furthest_index()
-        if furthest_index > self.curr_max_furthest:
-            self.curr_max_furthest = furthest_index
+        self.primary_oxidant.transform_to_3d(furthest_index)
 
-        self.primary_oxidant.transform_to_3d(furthest_index, self.curr_max_furthest)
         if self.iteration % self.param["stride"] == 0:
+            if furthest_index >= self.curr_max_furthest:
+                self.curr_max_furthest = furthest_index
             self.primary_active.transform_to_3d(self.curr_max_furthest)
 
         oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
@@ -351,20 +367,11 @@ class CellularAutomata:
         active = np.array([np.sum(self.primary_active.c3d[:, :, plane_ind]) for plane_ind
                            in range(furthest_index + 1)], dtype=np.uint32)
         # product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
-        #                     in range(self.cells_per_axis)], dtype=np.uint32)
-        # print()
-        # print(product)
-        # product_fraction = np.array(product/self.cells_per_page)
-        # print(product_fraction)
-        # # closed = np.where(product_fraction >= 0.9)
-        # print("Current furthest: ", self.curr_max_furthest)
-        # print("Max product concentration (cells): ", product_fraction.max(initial=0))
-        # # if product_fraction.max(initial=0) > 0.9:
-        # #     print()
-        # # print(closed)
-        # # print()
+        #                     in range(furthest_index + 1)], dtype=np.uint32)
+
         oxidant_indexes = np.where(oxidant > 0)[0]
         active_indexes = np.where(active > 1)[0]
+        # product_indexes = np.where(product > seed_number)[0]
 
         min_act = active_indexes.min(initial=self.cells_per_axis + 10)
         if min_act < self.cells_per_axis:
@@ -374,9 +381,11 @@ class CellularAutomata:
             comb_indexes = [furthest_index]
 
         if len(comb_indexes) > 0:
-            # self.fix_init_precip(furthest_index, self.primary_product)
+            # if np.sum(product) > seed_number:
+            #     self.probabilities.set_constants(0.000000001, 10000000)
+
+            self.fix_init_precip(furthest_index, self.primary_product)
             self.precip_step(comb_indexes)
-            # print(np.sum(self.primary_product.c3d))
 
         self.primary_oxidant.transform_to_descards()
 
@@ -589,9 +598,10 @@ class CellularAutomata:
                 oxidant_cells = fetch_ind[:, np.nonzero(oxidant_cells)[0]]
 
                 # activate if "nucleation_probability" < 1 _____________________________
-                # randomise = np.random.random_sample(len(oxidant_cells[0]))
-                # temp_ind = np.where(randomise < self.nucleation_probability[plane_index])[0]
-                # oxidant_cells = oxidant_cells[:, temp_ind]
+                # if not self.dependent_growth:
+                #     randomise = np.random.random_sample(len(oxidant_cells[0]))
+                #     temp_ind = np.where(randomise < self.nucleation_probability[plane_index])[0]
+                #     oxidant_cells = oxidant_cells[:, temp_ind]
                 # ______________________________________________________________________
 
                 if len(oxidant_cells[0]) != 0:
@@ -611,11 +621,9 @@ class CellularAutomata:
         """
 
         all_arounds = self.utils.calc_sur_ind_formation(seeds, self.objs[self.case]["active"].c3d.shape[2] - 1)
-
         neighbours = go_around(self.objs[self.case]["active"].c3d, all_arounds)
         # neighbours = np.array([[self.objs[self.case]["active"].c3d[point[0], point[1], point[2]]
         #                         for point in seed_arrounds] for seed_arrounds in all_arounds], dtype=bool)
-
         arr_len_out = np.array([np.sum(item) for item in neighbours], dtype=np.ubyte)
         temp_ind = np.where(arr_len_out >= self.threshold_outward)[0]
 
@@ -624,15 +632,17 @@ class CellularAutomata:
             seeds = seeds[temp_ind]
             neighbours = neighbours[temp_ind]
             all_arounds = all_arounds[temp_ind]
-            flat_arounds = all_arounds[:, 0:6]
+            flat_arounds = all_arounds[:, 0:self.objs[self.case]["product"].lind_flat_arr]
             flat_neighbours = go_around(self.precipitations3d_init, flat_arounds)
             # flat_neighbours = np.array(
             #     [[self.precipitations3d_init[point[0], point[1], point[2]] for point in seed_arrounds]
             #      for seed_arrounds in flat_arounds], dtype=bool)
             arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
             homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
-            needed_prob = self.const_a * 2.718281828 ** (self.const_b * arr_len_in_flat)
-            needed_prob[homogeneous_ind] = self.nucleation_probability[seeds[0][2]]  # seeds[0][2] - current plane index
+            # needed_prob = self.const_a * 2.718281828 ** (self.const_b * arr_len_in_flat)
+            needed_prob = self.probabilities.get_probabilities(arr_len_in_flat)
+            # needed_prob[homogeneous_ind] = self.nucleation_probability[seeds[0][2]]  # seeds[0][2] - current plane index
+            needed_prob[homogeneous_ind] = self.probabilities.nucleation_probability[seeds[0][2]] # seeds[0][2] - current plane index
             randomise = np.random.random_sample(arr_len_in_flat.size)
             temp_ind = np.where(randomise < needed_prob)[0]
         # _________________________________________________________________________________________________
@@ -648,8 +658,8 @@ class CellularAutomata:
             coord = np.array([all_arounds[seed_ind][point_ind] for seed_ind, point_ind in enumerate(to_del)],
                              dtype=np.short)
             coord = np.reshape(coord, (len(coord) * self.threshold_outward, 3))
-
-            exists = [self.objs[self.case]["product"].full_c3d[point[0], point[1], point[2]] for point in coord]
+            # exists = [self.objs[self.case]["product"].full_c3d[point[0], point[1], point[2]] for point in coord]
+            exists = check_at_coord(self.objs[self.case]["product"].full_c3d, coord)
             temp_ind = np.where(exists)[0]
             coord = np.delete(coord, temp_ind, 0)
             seeds = np.delete(seeds, temp_ind, 0)

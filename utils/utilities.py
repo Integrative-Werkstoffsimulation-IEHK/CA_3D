@@ -1,8 +1,10 @@
 from . import physical_data
 from . import data_base
+from . import templates
 import sys
 import numpy as np
 from math import *
+from . import probabilities
 
 
 class Utils:
@@ -22,10 +24,10 @@ class Utils:
             self.ind_formation = self.generate_neigh_indexes()
         else:
             self.ind_formation = np.array(
-                [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1],  # 5 flat
-                 [1, 1, -1], [1, 1, 1], [1, -1, -1], [1, -1, 1],  # 9  corners
-                 [-1, 1, -1], [-1, 1, 1], [-1, -1, -1], [0, 0, 0],   # 13
-                 [-1, -1, 1], [1, 1, 0], [1, 0, -1], [1, 0, 1], [1, -1, 0], [0, 1, -1], [0, 1, 1],  # 19 side corners
+                [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1], [0, 0, 0],
+                 [1, 1, -1], [1, 1, 1], [1, -1, -1], [1, -1, 1],
+                 [-1, 1, -1], [-1, 1, 1], [-1, -1, -1],
+                 [-1, -1, 1], [1, 1, 0], [1, 0, -1], [1, 0, 1], [1, -1, 0], [0, 1, -1], [0, 1, 1],
                  [0, -1, -1], [0, -1, 1], [-1, 1, 0], [-1, 0, -1], [-1, 0, 1], [-1, -1, 0]], dtype=np.byte)
 
         self.ind_formation_noz = np.array(np.delete(self.ind_formation, 13, 0), dtype=np.byte)
@@ -329,55 +331,6 @@ class Utils:
         m_precip = m_act * self.param["threshold_outward"] + m_inward * self.param["threshold_inward"]
         return {"matrix": m_matrix, "active": m_act, "precipitation": m_precip, "inward": m_inward}
 
-    def get_nactcells_one_active(self):
-        mass_conc_active = self.param["active_element"]["primary"]["concentration"]
-        molar_mass_active = self.param["active_element"]["primary"]["molar_mass"]
-        moles_per_cell_active = self.param["active_element"]["primary"]["moles_per_cell"]
-
-        molar_mass_matrix = self.param["matrix_elem"]["molar_mass"]
-        moles_per_cell_matrix = self.param["matrix_elem"]["moles_per_cell"]
-        n2 = self.param["n_cells_per_axis"] ** 2
-
-        atomic_conc = mass_conc_active /\
-                      (mass_conc_active + (molar_mass_active / molar_mass_matrix) * (1 - mass_conc_active))
-
-        self.param["active_element"]["primary"]["atomic_conc"] = atomic_conc
-        self.param["active_element"]["primary"]["n_per_page"] = int((atomic_conc * moles_per_cell_matrix * n2) /
-                   (moles_per_cell_active + atomic_conc * (moles_per_cell_matrix - moles_per_cell_active)))
-
-    def get_nactcells_two_active(self):
-        mass_conc_active1 = self.param["active_element"]["primary"]["concentration"]
-        molar_mass_active1 = self.param["active_element"]["primary"]["molar_mass"]
-        moles_per_cell_active1 = self.param["active_element"]["primary"]["moles_per_cell"]
-
-        mass_conc_active2 = self.param["active_element"]["secondary"]["concentration"]
-        molar_mass_active2 = self.param["active_element"]["secondary"]["molar_mass"]
-        moles_per_cell_active2 = self.param["active_element"]["secondary"]["moles_per_cell"]
-
-        mass_conc_matrix = 1 - mass_conc_active1 - mass_conc_active2
-        molar_mass_matrix = self.param["matrix_elem"]["molar_mass"]
-        moles_per_cell_matrix = self.param["matrix_elem"]["moles_per_cell"]
-        n2 = self.param["n_cells_per_axis"] ** 2
-
-        atomic_conc1 = mass_conc_active1 /\
-                       (mass_conc_active1 + (molar_mass_active1 / molar_mass_active2) * mass_conc_active2 +
-                        (molar_mass_active1 / molar_mass_matrix) * mass_conc_matrix)
-
-        atomic_conc2 = mass_conc_active2 / \
-                       (mass_conc_active2 + (molar_mass_active2 / molar_mass_active1) * mass_conc_active1 +
-                        (molar_mass_active2 / molar_mass_matrix) * mass_conc_matrix)
-        atomic_conc_matrix = 1 - atomic_conc1 - atomic_conc2
-
-        floatn = (atomic_conc1 * moles_per_cell_matrix * n2) /\
-                 (moles_per_cell_active1 * atomic_conc_matrix + moles_per_cell_matrix *
-                 (atomic_conc1 + (moles_per_cell_active1 / moles_per_cell_active2) * atomic_conc2))
-        t_const = (moles_per_cell_active1 / moles_per_cell_active2) * atomic_conc2 / atomic_conc1
-
-        self.param["active_element"]["primary"]["atomic_conc"] = atomic_conc1
-        self.param["active_element"]["secondary"]["atomic_conc"] = atomic_conc2
-        self.param["active_element"]["primary"]["n_per_page"] = int(floatn)
-        self.param["active_element"]["secondary"]["n_per_page"] = int(floatn * t_const)
-
     def calc_sur_ind_decompose(self, seeds):
         """
         Calculating the descarts surrounding coordinates for each seed including the position of the seed itself.
@@ -474,12 +427,12 @@ SYSTEM PARAMETERS:----------------------------------------------------/PRECIPITA
             * Length [m]: _____________ {self.param["size"]:<30}/    * Heterogeneous Factor:  {self.param["het_factor"]}
                                                                       /    * Nucleation probability: {self.param["nucleation_probability"]}                   
             Modules:                                                  /    * Neighbourhood distance: {self.param["neigh_range"]}
-            * inward_diffusion: _______ {self.param["inward_diffusion"]:<30}/        
-            * outward_diffusion: ______ {self.param["outward_diffusion"]:<30}/    * Number of sides covered:              0       1       2        3        4        5       6
-            * compute_precipitations: _ {self.param["compute_precipitations"]:<30}/    * Nucleation Probabilities:           {self.param["nucleation_probability"]}    {nucl_prob[0]:.2f}    {nucl_prob[1]:.2f}     {nucl_prob[2]:.2f}     {nucl_prob[3]:.2f}     {nucl_prob[4]:.2f}     1
-            * diffusion_in_precip: ____ {self.param["diffusion_in_precipitation"]:<30}/    * Dissolution Probabilities:          {dissol_prob[0]:.4f}  {dissol_prob[1]:.4f}  {dissol_prob[2]:.4f}   {dissol_prob[3]:.4f}   {dissol_prob[4]:.4f}   {dissol_prob[5]:.4f}    0
-            * decompose_precip: _______ {self.param["decompose_precip"]:<30}/    * Dissolution Probabilities in block:   -       -       -      {dissol_prob_block[0]:.4f}   {dissol_prob_block[1]:.4f}   {dissol_prob_block[2]:.4f}    -
-            * full_cells: _____________ {self.param["full_cells"]:<30}
+            * inward_diffusion: _______ {bool(self.param["inward_diffusion"]):<30}/        
+            * outward_diffusion: ______ {bool(self.param["outward_diffusion"]):<30}/    * Number of sides covered:              0       1       2        3        4        5       6
+            * compute_precipitations: _ {bool(self.param["compute_precipitations"]):<30}/    * Nucleation Probabilities:           {self.param["nucleation_probability"]}    {nucl_prob[0]:.2f}    {nucl_prob[1]:.2f}     {nucl_prob[2]:.2f}     {nucl_prob[3]:.2f}     {nucl_prob[4]:.2f}     1
+            * diffusion_in_precip: ____ {bool(self.param["diffusion_in_precipitation"]):<30}/    * Dissolution Probabilities:          {dissol_prob[0]:.4f}  {dissol_prob[1]:.4f}  {dissol_prob[2]:.4f}   {dissol_prob[3]:.4f}   {dissol_prob[4]:.4f}   {dissol_prob[5]:.4f}    0
+            * decompose_precip: _______ {bool(self.param["decompose_precip"]):<30}/    * Dissolution Probabilities in block:   -       -       -      {dissol_prob_block[0]:.4f}   {dissol_prob_block[1]:.4f}   {dissol_prob_block[2]:.4f}    -
+            * full_cells: _____________ {bool(self.param["full_cells"]):<30}
 """, end="")
         print(f"""
 ELEMENTS:---------------------------------------------------------------------------------------------------------------------------------------------------------------
