@@ -1,30 +1,30 @@
-import numba
 from utils.utilities import *
+from utils.numba_functions import *
 import progressbar
 import elements
 import time
 
 
-@numba.njit(nopython=True)
-def go_around(array_3d, arrounds):
-    all_neighbours = []
-    # trick to initialize an empty list with known type
-    single_neighbours = [np.ubyte(x) for x in range(0)]
-    for seed_arrounds in arrounds:
-        for point in seed_arrounds:
-            single_neighbours.append(array_3d[point[0], point[1], point[2]])
-        all_neighbours.append(single_neighbours)
-        single_neighbours = [np.ubyte(x) for x in range(0)]
-    return np.array(all_neighbours, dtype=np.bool_)
-
-
-@numba.njit(nopython=True)
-def check_at_coord(array_3d, coordinates):
-    # trick to initialize an empty list with known type
-    result_coords = [np.bool_(x) for x in range(0)]
-    for single_coordinate in coordinates:
-        result_coords.append(array_3d[single_coordinate[0], single_coordinate[1], single_coordinate[2]])
-    return np.array(result_coords, dtype=np.bool_)
+# @numba.njit(nopython=True)
+# def go_around(array_3d, arrounds):
+#     all_neighbours = []
+#     # trick to initialize an empty list with known type
+#     single_neighbours = [np.ubyte(x) for x in range(0)]
+#     for seed_arrounds in arrounds:
+#         for point in seed_arrounds:
+#             single_neighbours.append(array_3d[point[0], point[1], point[2]])
+#         all_neighbours.append(single_neighbours)
+#         single_neighbours = [np.ubyte(x) for x in range(0)]
+#     return np.array(all_neighbours, dtype=np.bool_)
+#
+#
+# @numba.njit(nopython=True)
+# def check_at_coord(array_3d, coordinates):
+#     # trick to initialize an empty list with known type
+#     result_coords = [np.bool_(x) for x in range(0)]
+#     for single_coordinate in coordinates:
+#         result_coords.append(array_3d[single_coordinate[0], single_coordinate[1], single_coordinate[2]])
+#     return np.array(result_coords, dtype=np.bool_)
 
 
 class CellularAutomata:
@@ -174,13 +174,13 @@ class CellularAutomata:
         """
         """
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
-            for _ in range(10):
-                self.precip_func()
-                self.decomposition_0()
-            # if self.param["compute_precipitations"]:
+            # for _ in range(10):
             #     self.precip_func()
-            # if self.param["decompose_precip"]:
             #     self.decomposition_0()
+            if self.param["compute_precipitations"]:
+                self.precip_func()
+            if self.param["decompose_precip"]:
+                self.decomposition_0()
 
             if self.param["inward_diffusion"]:
                 self.diffusion_inward()
@@ -297,8 +297,9 @@ class CellularAutomata:
                 self.primary_active.c3d[dec[0], dec[1], dec[2]] += counts
 
                 # push back the oxidant cells to avoid nucl + disol jumps
-                to_shift_back = np.where(todec[2] > 0)
-                todec[2, to_shift_back] -= 1
+                # to_shift_back = np.where(todec[2] > 0)
+                # todec[2] -= 1
+                # todec[2, to_shift_back] -= 1
 
                 self.primary_oxidant.cells = np.concatenate((self.primary_oxidant.cells, todec), axis=1)
                 new_dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(todec[0]))

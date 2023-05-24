@@ -6,7 +6,7 @@ if __name__ == '__main__':
 
     user_input = {"oxidant": {"primary": {"elem": "O",
                                           "diffusion_condition": "O in Ni Krupp",
-                                          "cells_concentration": 0.0001},
+                                          "cells_concentration": 0.01},
                               "secondary": {"elem": "None",
                                             "diffusion_condition": "N in Ni Krupp",
                                             "cells_concentration": 0.01}
@@ -30,21 +30,21 @@ if __name__ == '__main__':
                   "diff_in_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
                   "diff_out_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
                   "temperature": 1100,  # °C
-                  "n_cells_per_axis": 300,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
-                  "n_iterations": 10000000,  # must be >= n_cells_per_axis
-                  "stride": 999999999999,  # n_iterations / stride = n_iterations for outward diffusion
+                  "n_cells_per_axis": 102,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
+                  "n_iterations": 100000,  # must be >= n_cells_per_axis
+                  "stride": 30,  # n_iterations / stride = n_iterations for outward diffusion
                   "sim_time": 72000,  # [sek]
-                  "size": 100 * (10**-6),  # [m]
+                  "size": 50 * (10**-6),  # [m]
 
                   "threshold_inward": 1,
                   "threshold_outward": 1,
                   "sol_prod": 0,  # 5.621 * 10 ** -10
 
-                  "nucleation_probability": 0.1,
-                  "het_factor": 5,
+                  "nucleation_probability": 0.01,
+                  "het_factor": 90,
 
                   "dissolution_p": 0.0000001,
-                  "dissolution_n": 20,
+                  "dissolution_n": 5,
                   "exponent_power": 0,  # not used anymore
                   "block_scale_factor": 10,
 
@@ -59,7 +59,7 @@ if __name__ == '__main__':
                   "neigh_range": 1,  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
                                      #          and           |  |  |  |  |   |   |   |   |   |
                                      # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
-                  "decompose_precip": True
+                  "decompose_precip": False
                   }
 
     eng = CellularAutomata(user_input=user_input)

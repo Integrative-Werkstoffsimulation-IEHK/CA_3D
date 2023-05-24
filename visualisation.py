@@ -18,7 +18,7 @@ class Visualisation:
         self.shape = None
         self.last_i = None
         self.generate_param_from_db()
-        self.cell_size = 1
+        self.cell_size = 3
         self.linewidth = 1
 
     def generate_param_from_db(self):

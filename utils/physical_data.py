@@ -6,8 +6,6 @@ MOLAR_MASS = {"Ti": 0.0479, "Ni": 0.0587, "Fe": 0.0558, "Cr": 0.052, "Al": 0.027
               "None": 1}  # kg/mol
 
 
-
-
 def get_diff_coeff(temperature, cond):
     diff_coeff = {"N in Ni20Cr2Ti Krupp": 4.7 * 10 ** -6 * exp(-125720 / (8.314 * (273 + temperature))),
                   "O in Ni at 1000 Smithells_Ransley": 2.4 * 10**-13,

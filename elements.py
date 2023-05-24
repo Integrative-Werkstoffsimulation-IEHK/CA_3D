@@ -1,29 +1,28 @@
 import time
-
 import numpy as np
 import gc
 import random
-import numba
 from microstructure import voronoi
+from utils.numba_functions import *
+from numba.typed import List
 
-
-@numba.njit(nopython=True)
-def insert_counts(array_3d, points):
-    for point in points.transpose():
-        array_3d[point[0], point[1], point[2]] += 1
-
-
-@numba.njit(nopython=True)
-def decrease_counts(array_3d, points):
-    zero_positions = []
-    for ind, point in enumerate(points.transpose()):
-        if array_3d[point[0], point[1], point[2]] > 0:
-            array_3d[point[0], point[1], point[2]] -= 1
-        else:
-            zero_positions.append(ind)
-    return zero_positions
-
-
+# @numba.njit(nopython=True)
+# def insert_counts(array_3d, points):
+#     for point in points.transpose():
+#         array_3d[point[0], point[1], point[2]] += 1
+#
+#
+# @numba.njit(nopython=True)
+# def decrease_counts(array_3d, points):
+#     zero_positions = []
+#     for ind, point in enumerate(points.transpose()):
+#         if array_3d[point[0], point[1], point[2]] > 0:
+#             array_3d[point[0], point[1], point[2]] -= 1
+#         else:
+#             zero_positions.append(ind)
+#     return zero_positions
+#
+#
 # @numba.njit(nopython=True)
 # def diff_single(cells, directions, random_rng):
 #
@@ -98,6 +97,11 @@ class ActiveElem:
 
         self.current_count = self.n_per_page
 
+        # self.rng = np.random.default_rng()
+        # probs = [self.p1_range, self.p2_range, self.p3_range, self.p4_range, self.p_r_range]
+        # self.probs = List()
+        # [self.probs.append(x) for x in probs]
+
     def diffuse(self):
         """
         Outgoing diffusion from the inside.
@@ -122,13 +126,11 @@ class ActiveElem:
         # reflection
         temp_ind = np.array(np.where((randomise > self.p4_range) & (randomise <= self.p_r_range))[0], dtype=np.uint32)
         self.dirs[:, temp_ind] *= -1
-        del temp_ind
-        gc.collect()
 
         self.cells = np.add(self.cells, self.dirs, casting="unsafe")
 
         # adjusting a coordinates of side points for correct shifting
-        ind = np.where(self.cells[2] == -1)[0]
+        ind = np.where(self.cells[2] < 0)[0]
         # closed left bound (reflection)
         self.cells[2, ind] = 1
         self.dirs[2, ind] = 1
@@ -286,7 +288,7 @@ class OxidantElem:
 
         self.cells = np.add(self.cells, self.dirs, casting="unsafe")
         # adjusting a coordinates of side points for correct shifting
-        ind = np.where(self.cells[2] <= -1)[0]
+        ind = np.where(self.cells[2] < 0)[0]
         # closed left bound (reflection)
         self.cells[2, ind] = 0
         self.dirs[2, ind] = 1
@@ -314,9 +316,12 @@ class OxidantElem:
         """
         # # Diffusion through the scale. If the current particle is inside the product particle
         # # it gets a new diffusion probabilities
-        exist = self.scale.c3d[self.cells[0], self.cells[1], self.cells[2]]
-        in_scale = np.array(np.where(exist > 0)[0], dtype=np.uint32)
-        out_scale = np.array(np.where(exist == 0)[0], dtype=np.uint32)
+
+        # exist = self.scale.c3d[self.cells[0], self.cells[1], self.cells[2]]
+        # in_scale = np.array(np.where(exist > 0)[0], dtype=np.uint32)
+        # out_scale = np.array(np.where(exist == 0)[0], dtype=np.uint32)
+
+        in_scale, out_scale = check_in_scale(self.scale.c3d, self.cells)
         self.dirs[:, in_scale] *= -1
 
         # Diffusion along grain boundaries
@@ -365,9 +370,16 @@ class OxidantElem:
 
         self.cells = np.add(self.cells, self.dirs, casting="unsafe")
         # adjusting a coordinates of side points for correct shifting
-        ind = np.where(self.cells[2] <= -1)[0]
+        ind = np.where(self.cells[2] < 0)[0]
+        # closed left bound (reflection)
         self.cells[2, ind] = 0
         self.dirs[2, ind] = 1
+        # _______________________
+        # open left bound___________________________
+        # self.cells = np.delete(self.cells, ind, 1)
+        # self.dirs = np.delete(self.dirs, ind, 1)
+        # __________________________________________
+
         self.cells[0, np.where(self.cells[0] <= -1)] = self.cells_per_axis - 1
         self.cells[0, np.where(self.cells[0] >= self.cells_per_axis)] = 0
         self.cells[1, np.where(self.cells[1] <= -1)] = self.cells_per_axis - 1
