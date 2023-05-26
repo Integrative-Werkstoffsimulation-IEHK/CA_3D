@@ -42,16 +42,15 @@ def decrease_counts(array_3d, points):
 
 
 @numba.njit(nopython=True)
-def check_in_scale(scale, coordinates):
+def check_in_scale(scale, cells, dirs):
     # trick to initialize an empty list with known type
-    in_scale = [np.uint32(x) for x in range(0)]
     out_scale = [np.uint32(x) for x in range(0)]
-    for index, single_coordinate in enumerate(coordinates.transpose()):
-        if scale[single_coordinate[0], single_coordinate[1], single_coordinate[2]] > 0:
-            in_scale.append(np.uint32(index))
-        else:
+    for index, coordinate in enumerate(cells.transpose()):
+        if scale[coordinate[0], coordinate[1], coordinate[2]] == 0:
             out_scale.append(np.uint32(index))
-    return np.array(in_scale, dtype=np.uint32), np.array(out_scale, dtype=np.uint32)
+        else:
+            dirs[:, index] *= -1
+    return np.array(out_scale, dtype=np.uint32)
 
 
 @numba.njit(nopython=True)

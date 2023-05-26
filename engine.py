@@ -62,8 +62,8 @@ class CellularAutomata:
             self.primary_oxidant = elements.OxidantElem(self.param["oxidant"]["primary"])
             self.objs[0]["oxidant"] = self.primary_oxidant
             self.objs[1]["oxidant"] = self.primary_oxidant
-            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
             self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
+            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk
 
             if self.param["secondary_oxidant_exists"]:
                 self.secondary_oxidant = elements.OxidantElem(self.param["oxidant"]["secondary"])
@@ -181,7 +181,6 @@ class CellularAutomata:
                 self.precip_func()
             if self.param["decompose_precip"]:
                 self.decomposition_0()
-
             if self.param["inward_diffusion"]:
                 self.diffusion_inward()
             if self.param["outward_diffusion"]:
@@ -371,7 +370,7 @@ class CellularAutomata:
         #                     in range(furthest_index + 1)], dtype=np.uint32)
 
         oxidant_indexes = np.where(oxidant > 0)[0]
-        active_indexes = np.where(active > 1)[0]
+        active_indexes = np.where(active > 0)[0]
         # product_indexes = np.where(product > seed_number)[0]
 
         min_act = active_indexes.min(initial=self.cells_per_axis + 10)
@@ -385,7 +384,7 @@ class CellularAutomata:
             # if np.sum(product) > seed_number:
             #     self.probabilities.set_constants(0.000000001, 10000000)
 
-            self.fix_init_precip(furthest_index, self.primary_product)
+            # self.fix_init_precip(furthest_index, self.primary_product)
             self.precip_step(comb_indexes)
 
         self.primary_oxidant.transform_to_descards()
@@ -629,23 +628,23 @@ class CellularAutomata:
         temp_ind = np.where(arr_len_out >= self.threshold_outward)[0]
 
         # activate for dependent growth___________________________________________________________________
-        if len(temp_ind) > 0:
-            seeds = seeds[temp_ind]
-            neighbours = neighbours[temp_ind]
-            all_arounds = all_arounds[temp_ind]
-            flat_arounds = all_arounds[:, 0:self.objs[self.case]["product"].lind_flat_arr]
-            flat_neighbours = go_around(self.precipitations3d_init, flat_arounds)
-            # flat_neighbours = np.array(
-            #     [[self.precipitations3d_init[point[0], point[1], point[2]] for point in seed_arrounds]
-            #      for seed_arrounds in flat_arounds], dtype=bool)
-            arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
-            homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
-            # needed_prob = self.const_a * 2.718281828 ** (self.const_b * arr_len_in_flat)
-            needed_prob = self.probabilities.get_probabilities(arr_len_in_flat)
-            # needed_prob[homogeneous_ind] = self.nucleation_probability[seeds[0][2]]  # seeds[0][2] - current plane index
-            needed_prob[homogeneous_ind] = self.probabilities.nucleation_probability[seeds[0][2]] # seeds[0][2] - current plane index
-            randomise = np.random.random_sample(arr_len_in_flat.size)
-            temp_ind = np.where(randomise < needed_prob)[0]
+        # if len(temp_ind) > 0:
+        #     seeds = seeds[temp_ind]
+        #     neighbours = neighbours[temp_ind]
+        #     all_arounds = all_arounds[temp_ind]
+        #     flat_arounds = all_arounds[:, 0:self.objs[self.case]["product"].lind_flat_arr]
+        #     flat_neighbours = go_around(self.precipitations3d_init, flat_arounds)
+        #     # flat_neighbours = np.array(
+        #     #     [[self.precipitations3d_init[point[0], point[1], point[2]] for point in seed_arrounds]
+        #     #      for seed_arrounds in flat_arounds], dtype=bool)
+        #     arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
+        #     homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
+        #     # needed_prob = self.const_a * 2.718281828 ** (self.const_b * arr_len_in_flat)
+        #     needed_prob = self.probabilities.get_probabilities(arr_len_in_flat)
+        #     # needed_prob[homogeneous_ind] = self.nucleation_probability[seeds[0][2]]  # seeds[0][2] - current plane index
+        #     needed_prob[homogeneous_ind] = self.probabilities.nucleation_probability[seeds[0][2]] # seeds[0][2] - current plane index
+        #     randomise = np.random.random_sample(arr_len_in_flat.size)
+        #     temp_ind = np.where(randomise < needed_prob)[0]
         # _________________________________________________________________________________________________
 
         if len(temp_ind) > 0:

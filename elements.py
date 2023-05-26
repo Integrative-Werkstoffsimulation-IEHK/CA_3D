@@ -1,6 +1,5 @@
 import time
 import numpy as np
-import gc
 import random
 from microstructure import voronoi
 from utils.numba_functions import *
@@ -58,8 +57,8 @@ class ActiveElem:
         self.p4_range = 4 * self.p1_range
         self.p_r_range = self.p4_range + settings["probabilities"][1]
         self.n_per_page = settings["n_per_page"]
-        # self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
-        self.precip_transform_depth = int(31)  # min self.neigh_range !!!
+        self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
+        # self.precip_transform_depth = int(31)  # min self.neigh_range !!!
 
         self.extended_axis = self.cells_per_axis + self.neigh_range
         self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
@@ -70,19 +69,19 @@ class ActiveElem:
 
         # exact concentration space fill
         # ___________________________________________
-        # self.cells = np.array([[], [], []], dtype=np.short)
-        # for plane_xind in range(self.cells_per_axis):
-        #     new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
-        #     new_cells = np.array(np.unravel_index(new_cells, (self.cells_per_axis, self.cells_per_axis)))
-        #     new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
-        #     self.cells = np.concatenate((self.cells, new_cells), 1)
-        # self.cells = np.array(self.cells, dtype=np.short)
+        self.cells = np.array([[], [], []], dtype=np.short)
+        for plane_xind in range(self.cells_per_axis):
+            new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
+            new_cells = np.array(np.unravel_index(new_cells, (self.cells_per_axis, self.cells_per_axis)))
+            new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
+            self.cells = np.concatenate((self.cells, new_cells), 1)
+        self.cells = np.array(self.cells, dtype=np.short)
         # ____________________________________________
 
         # approx concentration space fill
         # ____________________________________________
-        self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
-                                       dtype=np.short)
+        # self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
+        #                                dtype=np.short)
         # ____________________________________________
 
         # half space fill
@@ -149,7 +148,6 @@ class ActiveElem:
         self.cells[1, np.where(self.cells[1] == self.cells_per_axis)] = 0
 
         ind = np.where(self.cells[2] == self.cells_per_axis)[0]
-
         # closed right bound (reflection)____________
         self.cells[2, ind] = self.cells_per_axis - 2
         self.dirs[2, ind] = -1
@@ -220,7 +218,6 @@ class OxidantElem:
         self.furthest_index = None
         self.i_descards = None
         self.i_ind = None
-        # self.cut_shape = None
 
         self.extended_axis = self.cells_per_axis + self.neigh_range
         self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
@@ -290,12 +287,12 @@ class OxidantElem:
         # adjusting a coordinates of side points for correct shifting
         ind = np.where(self.cells[2] < 0)[0]
         # closed left bound (reflection)
-        self.cells[2, ind] = 0
-        self.dirs[2, ind] = 1
+        # self.cells[2, ind] = 0
+        # self.dirs[2, ind] = 1
         # _______________________
         # open left bound___________________________
-        # self.cells = np.delete(self.cells, ind, 1)
-        # self.dirs = np.delete(self.dirs, ind, 1)
+        self.cells = np.delete(self.cells, ind, 1)
+        self.dirs = np.delete(self.dirs, ind, 1)
         # __________________________________________
 
         self.cells[0, np.where(self.cells[0] <= -1)] = self.cells_per_axis - 1
@@ -304,8 +301,17 @@ class OxidantElem:
         self.cells[1, np.where(self.cells[1] >= self.cells_per_axis)] = 0
 
         ind = np.where(self.cells[2] >= self.cells_per_axis)
-        self.cells = np.delete(self.cells, ind, 1)
-        self.dirs = np.delete(self.dirs, ind, 1)
+        # closed right bound (reflection)____________
+        self.cells[2, ind] = self.cells_per_axis - 2
+        self.dirs[2, ind] = -1
+        # ___________________________________________
+        # open right bound___________________________
+        # self.cells = np.delete(self.cells, ind, 1)
+        # self.dirs = np.delete(self.dirs, ind, 1)
+        # ___________________________________________
+        # periodic____________________________________
+        # self.cells[2, ind] = 0
+        # ____________________________________________
 
         self.current_count = len(np.where(self.cells[2] == 0)[0])
         self.fill_first_page()
@@ -314,15 +320,9 @@ class OxidantElem:
         """
         Inward diffusion through bulk + scale.
         """
-        # # Diffusion through the scale. If the current particle is inside the product particle
-        # # it gets a new diffusion probabilities
-
-        # exist = self.scale.c3d[self.cells[0], self.cells[1], self.cells[2]]
-        # in_scale = np.array(np.where(exist > 0)[0], dtype=np.uint32)
-        # out_scale = np.array(np.where(exist == 0)[0], dtype=np.uint32)
-
-        in_scale, out_scale = check_in_scale(self.scale.c3d, self.cells)
-        self.dirs[:, in_scale] *= -1
+        # Diffusion through the scale. If the current particle is inside the product particle
+        # it will be reflected
+        out_scale = check_in_scale(self.scale.c3d, self.cells, self.dirs)
 
         # Diffusion along grain boundaries
         # ______________________________________________________________________________________________________________
@@ -372,12 +372,12 @@ class OxidantElem:
         # adjusting a coordinates of side points for correct shifting
         ind = np.where(self.cells[2] < 0)[0]
         # closed left bound (reflection)
-        self.cells[2, ind] = 0
-        self.dirs[2, ind] = 1
+        # self.cells[2, ind] = 0
+        # self.dirs[2, ind] = 1
         # _______________________
         # open left bound___________________________
-        # self.cells = np.delete(self.cells, ind, 1)
-        # self.dirs = np.delete(self.dirs, ind, 1)
+        self.cells = np.delete(self.cells, ind, 1)
+        self.dirs = np.delete(self.dirs, ind, 1)
         # __________________________________________
 
         self.cells[0, np.where(self.cells[0] <= -1)] = self.cells_per_axis - 1
@@ -386,8 +386,17 @@ class OxidantElem:
         self.cells[1, np.where(self.cells[1] >= self.cells_per_axis)] = 0
 
         ind = np.where(self.cells[2] >= self.cells_per_axis)
-        self.cells = np.delete(self.cells, ind, 1)
-        self.dirs = np.delete(self.dirs, ind, 1)
+        # closed right bound (reflection)____________
+        self.cells[2, ind] = self.cells_per_axis - 2
+        self.dirs[2, ind] = -1
+        # ___________________________________________
+        # open right bound___________________________
+        # self.cells = np.delete(self.cells, ind, 1)
+        # self.dirs = np.delete(self.dirs, ind, 1)
+        # ___________________________________________
+        # periodic____________________________________
+        # self.cells[2, ind] = 0
+        # ____________________________________________
 
         self.current_count = len(np.where(self.cells[2] == 0)[0])
         self.fill_first_page()
