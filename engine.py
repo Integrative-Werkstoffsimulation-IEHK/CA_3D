@@ -3,28 +3,7 @@ from utils.numba_functions import *
 import progressbar
 import elements
 import time
-
-
-# @numba.njit(nopython=True)
-# def go_around(array_3d, arrounds):
-#     all_neighbours = []
-#     # trick to initialize an empty list with known type
-#     single_neighbours = [np.ubyte(x) for x in range(0)]
-#     for seed_arrounds in arrounds:
-#         for point in seed_arrounds:
-#             single_neighbours.append(array_3d[point[0], point[1], point[2]])
-#         all_neighbours.append(single_neighbours)
-#         single_neighbours = [np.ubyte(x) for x in range(0)]
-#     return np.array(all_neighbours, dtype=np.bool_)
-#
-#
-# @numba.njit(nopython=True)
-# def check_at_coord(array_3d, coordinates):
-#     # trick to initialize an empty list with known type
-#     result_coords = [np.bool_(x) for x in range(0)]
-#     for single_coordinate in coordinates:
-#         result_coords.append(array_3d[single_coordinate[0], single_coordinate[1], single_coordinate[2]])
-#     return np.array(result_coords, dtype=np.bool_)
+from thermodynamics import td_data
 
 
 class CellularAutomata:
@@ -62,8 +41,8 @@ class CellularAutomata:
             self.primary_oxidant = elements.OxidantElem(self.param["oxidant"]["primary"])
             self.objs[0]["oxidant"] = self.primary_oxidant
             self.objs[1]["oxidant"] = self.primary_oxidant
-            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
-            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk
+            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
+            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk
 
             if self.param["secondary_oxidant_exists"]:
                 self.secondary_oxidant = elements.OxidantElem(self.param["oxidant"]["secondary"])
@@ -161,6 +140,7 @@ class CellularAutomata:
                                    [10, 3, 1, 5, 18, 23, 22],
                                    [12, 3, 4, 5, 20, 23, 25],
                                    [13, 3, 4, 2, 21, 24, 25]]
+
             self.nucleation_probability = np.full(self.cells_per_axis, self.param["nucleation_probability"])
             self.het_factor = self.param["het_factor"]
             self.const_a = (1 / (self.het_factor * self.nucleation_probability[0])) ** (-6 / 5)
@@ -168,15 +148,14 @@ class CellularAutomata:
 
             self.probabilities = probabilities.NucleationProbabilities(self.param)
 
+            # self.look_up_table = td_data.TDATA()
+
         self.begin = time.time()
 
     def simulation(self):
         """
         """
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
-            # for _ in range(10):
-            #     self.precip_func()
-            #     self.decomposition_0()
             if self.param["compute_precipitations"]:
                 self.precip_func()
             if self.param["decompose_precip"]:
@@ -366,11 +345,57 @@ class CellularAutomata:
                             in range(furthest_index + 1)], dtype=np.uint32)
         active = np.array([np.sum(self.primary_active.c3d[:, :, plane_ind]) for plane_ind
                            in range(furthest_index + 1)], dtype=np.uint32)
+        product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
+                            in range(furthest_index + 1)], dtype=np.uint32)
+
+        oxidant_indexes = np.where(oxidant > 0)[0]
+        active_indexes = np.where(active > 0)[0]
+        product_indexes = np.where(product < 1000)[0]
+
+        min_act = active_indexes.min(initial=self.cells_per_axis)
+        if min_act < self.cells_per_axis:
+            indexs = np.where(oxidant_indexes >= min_act - 1)[0]
+            comb_indexes = oxidant_indexes[indexs]
+            comb_indexes = np.intersect1d(comb_indexes, product_indexes)
+        else:
+            comb_indexes = [furthest_index]
+
+        if len(comb_indexes) > 0:
+            if self.iteration == 0:
+                self.probabilities.set_constants(0.1, 10)
+                self.fix_init_precip(furthest_index, self.primary_product)
+                self.precip_step(comb_indexes)
+                self.probabilities.set_constants(0.0000001, 10000000)
+
+            else:
+                self.fix_init_precip(furthest_index, self.primary_product)
+                self.precip_step(comb_indexes)
+                self.probabilities.evolve(self.iteration)
+
+            # self.fix_init_precip(furthest_index, self.primary_product)
+            # self.precip_step(comb_indexes)
+
+        self.primary_oxidant.transform_to_descards()
+
+    def td_precip(self):
+        # Only one oxidant and one active elements exist. Only one product can be created
+        furthest_index = self.primary_oxidant.calc_furthest_index()
+        self.primary_oxidant.transform_to_3d(furthest_index)
+
+        if self.iteration % self.param["stride"] == 0:
+            if furthest_index >= self.curr_max_furthest:
+                self.curr_max_furthest = furthest_index
+            self.primary_active.transform_to_3d(self.curr_max_furthest)
+
+        oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
+                            in range(furthest_index + 1)], dtype=np.uint32)
+        active = np.array([np.sum(self.primary_active.c3d[:, :, plane_ind]) for plane_ind
+                           in range(furthest_index + 1)], dtype=np.uint32)
         # product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
         #                     in range(furthest_index + 1)], dtype=np.uint32)
 
         oxidant_indexes = np.where(oxidant > 0)[0]
-        active_indexes = np.where(active > 0)[0]
+        active_indexes = np.where(active > 1)[0]
         # product_indexes = np.where(product > seed_number)[0]
 
         min_act = active_indexes.min(initial=self.cells_per_axis + 10)
@@ -381,9 +406,6 @@ class CellularAutomata:
             comb_indexes = [furthest_index]
 
         if len(comb_indexes) > 0:
-            # if np.sum(product) > seed_number:
-            #     self.probabilities.set_constants(0.000000001, 10000000)
-
             # self.fix_init_precip(furthest_index, self.primary_product)
             self.precip_step(comb_indexes)
 
@@ -597,13 +619,6 @@ class CellularAutomata:
                 oxidant_cells = self.objs[self.case]["oxidant"].c3d[fetch_ind[0], fetch_ind[1], plane_index]
                 oxidant_cells = fetch_ind[:, np.nonzero(oxidant_cells)[0]]
 
-                # activate if "nucleation_probability" < 1 _____________________________
-                # if not self.dependent_growth:
-                #     randomise = np.random.random_sample(len(oxidant_cells[0]))
-                #     temp_ind = np.where(randomise < self.nucleation_probability[plane_index])[0]
-                #     oxidant_cells = oxidant_cells[:, temp_ind]
-                # ______________________________________________________________________
-
                 if len(oxidant_cells[0]) != 0:
                     oxidant_cells = np.vstack((oxidant_cells, np.full(len(oxidant_cells[0]), plane_index, dtype=np.short)))
                     oxidant_cells = oxidant_cells.transpose()
@@ -617,72 +632,68 @@ class CellularAutomata:
                     self.check_intersection(oxidant_cells)
 
     def ci_single(self, seeds):
-        """
-        """
-
         all_arounds = self.utils.calc_sur_ind_formation(seeds, self.objs[self.case]["active"].c3d.shape[2] - 1)
         neighbours = go_around(self.objs[self.case]["active"].c3d, all_arounds)
-        # neighbours = np.array([[self.objs[self.case]["active"].c3d[point[0], point[1], point[2]]
-        #                         for point in seed_arrounds] for seed_arrounds in all_arounds], dtype=bool)
         arr_len_out = np.array([np.sum(item) for item in neighbours], dtype=np.ubyte)
         temp_ind = np.where(arr_len_out >= self.threshold_outward)[0]
 
         # activate for dependent growth___________________________________________________________________
-        # if len(temp_ind) > 0:
-        #     seeds = seeds[temp_ind]
-        #     neighbours = neighbours[temp_ind]
-        #     all_arounds = all_arounds[temp_ind]
-        #     flat_arounds = all_arounds[:, 0:self.objs[self.case]["product"].lind_flat_arr]
-        #     flat_neighbours = go_around(self.precipitations3d_init, flat_arounds)
-        #     # flat_neighbours = np.array(
-        #     #     [[self.precipitations3d_init[point[0], point[1], point[2]] for point in seed_arrounds]
-        #     #      for seed_arrounds in flat_arounds], dtype=bool)
-        #     arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
-        #     homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
-        #     # needed_prob = self.const_a * 2.718281828 ** (self.const_b * arr_len_in_flat)
-        #     needed_prob = self.probabilities.get_probabilities(arr_len_in_flat)
-        #     # needed_prob[homogeneous_ind] = self.nucleation_probability[seeds[0][2]]  # seeds[0][2] - current plane index
-        #     needed_prob[homogeneous_ind] = self.probabilities.nucleation_probability[seeds[0][2]] # seeds[0][2] - current plane index
-        #     randomise = np.random.random_sample(arr_len_in_flat.size)
-        #     temp_ind = np.where(randomise < needed_prob)[0]
-        # _________________________________________________________________________________________________
-
         if len(temp_ind) > 0:
             seeds = seeds[temp_ind]
             neighbours = neighbours[temp_ind]
             all_arounds = all_arounds[temp_ind]
-            out_to_del = np.array(np.nonzero(neighbours))
-            start_seed_index = np.unique(out_to_del[0], return_index=True)[1]
-            to_del = np.array([out_to_del[1, indx:indx + self.threshold_outward] for indx in start_seed_index],
-                              dtype=np.ubyte)
-            coord = np.array([all_arounds[seed_ind][point_ind] for seed_ind, point_ind in enumerate(to_del)],
-                             dtype=np.short)
-            coord = np.reshape(coord, (len(coord) * self.threshold_outward, 3))
-            # exists = [self.objs[self.case]["product"].full_c3d[point[0], point[1], point[2]] for point in coord]
-            exists = check_at_coord(self.objs[self.case]["product"].full_c3d, coord)
-            temp_ind = np.where(exists)[0]
-            coord = np.delete(coord, temp_ind, 0)
-            seeds = np.delete(seeds, temp_ind, 0)
+            flat_arounds = all_arounds[:, 0:self.objs[self.case]["product"].lind_flat_arr]
+            flat_neighbours = go_around(self.precipitations3d_init, flat_arounds)
+            arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
+            homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
+            needed_prob = self.probabilities.get_probabilities(arr_len_in_flat)
+            needed_prob[homogeneous_ind] = self.probabilities.nucleation_probability[seeds[0][2]] # seeds[0][2] - current plane index
+            randomise = np.random.random_sample(arr_len_in_flat.size)
+            temp_ind = np.where(randomise < needed_prob)[0]
+        # _________________________________________________________________________________________________
 
-            # if self.objs[self.case]["to_check_with"] is not None:
-            #     # to_check_min_self = np.array(self.cumul_product - product.c3d, dtype=np.ubyte)
-            #     exists = np.array([self.objs[self.case]["to_check_with"].c3d[point[0], point[1], point[2]]
-            #                        for point in coord], dtype=np.ubyte)
-            #     # exists = np.array([to_check_min_self[point[0], point[1], point[2]] for point in coord],
-            #     #                   dtype=np.ubyte)
-            #     temp_ind = np.where(exists > 0)[0]
-            #     coord = np.delete(coord, temp_ind, 0)
-            #     seeds = np.delete(seeds, temp_ind, 0)
+            if len(temp_ind) > 0:
+                seeds = seeds[temp_ind]
+                neighbours = neighbours[temp_ind]
+                all_arounds = all_arounds[temp_ind]
+                out_to_del = np.array(np.nonzero(neighbours))
+                start_seed_index = np.unique(out_to_del[0], return_index=True)[1]
+                to_del = np.array([out_to_del[1, indx:indx + self.threshold_outward] for indx in start_seed_index],
+                                  dtype=np.ubyte)
+                coord = np.array([all_arounds[seed_ind][point_ind] for seed_ind, point_ind in enumerate(to_del)],
+                                 dtype=np.short)
+                coord = np.reshape(coord, (len(coord) * self.threshold_outward, 3))
 
-            coord = coord.transpose()
-            seeds = seeds.transpose()
+                # exists = check_at_coord(self.objs[self.case]["product"].full_c3d, coord)  # precip on place of active!
+                exists = check_at_coord(self.objs[self.case]["product"].full_c3d, seeds)  # precip on place of oxidant!
 
-            self.objs[self.case]["active"].c3d[coord[0], coord[1], coord[2]] -= 1
-            self.objs[self.case]["oxidant"].c3d[seeds[0], seeds[1], seeds[2]] -= 1
+                temp_ind = np.where(exists)[0]
+                coord = np.delete(coord, temp_ind, 0)
+                seeds = np.delete(seeds, temp_ind, 0)
 
-            self.objs[self.case]["product"].c3d[coord[0], coord[1], coord[2]] += 1
-            self.objs[self.case]["product"].fix_full_cells(coord)
-            # self.cumul_product[coord[0], coord[1], coord[2]] += 1
+                # if self.objs[self.case]["to_check_with"] is not None:
+                #     # to_check_min_self = np.array(self.cumul_product - product.c3d, dtype=np.ubyte)
+                #     exists = np.array([self.objs[self.case]["to_check_with"].c3d[point[0], point[1], point[2]]
+                #                        for point in coord], dtype=np.ubyte)
+                #     # exists = np.array([to_check_min_self[point[0], point[1], point[2]] for point in coord],
+                #     #                   dtype=np.ubyte)
+                #     temp_ind = np.where(exists > 0)[0]
+                #     coord = np.delete(coord, temp_ind, 0)
+                #     seeds = np.delete(seeds, temp_ind, 0)
+
+                coord = coord.transpose()
+                seeds = seeds.transpose()
+
+                self.objs[self.case]["active"].c3d[coord[0], coord[1], coord[2]] -= 1
+                self.objs[self.case]["oxidant"].c3d[seeds[0], seeds[1], seeds[2]] -= 1
+
+                # self.objs[self.case]["product"].c3d[coord[0], coord[1], coord[2]] += 1  # precip on place of active!
+                self.objs[self.case]["product"].c3d[seeds[0], seeds[1], seeds[2]] += 1  # precip on place of oxidant!
+
+                # self.objs[self.case]["product"].fix_full_cells(coord)  # precip on place of active!
+                self.objs[self.case]["product"].fix_full_cells(seeds)  # precip on place of oxidant!
+
+                # self.cumul_product[coord[0], coord[1], coord[2]] += 1
 
     def ci_multi(self, seeds):
         """
@@ -1005,21 +1016,8 @@ class CellularAutomata:
                 self.secondary_active.transform_to_3d(self.curr_max_furthest)
 
     def save_results_only_prod(self):
-        if self.param["compute_precipitations"]:
-            self.utils.db.insert_particle_data("primary_product", self.iteration,
-                                               self.primary_product.transform_c3d())
-
-            if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
-                self.utils.db.insert_particle_data("secondary_product", self.iteration,
-                                                   self.secondary_product.transform_c3d())
-                self.utils.db.insert_particle_data("ternary_product", self.iteration,
-                                                   self.ternary_product.transform_c3d())
-                self.utils.db.insert_particle_data("quaternary_product", self.iteration,
-                                                   self.quaternary_product.transform_c3d())
-
-            elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
-                self.utils.db.insert_particle_data("secondary_product", self.iteration,
-                                                   self.secondary_product.transform_c3d())
+        self.utils.db.insert_particle_data("primary_product", self.iteration,
+                                           self.primary_product.transform_c3d())
 
     def fix_init_precip(self, u_bound, product):
         if u_bound == self.cells_per_axis - 1:

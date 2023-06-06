@@ -71,4 +71,4 @@ DEFAULT_OBJ_REF = {
         "to_check_with": None}
                    }
 
-TD_LOOKUP_TABLE = {}
+TD_LOOKUP = {}

@@ -3,47 +3,6 @@ import numpy as np
 import random
 from microstructure import voronoi
 from utils.numba_functions import *
-from numba.typed import List
-
-# @numba.njit(nopython=True)
-# def insert_counts(array_3d, points):
-#     for point in points.transpose():
-#         array_3d[point[0], point[1], point[2]] += 1
-#
-#
-# @numba.njit(nopython=True)
-# def decrease_counts(array_3d, points):
-#     zero_positions = []
-#     for ind, point in enumerate(points.transpose()):
-#         if array_3d[point[0], point[1], point[2]] > 0:
-#             array_3d[point[0], point[1], point[2]] -= 1
-#         else:
-#             zero_positions.append(ind)
-#     return zero_positions
-#
-#
-# @numba.njit(nopython=True)
-# def diff_single(cells, directions, random_rng):
-#
-#     for index, direction in enumerate(directions.transpose()):
-#         rand_numb = random_rng.random()
-#
-#         # new_direction = np.array([direction[0] * -1, direction[1] * -1, direction[2] * -1])
-#
-#         if rand_numb <= 0.1:
-#             new_direction = np.array([direction[2], direction[0], direction[1]])
-#         elif 0.1 < rand_numb <= 0.2:
-#             new_direction = np.array([direction[2] * -1, direction[0] * -1, direction[1] * -1])
-#         elif 0.2 < rand_numb <= 0.3:
-#             new_direction = np.array([direction[1], direction[2], direction[0]])
-#         elif 0.3 < rand_numb <= 0.4:
-#             new_direction = np.array([direction[1] * -1, direction[2] * -1, direction[0] * -1])
-#         elif 0.4 < rand_numb <= 0.6:
-#             new_direction = np.array([direction[0] * -1, direction[1] * -1, direction[2] * -1])
-#         else:
-#             new_direction = direction
-#
-#         directions[:, index] = new_direction
 
 
 class ActiveElem:
@@ -57,8 +16,8 @@ class ActiveElem:
         self.p4_range = 4 * self.p1_range
         self.p_r_range = self.p4_range + settings["probabilities"][1]
         self.n_per_page = settings["n_per_page"]
-        self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
-        # self.precip_transform_depth = int(31)  # min self.neigh_range !!!
+        # self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
+        self.precip_transform_depth = int(41)  # min self.neigh_range !!!
 
         self.extended_axis = self.cells_per_axis + self.neigh_range
         self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
@@ -69,19 +28,19 @@ class ActiveElem:
 
         # exact concentration space fill
         # ___________________________________________
-        self.cells = np.array([[], [], []], dtype=np.short)
-        for plane_xind in range(self.cells_per_axis):
-            new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
-            new_cells = np.array(np.unravel_index(new_cells, (self.cells_per_axis, self.cells_per_axis)))
-            new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
-            self.cells = np.concatenate((self.cells, new_cells), 1)
-        self.cells = np.array(self.cells, dtype=np.short)
+        # self.cells = np.array([[], [], []], dtype=np.short)
+        # for plane_xind in range(self.cells_per_axis):
+        #     new_cells = np.array(random.sample(range(self.cells_per_axis**2), int(self.n_per_page)))
+        #     new_cells = np.array(np.unravel_index(new_cells, (self.cells_per_axis, self.cells_per_axis)))
+        #     new_cells = np.vstack((new_cells, np.full(len(new_cells[0]), plane_xind)))
+        #     self.cells = np.concatenate((self.cells, new_cells), 1)
+        # self.cells = np.array(self.cells, dtype=np.short)
         # ____________________________________________
 
         # approx concentration space fill
         # ____________________________________________
-        # self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
-        #                                dtype=np.short)
+        self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
+                                       dtype=np.short)
         # ____________________________________________
 
         # half space fill
@@ -95,11 +54,6 @@ class ActiveElem:
         self.dirs -= 1
 
         self.current_count = self.n_per_page
-
-        # self.rng = np.random.default_rng()
-        # probs = [self.p1_range, self.p2_range, self.p3_range, self.p4_range, self.p_r_range]
-        # self.probs = List()
-        # [self.probs.append(x) for x in probs]
 
     def diffuse(self):
         """
@@ -302,16 +256,13 @@ class OxidantElem:
 
         ind = np.where(self.cells[2] >= self.cells_per_axis)
         # closed right bound (reflection)____________
-        self.cells[2, ind] = self.cells_per_axis - 2
-        self.dirs[2, ind] = -1
+        # self.cells[2, ind] = self.cells_per_axis - 2
+        # self.dirs[2, ind] = -1
         # ___________________________________________
         # open right bound___________________________
-        # self.cells = np.delete(self.cells, ind, 1)
-        # self.dirs = np.delete(self.dirs, ind, 1)
+        self.cells = np.delete(self.cells, ind, 1)
+        self.dirs = np.delete(self.dirs, ind, 1)
         # ___________________________________________
-        # periodic____________________________________
-        # self.cells[2, ind] = 0
-        # ____________________________________________
 
         self.current_count = len(np.where(self.cells[2] == 0)[0])
         self.fill_first_page()
@@ -394,9 +345,6 @@ class OxidantElem:
         # self.cells = np.delete(self.cells, ind, 1)
         # self.dirs = np.delete(self.dirs, ind, 1)
         # ___________________________________________
-        # periodic____________________________________
-        # self.cells[2, ind] = 0
-        # ____________________________________________
 
         self.current_count = len(np.where(self.cells[2] == 0)[0])
         self.fill_first_page()
