@@ -350,27 +350,35 @@ class CellularAutomata:
 
         oxidant_indexes = np.where(oxidant > 0)[0]
         active_indexes = np.where(active > 0)[0]
-        product_indexes = np.where(product < 1000)[0]
+        prod_fraction = product / self.cells_per_page
+        rel_prod_fraction = prod_fraction / self.param["phase_fraction_lim"]
+        product_indexes = np.where(prod_fraction < self.param["phase_fraction_lim"])[0]
+
+        # if self.iteration == 0:
+        #     product_indexes = np.where(prod_fraction < 0.1)[0]
+        # else:
+        #     product_indexes = np.where((prod_fraction < 0.1) & (prod_fraction > 0))[0]
 
         min_act = active_indexes.min(initial=self.cells_per_axis)
         if min_act < self.cells_per_axis:
             indexs = np.where(oxidant_indexes >= min_act - 1)[0]
             comb_indexes = oxidant_indexes[indexs]
             comb_indexes = np.intersect1d(comb_indexes, product_indexes)
+
         else:
             comb_indexes = [furthest_index]
 
         if len(comb_indexes) > 0:
             if self.iteration == 0:
-                self.probabilities.set_constants(0.1, 10)
+                self.probabilities.reset_constants(0.1, 10)
                 self.fix_init_precip(furthest_index, self.primary_product)
                 self.precip_step(comb_indexes)
-                self.probabilities.set_constants(0.0000001, 10000000)
+                self.probabilities.reset_constants(0.000001, 1000000)
 
             else:
+                self.probabilities.adapt_hf(comb_indexes, rel_prod_fraction[comb_indexes])
                 self.fix_init_precip(furthest_index, self.primary_product)
                 self.precip_step(comb_indexes)
-                self.probabilities.evolve(self.iteration)
 
             # self.fix_init_precip(furthest_index, self.primary_product)
             # self.precip_step(comb_indexes)
@@ -646,8 +654,8 @@ class CellularAutomata:
             flat_neighbours = go_around(self.precipitations3d_init, flat_arounds)
             arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
             homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
-            needed_prob = self.probabilities.get_probabilities(arr_len_in_flat)
-            needed_prob[homogeneous_ind] = self.probabilities.nucleation_probability[seeds[0][2]] # seeds[0][2] - current plane index
+            needed_prob = self.probabilities.get_probabilities(arr_len_in_flat, seeds[0][2])
+            needed_prob[homogeneous_ind] = self.probabilities.nucl_prob_pp[seeds[0][2]] # seeds[0][2] - current plane index
             randomise = np.random.random_sample(arr_len_in_flat.size)
             temp_ind = np.where(randomise < needed_prob)[0]
         # _________________________________________________________________________________________________

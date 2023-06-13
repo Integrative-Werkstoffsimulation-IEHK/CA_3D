@@ -50,7 +50,11 @@ DEFAULT_PARAM = {
     "save_path": 'W:/SIMCA/test_runs_data/',
 
     "neigh_range": 1,
-    "decompose_precip": False}
+    "decompose_precip": False,
+
+    "phase_fraction_lim": 0.1,
+    "hf_deg_lim": 0.5
+}
 
 DEFAULT_OBJ_REF = {
     0: {"oxidant": None,

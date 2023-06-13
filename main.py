@@ -53,13 +53,16 @@ if __name__ == '__main__':
                   "compute_precipitations": True,
                   "diffusion_in_precipitation": False,
 
-                  "save_whole": True,
+                  "save_whole": False,
                   "save_path": 'W:/SIMCA/test_runs_data/',
 
                   "neigh_range": 1,  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
                                      #          and           |  |  |  |  |   |   |   |   |   |
                                      # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
-                  "decompose_precip": False
+                  "decompose_precip": False,
+
+                  "phase_fraction_lim": 0.1,
+                  "hf_deg_lim": 0.000001  # range 0 - 1
                   }
 
     eng = CellularAutomata(user_input=user_input)
