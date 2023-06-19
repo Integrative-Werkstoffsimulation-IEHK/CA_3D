@@ -1,3 +1,5 @@
+import numpy as np
+
 from utils.utilities import *
 from utils.numba_functions import *
 import progressbar
@@ -158,8 +160,8 @@ class CellularAutomata:
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
             if self.param["compute_precipitations"]:
                 self.precip_func()
-            if self.param["decompose_precip"]:
-                self.decomposition_0()
+            # if self.param["decompose_precip"]:
+            #     self.decomposition_0()
             if self.param["inward_diffusion"]:
                 self.diffusion_inward()
             if self.param["outward_diffusion"]:
@@ -174,8 +176,12 @@ class CellularAutomata:
         self.utils.db.insert_time(self.elapsed_time)
         self.utils.db.conn.commit()
 
-    def decomposition_0(self):
-        self.precipitations = self.primary_product.transform_c3d()
+    def decomposition_0(self, plane_indxs):
+        # self.precipitations = self.primary_product.transform_c3d()
+        nz_ind = np.array(np.nonzero(self.primary_product.c3d[:, :, plane_indxs]))
+        self.precipitations = nz_ind
+        self.precipitations[2] = plane_indxs[nz_ind[2]]
+
         if len(self.precipitations[0]) > 0:
             dec_p_three_open = np.array([[], [], []], dtype=np.short)
             dec_p_two_open = np.array([[], [], []], dtype=np.short)
@@ -380,6 +386,12 @@ class CellularAutomata:
                 self.probabilities.adapt_hf(comb_indexes, rel_prod_fraction[comb_indexes])
                 self.fix_init_precip(furthest_index, self.primary_product)
                 self.precip_step(comb_indexes)
+
+                decomp_ind = np.array(np.where(prod_fraction[comb_indexes] >= 0.05))
+
+                if len(decomp_ind) > 0:
+                    # print()
+                    self.decomposition_0(comb_indexes)
 
             # self.fix_init_precip(furthest_index, self.primary_product)
             # self.precip_step(comb_indexes)
