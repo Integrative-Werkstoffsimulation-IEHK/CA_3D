@@ -166,6 +166,8 @@ class CellularAutomata:
                 self.diffusion_outward()
             if self.param["save_whole"]:
                 self.save_results_only_prod()
+            if self.iteration > 10000:
+                break
 
         end = time.time()
         self.elapsed_time = (end - self.begin)
@@ -370,10 +372,9 @@ class CellularAutomata:
 
         if len(comb_indexes) > 0:
             if self.iteration == 0:
-                self.probabilities.reset_constants(0.1, 10)
                 self.fix_init_precip(furthest_index, self.primary_product)
                 self.precip_step(comb_indexes)
-                self.probabilities.reset_constants(0.000001, 1000000)
+                self.probabilities.reset_constants(10**-19, 10**19, self.param["hf_deg_lim"])
 
             else:
                 self.probabilities.adapt_hf(comb_indexes, rel_prod_fraction[comb_indexes])
@@ -382,40 +383,6 @@ class CellularAutomata:
 
             # self.fix_init_precip(furthest_index, self.primary_product)
             # self.precip_step(comb_indexes)
-
-        self.primary_oxidant.transform_to_descards()
-
-    def td_precip(self):
-        # Only one oxidant and one active elements exist. Only one product can be created
-        furthest_index = self.primary_oxidant.calc_furthest_index()
-        self.primary_oxidant.transform_to_3d(furthest_index)
-
-        if self.iteration % self.param["stride"] == 0:
-            if furthest_index >= self.curr_max_furthest:
-                self.curr_max_furthest = furthest_index
-            self.primary_active.transform_to_3d(self.curr_max_furthest)
-
-        oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
-                            in range(furthest_index + 1)], dtype=np.uint32)
-        active = np.array([np.sum(self.primary_active.c3d[:, :, plane_ind]) for plane_ind
-                           in range(furthest_index + 1)], dtype=np.uint32)
-        # product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
-        #                     in range(furthest_index + 1)], dtype=np.uint32)
-
-        oxidant_indexes = np.where(oxidant > 0)[0]
-        active_indexes = np.where(active > 1)[0]
-        # product_indexes = np.where(product > seed_number)[0]
-
-        min_act = active_indexes.min(initial=self.cells_per_axis + 10)
-        if min_act < self.cells_per_axis:
-            indexs = np.where(oxidant_indexes >= min_act)[0]
-            comb_indexes = oxidant_indexes[indexs]
-        else:
-            comb_indexes = [furthest_index]
-
-        if len(comb_indexes) > 0:
-            # self.fix_init_precip(furthest_index, self.primary_product)
-            self.precip_step(comb_indexes)
 
         self.primary_oxidant.transform_to_descards()
 
@@ -656,7 +623,7 @@ class CellularAutomata:
             homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
             needed_prob = self.probabilities.get_probabilities(arr_len_in_flat, seeds[0][2])
             needed_prob[homogeneous_ind] = self.probabilities.nucl_prob_pp[seeds[0][2]] # seeds[0][2] - current plane index
-            randomise = np.random.random_sample(arr_len_in_flat.size)
+            randomise = np.array(np.random.random_sample(arr_len_in_flat.size), dtype=np.float64)
             temp_ind = np.where(randomise < needed_prob)[0]
         # _________________________________________________________________________________________________
 

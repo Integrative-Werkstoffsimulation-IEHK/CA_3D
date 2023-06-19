@@ -388,9 +388,11 @@ class Product:
 
         if self.oxidation_number == 1:
             self.fix_full_cells = self.fix_full_cells_ox_numb_single
+            self.transform_c3d = self.transform_c3d_single
             self.lind_flat_arr = 6
         else:
             self.fix_full_cells = self.fix_full_cells_ox_numb_mult
+            self.transform_c3d = self.transform_c3d_mult
             self.lind_flat_arr = 7
 
         self.c3d = np.full(shape, 0, dtype=np.ubyte)
@@ -405,12 +407,14 @@ class Product:
         full_precip = new_precip[:, indexes]
         self.full_c3d[full_precip[0], full_precip[1], full_precip[2]] = True
 
-    def transform_c3d(self):
+    def transform_c3d_single(self):
+        return np.array(np.nonzero(self.c3d), dtype=np.short)
+
+    def transform_c3d_mult(self):
         precipitations = np.array(np.nonzero(self.c3d), dtype=np.short)
         counts = self.c3d[precipitations[0], precipitations[1], precipitations[2]]
         return np.array(np.repeat(precipitations, counts, axis=1), dtype=np.short)
 
-    def transform_single_c3d(self):
-        return np.array(np.nonzero(self.c3d), dtype=np.short)
+
 
 

@@ -15,7 +15,7 @@ visualise.plot_3d(plot_separate=False, const_cam_pos=False)
 
 # visualise.animate_2d(plot_separate=False)
 
-visualise.plot_2d(plot_separate=False)
+# visualise.plot_2d(plot_separate=False)
 # visualise.plot_2d(plot_separate=False, iteration=20000)
 
 # visualise.animate_concentration(conc_type="cells", analytic_sol=False)

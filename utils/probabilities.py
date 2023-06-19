@@ -4,10 +4,9 @@ import numpy as np
 class NucleationProbabilities:
     def __init__(self, param):
         self.nucl_prob_pp = np.full(param["n_cells_per_axis"], param["nucleation_probability"])
-        self.hf_pp = np.full(param["n_cells_per_axis"], param["het_factor"])
+        self.hf_pp = np.full(param["n_cells_per_axis"], param["het_factor"], dtype=np.uint64)
 
         self.hf_init = param["het_factor"]
-        # self.hf_b = np.log(1 / self.hf_init)
         self.hf_b = np.log(param["hf_deg_lim"])
 
         self.const_a_pp = (1 / (self.hf_init * self.nucl_prob_pp)) ** (-6 / 5)
@@ -17,7 +16,7 @@ class NucleationProbabilities:
         self.nucl_prob_pp[:] = nucleation_probability
         self.hf_pp[:] = het_factor
         self.hf_init = het_factor
-        # self.hf_b = np.log(1 / self.hf_init)
+
         self.hf_b = np.log(hf_deg_lim)
 
         self.const_a_pp = (1 / (self.hf_pp * self.nucl_prob_pp)) ** (-6 / 5)

@@ -46,23 +46,23 @@ if __name__ == '__main__':
                   "dissolution_p": 0.0000001,
                   "dissolution_n": 5,
                   "exponent_power": 0,  # not used anymore
-                  "block_scale_factor": 10,
+                  "block_scale_factor": 1,
 
                   "inward_diffusion": True,
                   "outward_diffusion": True,
                   "compute_precipitations": True,
                   "diffusion_in_precipitation": False,
 
-                  "save_whole": False,
+                  "save_whole": True,
                   "save_path": 'W:/SIMCA/test_runs_data/',
 
                   "neigh_range": 1,  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
                                      #          and           |  |  |  |  |   |   |   |   |   |
                                      # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
-                  "decompose_precip": False,
+                  "decompose_precip": True,
 
-                  "phase_fraction_lim": 0.1,
-                  "hf_deg_lim": 0.000001  # range 0 - 1
+                  "phase_fraction_lim": 0.3,
+                  "hf_deg_lim": 10**-0  # range 0 - 1
                   }
 
     eng = CellularAutomata(user_input=user_input)
@@ -79,6 +79,31 @@ if __name__ == '__main__':
         print("____________________________________________________________")
         print()
         traceback.print_exc()
+
+    # hf_list = [-17, -16, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0]
+    #
+    # for hf in hf_list:
+    #     temp_user_input = copy.deepcopy(user_input)
+    #     temp_user_input["hf_deg_lim"] = 10**hf
+    #
+    #     eng = CellularAutomata(user_input=temp_user_input)
+    #
+    #     print(f""" ----->>>>>>>>  DB:{temp_user_input["save_path"]}, Hf: {temp_user_input["hf_deg_lim"]}  <<<<<<------- """)
+    #     try:
+    #         eng.simulation()
+    #     finally:
+    #         if not user_input["save_whole"]:
+    #             eng.save_results()
+    #         eng.insert_last_it()
+    #         eng.utils.db.conn.commit()
+    #         print()
+    #         print("____________________________________________________________")
+    #         print("Simulation was closed at Iteration: ", eng.iteration)
+    #         print("____________________________________________________________")
+    #         print()
+    #         traceback.print_exc()
+
+
 
 # # inw_sec = [0.001, 0.002, 0.003, 0.004, 0.005, 0.1, 0.3, 0.6, 1]
     #

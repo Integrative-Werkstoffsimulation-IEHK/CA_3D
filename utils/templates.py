@@ -52,8 +52,8 @@ DEFAULT_PARAM = {
     "neigh_range": 1,
     "decompose_precip": False,
 
-    "phase_fraction_lim": 0.1,
-    "hf_deg_lim": 0.5
+    "phase_fraction_lim": 0.123456789,
+    "hf_deg_lim": 0.123456789
 }
 
 DEFAULT_OBJ_REF = {
