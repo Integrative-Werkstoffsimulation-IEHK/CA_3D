@@ -43,7 +43,7 @@ if __name__ == '__main__':
                   "nucleation_probability": 0.1,
                   "het_factor": 10,
 
-                  "dissolution_p": 0.0000001,
+                  "dissolution_p": 0.01,
                   "dissolution_n": 5,
                   "exponent_power": 0,  # not used anymore
                   "block_scale_factor": 1,
@@ -53,16 +53,16 @@ if __name__ == '__main__':
                   "compute_precipitations": True,
                   "diffusion_in_precipitation": False,
 
-                  "save_whole": True,
+                  "save_whole": False,
                   "save_path": 'W:/SIMCA/test_runs_data/',
 
                   "neigh_range": 1,  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
                                      #          and           |  |  |  |  |   |   |   |   |   |
                                      # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
-                  "decompose_precip": True,
+                  "decompose_precip": False,
 
                   "phase_fraction_lim": 0.3,
-                  "hf_deg_lim": 10**-0  # range 0 - 1
+                  "hf_deg_lim": 10**-19  # range 0 - 1
                   }
 
     eng = CellularAutomata(user_input=user_input)

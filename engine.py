@@ -168,8 +168,8 @@ class CellularAutomata:
                 self.diffusion_outward()
             if self.param["save_whole"]:
                 self.save_results_only_prod()
-            if self.iteration > 10000:
-                break
+            # if self.iteration > 10000:
+            #     break
 
         end = time.time()
         self.elapsed_time = (end - self.begin)
@@ -387,11 +387,11 @@ class CellularAutomata:
                 self.fix_init_precip(furthest_index, self.primary_product)
                 self.precip_step(comb_indexes)
 
-                decomp_ind = np.array(np.where(prod_fraction[comb_indexes] >= 0.05))
-
-                if len(decomp_ind) > 0:
-                    # print()
-                    self.decomposition_0(comb_indexes)
+                # decomp_ind = np.array(np.where(prod_fraction[comb_indexes] >= 0.05)[0])
+                #
+                # if len(decomp_ind) > 0:
+                #     print("yes")
+                #     self.decomposition(comb_indexes[decomp_ind])
 
             # self.fix_init_precip(furthest_index, self.primary_product)
             # self.precip_step(comb_indexes)
