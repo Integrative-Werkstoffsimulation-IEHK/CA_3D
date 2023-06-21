@@ -22,6 +22,9 @@ class ActiveElem:
         self.extended_axis = self.cells_per_axis + self.neigh_range
         self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
 
+        self.diffuse = None
+        self.scale = None
+
         self.i_descards = None
         self.i_ind = None
         self.c3d = np.full(self.extended_shape, 0, dtype=np.ubyte)
@@ -55,7 +58,7 @@ class ActiveElem:
 
         self.current_count = self.n_per_page
 
-    def diffuse(self):
+    def diffuse_bulk(self):
         """
         Outgoing diffusion from the inside.
         """
@@ -82,6 +85,91 @@ class ActiveElem:
 
         self.cells = np.add(self.cells, self.dirs, casting="unsafe")
 
+        # adjusting a coordinates of side points for correct shifting
+        ind = np.where(self.cells[2] < 0)[0]
+        # closed left bound (reflection)
+        self.cells[2, ind] = 1
+        self.dirs[2, ind] = 1
+        # _______________________
+        # periodic____________________________________
+        # self.cells[2, ind] = self.cells_per_axis - 1
+        # ____________________________________________
+        # open left bound___________________________
+        # self.cells = np.delete(self.cells, ind, 1)
+        # self.dirs = np.delete(self.dirs, ind, 1)
+        # __________________________________________
+
+        self.cells[0, np.where(self.cells[0] == -1)] = self.cells_per_axis - 1
+        self.cells[0, np.where(self.cells[0] == self.cells_per_axis)] = 0
+        self.cells[1, np.where(self.cells[1] == -1)] = self.cells_per_axis - 1
+        self.cells[1, np.where(self.cells[1] == self.cells_per_axis)] = 0
+
+        ind = np.where(self.cells[2] == self.cells_per_axis)[0]
+        # closed right bound (reflection)____________
+        self.cells[2, ind] = self.cells_per_axis - 2
+        self.dirs[2, ind] = -1
+        # ___________________________________________
+        # open right bound___________________________
+        # self.cells = np.delete(self.cells, ind, 1)
+        # self.dirs = np.delete(self.dirs, ind, 1)
+        # ___________________________________________
+        # periodic____________________________________
+        # self.cells[2, ind] = 0
+        # ____________________________________________
+
+    def diffuse_with_scale(self):
+        """
+        Outward diffusion through bulk + scale.
+        """
+        # Diffusion through the scale. If the current particle is inside the product particle
+        # it will be reflected
+        out_scale = check_in_scale(self.scale.c3d, self.cells, self.dirs)
+
+        # Diffusion along grain boundaries
+        # ______________________________________________________________________________________________________________
+        # exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
+        # # # print(exists)
+        # temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
+        # # print(temp_ind)
+
+        # exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
+        # # # print(exists)
+        # temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
+        # # print(temp_ind)
+        # #
+        # in_gb = np.array(self.cells[:, temp_ind], dtype=np.short)
+        # # print(in_gb)
+        # #
+        # shift_vector = np.array(self.microstructure.jump_directions[in_gb[0], in_gb[1], in_gb[2]],
+        #                         dtype=np.short).transpose()
+        # # print(shift_vector)
+        #
+        # # print(self.cells)
+        # cross_shifts = np.array(np.random.choice([0, 1, 2, 3], len(shift_vector[0])), dtype=np.ubyte)
+        # cross_shifts = np.array(self.cross_shifts[cross_shifts], dtype=np.byte).transpose()
+        #
+        # shift_vector += cross_shifts
+        #
+        # self.cells[:, temp_ind] += shift_vector
+        # # print(self.cells)
+        # ______________________________________________________________________________________________________________
+
+        # mixing particles according to Chopard and Droz
+        randomise = np.array(np.random.random_sample(out_scale.size), dtype=np.single)
+        temp_ind = np.array(np.where(randomise <= self.p1_range)[0], dtype=np.uint32)
+        self.dirs[:, out_scale[temp_ind]] = np.roll(self.dirs[:, out_scale[temp_ind]], 1, axis=0)
+        temp_ind = np.array(np.where((randomise > self.p1_range) & (randomise <= self.p2_range))[0], dtype=np.uint32)
+        self.dirs[:, out_scale[temp_ind]] = np.roll(self.dirs[:, out_scale[temp_ind]], 1, axis=0)
+        self.dirs[:, out_scale[temp_ind]] *= -1
+        temp_ind = np.array(np.where((randomise > self.p2_range) & (randomise <= self.p3_range))[0], dtype=np.uint32)
+        self.dirs[:, out_scale[temp_ind]] = np.roll(self.dirs[:, out_scale[temp_ind]], 2, axis=0)
+        temp_ind = np.array(np.where((randomise > self.p3_range) & (randomise <= self.p4_range))[0], dtype=np.uint32)
+        self.dirs[:, out_scale[temp_ind]] = np.roll(self.dirs[:, out_scale[temp_ind]], 2, axis=0)
+        self.dirs[:, out_scale[temp_ind]] *= -1
+        temp_ind = np.array(np.where((randomise > self.p4_range) & (randomise <= self.p_r_range))[0], dtype=np.uint32)
+        self.dirs[:, out_scale[temp_ind]] *= -1
+
+        self.cells = np.add(self.cells, self.dirs, casting="unsafe")
         # adjusting a coordinates of side points for correct shifting
         ind = np.where(self.cells[2] < 0)[0]
         # closed left bound (reflection)
@@ -159,7 +247,7 @@ class ActiveElem:
 
 
 class OxidantElem:
-    def __init__(self, settings):
+    def __init__(self, settings, utils):
         self.cells_per_axis = settings["cells_per_axis"]
         self.p1_range = settings["probabilities"][0]
         self.p2_range = 2 * self.p1_range
@@ -178,6 +266,8 @@ class OxidantElem:
         self.c3d = np.full(self.extended_shape, 0, dtype=np.ubyte)
         self.scale = None
         self.diffuse = None
+        self.diff_boost_step = 5
+        self.utils = utils
 
         self.cells = np.array([[], [], []], dtype=np.short)
         self.dirs = np.zeros((3, len(self.cells[0])), dtype=np.byte)
@@ -346,8 +436,50 @@ class OxidantElem:
         # self.dirs = np.delete(self.dirs, ind, 1)
         # ___________________________________________
 
+        self.diffuse_interface()
+
         self.current_count = len(np.where(self.cells[2] == 0)[0])
         self.fill_first_page()
+
+    def diffuse_interface(self):
+        """
+        Inward diffusion along the phase interfaces (between matrix and primary product).
+        If the current particle has at least one product particle in its flat neighbourhood and no product ahead
+        (in its ballistic direction) it will be boosted forwardly in n (self.diff_boost_step) steps.
+        """
+        all_arounds = self.utils.calc_sur_ind_interface(self.cells, self.dirs, self.extended_axis - 1)
+        neighbours = go_around(self.scale.c3d, all_arounds)
+        to_boost = np.array([sum(n_arr[:-1]) * (not n_arr[-1]) for n_arr in neighbours])
+        to_boost = np.array(np.where(to_boost)[0])
+
+        if len(to_boost) > 0:
+            self.cells[:, to_boost] = np.add(self.cells[:, to_boost], self.dirs[:, to_boost] * self.diff_boost_step,
+                                             casting="unsafe")
+            # adjusting a coordinates of side points for correct shifting
+            self.cells[0, to_boost[np.where(self.cells[0, to_boost] <= -1)]] = self.cells_per_axis - 1
+            self.cells[0, to_boost[np.where(self.cells[0, to_boost] >= self.cells_per_axis)]] = 0
+            self.cells[1, to_boost[np.where(self.cells[1, to_boost] <= -1)]] = self.cells_per_axis - 1
+            self.cells[1, to_boost[np.where(self.cells[1, to_boost] >= self.cells_per_axis)]] = 0
+
+            ind = np.where(self.cells[2, to_boost] < 0)[0]
+            # closed left bound (reflection)
+            # self.cells[2, to_boost[ind]] = 0
+            # self.dirs[2, to_boost[ind]] = 1
+            # _______________________
+            # open left bound___________________________
+            self.cells = np.delete(self.cells, to_boost[ind], 1)
+            self.dirs = np.delete(self.dirs, to_boost[ind], 1)
+            # __________________________________________
+
+            ind = np.where(self.cells[2] >= self.cells_per_axis)
+            # closed right bound (reflection)____________
+            self.cells[2, ind] = self.cells_per_axis - 2
+            self.dirs[2, ind] = -1
+            # ___________________________________________
+            # open right bound___________________________
+            # self.cells = np.delete(self.cells, ind, 1)
+            # self.dirs = np.delete(self.dirs, ind, 1)
+            # ___________________________________________
 
     def fill_first_page(self):
         # generating new particles on the diffusion surface (X = 0)
@@ -383,7 +515,7 @@ class Product:
     def __init__(self, settings):
         self.constitution = settings["constitution"]
         cells_per_axis = settings["cells_per_axis"]
-        shape = (cells_per_axis, cells_per_axis, cells_per_axis)
+        shape = (cells_per_axis, cells_per_axis, cells_per_axis + 1)
         self.oxidation_number = settings["oxidation_number"]
 
         if self.oxidation_number == 1:
@@ -396,7 +528,7 @@ class Product:
             self.lind_flat_arr = 7
 
         self.c3d = np.full(shape, 0, dtype=np.ubyte)
-        self.full_c3d = np.full(shape, False)
+        self.full_c3d = np.full((shape[0], shape[1], shape[2] - 1), False)
 
     def fix_full_cells_ox_numb_single(self, new_precip):
         self.full_c3d[new_precip[0], new_precip[1], new_precip[2]] = True

@@ -40,14 +40,14 @@ class CellularAutomata:
 
         # setting objects for inward diffusion
         if self.param["inward_diffusion"]:
-            self.primary_oxidant = elements.OxidantElem(self.param["oxidant"]["primary"])
+            self.primary_oxidant = elements.OxidantElem(self.param["oxidant"]["primary"], self.utils)
             self.objs[0]["oxidant"] = self.primary_oxidant
             self.objs[1]["oxidant"] = self.primary_oxidant
-            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
-            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk
+            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
+            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk
 
             if self.param["secondary_oxidant_exists"]:
-                self.secondary_oxidant = elements.OxidantElem(self.param["oxidant"]["secondary"])
+                self.secondary_oxidant = elements.OxidantElem(self.param["oxidant"]["secondary"], self.utils)
                 self.objs[2]["oxidant"] = self.primary_oxidant
                 self.objs[3]["oxidant"] = self.primary_oxidant
 
@@ -56,6 +56,9 @@ class CellularAutomata:
             self.primary_active = elements.ActiveElem(self.param["active_element"]["primary"])
             self.objs[0]["active"] = self.primary_active
             self.objs[2]["active"] = self.primary_active
+            self.primary_active.diffuse = self.primary_active.diffuse_with_scale
+            # self.primary_active.diffuse = self.primary_active.diffuse_bulk
+
             if self.param["secondary_active_element_exists"]:
                 self.secondary_active = elements.ActiveElem(self.param["active_element"]["secondary"])
                 self.objs[1]["active"] = self.secondary_active
@@ -65,7 +68,7 @@ class CellularAutomata:
         if self.param["compute_precipitations"]:
             self.precipitations = None
             self.cumul_product = np.full(self.shape, 0, dtype=np.ubyte)
-            self.precipitations3d_init = np.full((self.cells_per_axis, self.cells_per_axis, self.cells_per_axis),
+            self.precipitations3d_init = np.full((self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
                                                  False, dtype=bool)
             self.case = 0
             # self.dependent_growth = True
@@ -101,16 +104,17 @@ class CellularAutomata:
                 self.precip_func = self.precipitation_0_cells
                 # self.precip_func = self.precipitation_0
                 self.calc_precip_front = self.calc_precip_front_0
-                self.decomposition = self.decomposition_0
+                # self.decomposition = self.decomposition_0
                 self.primary_oxidant.scale = self.primary_product
+                self.primary_active.scale = self.primary_product
 
             # self.precipitations3d = np.full(self.shape, False)
-            # self.half_thickness = 20
-            # middle = int(self.cells_per_axis / 2)
-            # minus = middle - self.half_thickness
-            # plus = middle + self.half_thickness
+            self.half_thickness = 20
+            middle = int(self.cells_per_axis / 2)
+            minus = middle - self.half_thickness
+            plus = middle + self.half_thickness
             # self.primary_product.c3d = np.zeros(self.shape, dtype=int)
-            # self.primary_product.c3d[minus:plus, minus:plus, minus:plus] = 1
+            self.primary_product.c3d[minus:plus, minus:plus, minus - 30:plus - 30] = 1
             # shift = 0
             # self.precipitations3d[minus + shift:plus + shift, minus + shift:plus + shift, minus + shift:plus + shift] = True
             # self.precipitations = np.array(np.nonzero(self.precipitations), dtype=int)
@@ -167,7 +171,7 @@ class CellularAutomata:
             if self.param["outward_diffusion"]:
                 self.diffusion_outward()
             if self.param["save_whole"]:
-                self.save_results_only_prod()
+                self.save_results_only_inw()
             # if self.iteration > 10000:
             #     break
 
@@ -380,18 +384,17 @@ class CellularAutomata:
             if self.iteration == 0:
                 self.fix_init_precip(furthest_index, self.primary_product)
                 self.precip_step(comb_indexes)
-                self.probabilities.reset_constants(10**-19, 10**19, self.param["hf_deg_lim"])
+                self.probabilities.reset_constants(10**-19, 1, self.param["hf_deg_lim"])
 
             else:
                 self.probabilities.adapt_hf(comb_indexes, rel_prod_fraction[comb_indexes])
                 self.fix_init_precip(furthest_index, self.primary_product)
                 self.precip_step(comb_indexes)
 
-                # decomp_ind = np.array(np.where(prod_fraction[comb_indexes] >= 0.05)[0])
+                # decomp_ind = np.array(np.where(prod_fraction[comb_indexes] >= 0.1)[0])
                 #
                 # if len(decomp_ind) > 0:
-                #     print("yes")
-                #     self.decomposition(comb_indexes[decomp_ind])
+                #     self.decomposition_0(comb_indexes[decomp_ind])
 
             # self.fix_init_precip(furthest_index, self.primary_product)
             # self.precip_step(comb_indexes)
@@ -1005,6 +1008,14 @@ class CellularAutomata:
     def save_results_only_prod(self):
         self.utils.db.insert_particle_data("primary_product", self.iteration,
                                            self.primary_product.transform_c3d())
+
+    def save_results_prod_and_inw(self):
+        self.utils.db.insert_particle_data("primary_product", self.iteration,
+                                           self.primary_product.transform_c3d())
+        self.utils.db.insert_particle_data("primary_oxidant", self.iteration, self.primary_oxidant.cells)
+
+    def save_results_only_inw(self):
+        self.utils.db.insert_particle_data("primary_oxidant", self.iteration, self.primary_oxidant.cells)
 
     def fix_init_precip(self, u_bound, product):
         if u_bound == self.cells_per_axis - 1:

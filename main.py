@@ -6,7 +6,7 @@ if __name__ == '__main__':
 
     user_input = {"oxidant": {"primary": {"elem": "O",
                                           "diffusion_condition": "O in Ni Krupp",
-                                          "cells_concentration": 0.01},
+                                          "cells_concentration": 0.5},
                               "secondary": {"elem": "None",
                                             "diffusion_condition": "N in Ni Krupp",
                                             "cells_concentration": 0.01}
@@ -40,11 +40,11 @@ if __name__ == '__main__':
                   "threshold_outward": 1,
                   "sol_prod": 0,  # 5.621 * 10 ** -10
 
-                  "nucleation_probability": 0.1,
-                  "het_factor": 10,
+                  "nucleation_probability": 10**-19,
+                  "het_factor": 1,
 
-                  "dissolution_p": 0.01,
-                  "dissolution_n": 5,
+                  "dissolution_p": 10**-3,
+                  "dissolution_n": 300,
                   "exponent_power": 0,  # not used anymore
                   "block_scale_factor": 1,
 
@@ -53,7 +53,7 @@ if __name__ == '__main__':
                   "compute_precipitations": True,
                   "diffusion_in_precipitation": False,
 
-                  "save_whole": False,
+                  "save_whole": True,
                   "save_path": 'W:/SIMCA/test_runs_data/',
 
                   "neigh_range": 1,  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
@@ -62,7 +62,7 @@ if __name__ == '__main__':
                   "decompose_precip": False,
 
                   "phase_fraction_lim": 0.3,
-                  "hf_deg_lim": 10**-19  # range 0 - 1
+                  "hf_deg_lim": 10**0  # range 0 - 1
                   }
 
     eng = CellularAutomata(user_input=user_input)
@@ -80,7 +80,7 @@ if __name__ == '__main__':
         print()
         traceback.print_exc()
 
-    # hf_list = [-17, -16, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0]
+    # hf_list = [-19, -18, -17, -16, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0]
     #
     # for hf in hf_list:
     #     temp_user_input = copy.deepcopy(user_input)
@@ -88,7 +88,7 @@ if __name__ == '__main__':
     #
     #     eng = CellularAutomata(user_input=temp_user_input)
     #
-    #     print(f""" ----->>>>>>>>  DB:{temp_user_input["save_path"]}, Hf: {temp_user_input["hf_deg_lim"]}  <<<<<<------- """)
+    #     print(f"""!!!!!!!!!!!!! ----->>>>>>>>>>>>>>>>>>>>>>>>>  DB:{temp_user_input["save_path"]}, Hf: {temp_user_input["hf_deg_lim"]}  <<<<<<<<<<<<<<<<<<<<<<<<<<<------- """)
     #     try:
     #         eng.simulation()
     #     finally:

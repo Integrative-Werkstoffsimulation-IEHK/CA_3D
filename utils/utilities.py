@@ -32,6 +32,13 @@ class Utils:
 
         self.ind_formation_noz = np.array(np.delete(self.ind_formation, 13, 0), dtype=np.byte)
 
+        self.interface_neigh = {(0, 0, 1): [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1]],
+                                (0, 0, -1): [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, -1]],
+                                (0, 1, 0): [[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1], [0, 1, 0]],
+                                (0, -1, 0): [[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1], [0, -1, 0]],
+                                (1, 0, 0): [[0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1], [1, 0, 0]],
+                                (-1, 0, 0): [[0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1], [-1, 0, 0]]}
+
         # self.ind_excl_side = [[1, 1, -1], [1, 1, 0], [1, 1, 1], [1, 0, -1], [1, 0, 1],
         #                       [1, -1, -1], [1, -1, 0], [1, -1, 1], [0, 1, -1], [0, 1, 1],
         #                       [0, -1, -1], [0, -1, 1], [-1, 1, -1], [-1, 1, 0], [-1, 1, 1],
@@ -383,6 +390,27 @@ class Utils:
             around_seeds[indexes[0], indexes[1], indexes[2]] = shift
             indexes = np.where(around_seeds[:, :, 0:2] == - shift - 1)
             around_seeds[indexes[0], indexes[1], indexes[2]] = self.n_cells_per_axis - shift - 1
+        return around_seeds
+
+    def calc_sur_ind_interface(self, cells, dirs, dummy_ind):
+        """
+        Calculating the descarts surrounding coordinates for each seed including the position of the seed itself.
+        :param dirs:
+        :param cells:
+        :param dummy_ind:
+        :return: around_seeds: array of the surrounding coordinates for each seed (4 flat coordinates for each seed)
+        """
+        # generating a neighbouring coordinates for each seed (including the position of the seed itself)
+        around_seeds = np.array([[cell + self.interface_neigh[tuple(dir)]]
+                                 for cell, dir in zip(cells.transpose(), dirs.transpose())], dtype=np.short)[:, 0]
+        # applying periodic boundary conditions
+        indexes = np.where(around_seeds[:, :, 2] < 0)
+        around_seeds[indexes[0], indexes[1], 2] = dummy_ind
+
+        indexes = np.where(around_seeds[:, :, 0:2] == self.n_cells_per_axis)
+        around_seeds[indexes[0], indexes[1], indexes[2]] = 0
+        indexes = np.where(around_seeds[:, :, 0:2] == - 1)
+        around_seeds[indexes[0], indexes[1], indexes[2]] = self.n_cells_per_axis - 1
         return around_seeds
 
     def generate_neigh_indexes(self):
