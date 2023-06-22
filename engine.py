@@ -109,12 +109,12 @@ class CellularAutomata:
                 self.primary_active.scale = self.primary_product
 
             # self.precipitations3d = np.full(self.shape, False)
-            self.half_thickness = 20
-            middle = int(self.cells_per_axis / 2)
-            minus = middle - self.half_thickness
-            plus = middle + self.half_thickness
+            # self.half_thickness = 20
+            # middle = int(self.cells_per_axis / 2)
+            # minus = middle - self.half_thickness
+            # plus = middle + self.half_thickness
             # self.primary_product.c3d = np.zeros(self.shape, dtype=int)
-            self.primary_product.c3d[minus:plus, minus:plus, minus - 30:plus - 30] = 1
+            # self.primary_product.c3d[minus:plus, minus:plus, minus - 30:plus - 30] = 1
             # shift = 0
             # self.precipitations3d[minus + shift:plus + shift, minus + shift:plus + shift, minus + shift:plus + shift] = True
             # self.precipitations = np.array(np.nonzero(self.precipitations), dtype=int)
@@ -384,22 +384,22 @@ class CellularAutomata:
             if self.iteration == 0:
                 self.fix_init_precip(furthest_index, self.primary_product)
                 self.precip_step(comb_indexes)
-                self.probabilities.reset_constants(10**-19, 1, self.param["hf_deg_lim"])
+                self.probabilities.reset_constants(10**-19, 10**19, self.param["hf_deg_lim"])
 
             else:
                 self.probabilities.adapt_hf(comb_indexes, rel_prod_fraction[comb_indexes])
                 self.fix_init_precip(furthest_index, self.primary_product)
                 self.precip_step(comb_indexes)
 
+                self.primary_oxidant.transform_to_descards()
+
                 # decomp_ind = np.array(np.where(prod_fraction[comb_indexes] >= 0.1)[0])
                 #
                 # if len(decomp_ind) > 0:
                 #     self.decomposition_0(comb_indexes[decomp_ind])
 
-            # self.fix_init_precip(furthest_index, self.primary_product)
-            # self.precip_step(comb_indexes)
-
-        self.primary_oxidant.transform_to_descards()
+        else:
+            self.primary_oxidant.transform_to_descards()
 
     def precipitation_1(self):
         # ONE oxidant and TWO active elements exist. TWO products can be created.

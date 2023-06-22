@@ -6,7 +6,7 @@ if __name__ == '__main__':
 
     user_input = {"oxidant": {"primary": {"elem": "O",
                                           "diffusion_condition": "O in Ni Krupp",
-                                          "cells_concentration": 0.5},
+                                          "cells_concentration": 0.01},
                               "secondary": {"elem": "None",
                                             "diffusion_condition": "N in Ni Krupp",
                                             "cells_concentration": 0.01}
@@ -40,8 +40,8 @@ if __name__ == '__main__':
                   "threshold_outward": 1,
                   "sol_prod": 0,  # 5.621 * 10 ** -10
 
-                  "nucleation_probability": 10**-19,
-                  "het_factor": 1,
+                  "nucleation_probability": 0.1,
+                  "het_factor": 10,
 
                   "dissolution_p": 10**-3,
                   "dissolution_n": 300,
@@ -53,7 +53,7 @@ if __name__ == '__main__':
                   "compute_precipitations": True,
                   "diffusion_in_precipitation": False,
 
-                  "save_whole": True,
+                  "save_whole": False,
                   "save_path": 'W:/SIMCA/test_runs_data/',
 
                   "neigh_range": 1,  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
@@ -62,7 +62,7 @@ if __name__ == '__main__':
                   "decompose_precip": False,
 
                   "phase_fraction_lim": 0.3,
-                  "hf_deg_lim": 10**0  # range 0 - 1
+                  "hf_deg_lim": 10**-19  # range 0 - 1
                   }
 
     eng = CellularAutomata(user_input=user_input)

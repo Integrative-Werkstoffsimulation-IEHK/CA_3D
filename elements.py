@@ -235,6 +235,8 @@ class ActiveElem:
 
         decomposed = np.array(np.nonzero(self.c3d), dtype=np.short)
         if len(decomposed[0] > 0):
+            counts = self.c3d[decomposed[0], decomposed[1], decomposed[2]]
+            decomposed = np.array(np.repeat(decomposed, counts, axis=1), dtype=np.short)
             self.cells = np.concatenate((self.cells, decomposed), axis=1)
             new_dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(decomposed[0]))
             new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
@@ -266,7 +268,7 @@ class OxidantElem:
         self.c3d = np.full(self.extended_shape, 0, dtype=np.ubyte)
         self.scale = None
         self.diffuse = None
-        self.diff_boost_step = 5
+        self.diff_boost_step = 1
         self.utils = utils
 
         self.cells = np.array([[], [], []], dtype=np.short)
