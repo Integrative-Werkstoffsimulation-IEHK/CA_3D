@@ -125,24 +125,44 @@ class Utils:
         self.param["product"]["primary"]["oxidation_number"] =\
             round(self.param["matrix_elem"]["moles_per_cell"] / (self.param["active_element"]["primary"]["moles_per_cell"]
                                                                * t_1))
+        if self.param["product"]["primary"]["oxidation_number"] == 1:
+            self.param["product"]["primary"]["lind_flat_arr"] = 6
+        else:
+            self.param["product"]["primary"]["lind_flat_arr"] = 7
 
         if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
             self.param["product"]["secondary"]["oxidation_number"] = \
                 round(self.param["matrix_elem"]["moles_per_cell"] / (self.param["active_element"]["secondary"]["moles_per_cell"]
                                                                      * t_2))
+            if self.param["product"]["secondary"]["oxidation_number"] == 1:
+                self.param["product"]["secondary"]["lind_flat_arr"] = 6
+            else:
+                self.param["product"]["secondary"]["lind_flat_arr"] = 7
 
             self.param["product"]["ternary"]["oxidation_number"] = \
                 round(self.param["matrix_elem"]["moles_per_cell"] / (self.param["active_element"]["primary"]["moles_per_cell"]
                                                                      * t_1))
+            if self.param["product"]["ternary"]["oxidation_number"] == 1:
+                self.param["product"]["ternary"]["lind_flat_arr"] = 6
+            else:
+                self.param["product"]["ternary"]["lind_flat_arr"] = 7
 
             self.param["product"]["quaternary"]["oxidation_number"] = \
                 round(self.param["matrix_elem"]["moles_per_cell"] / (self.param["active_element"]["secondary"]["moles_per_cell"]
                                                                      * t_2))
+            if self.param["product"]["quaternary"]["oxidation_number"] == 1:
+                self.param["product"]["quaternary"]["lind_flat_arr"] = 6
+            else:
+                self.param["product"]["quaternary"]["lind_flat_arr"] = 7
 
         elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
             self.param["product"]["secondary"]["oxidation_number"] = \
                 round(self.param["matrix_elem"]["moles_per_cell"] / (self.param["active_element"]["secondary"]["moles_per_cell"]
                                                                    * t_2))
+            if self.param["product"]["secondary"]["oxidation_number"] == 1:
+                self.param["product"]["secondary"]["lind_flat_arr"] = 6
+            else:
+                self.param["product"]["secondary"]["lind_flat_arr"] = 7
 
         self.param["product"]["primary"]["cells_per_axis"] = self.param["n_cells_per_axis"]
         self.param["product"]["secondary"]["cells_per_axis"] = self.param["n_cells_per_axis"]

@@ -172,8 +172,8 @@ class CellularAutomata:
                 self.diffusion_outward()
             if self.param["save_whole"]:
                 self.save_results_only_inw()
-            # if self.iteration > 10000:
-            #     break
+            if self.iteration > 10000:
+                break
 
         end = time.time()
         self.elapsed_time = (end - self.begin)
@@ -634,10 +634,13 @@ class CellularAutomata:
             all_arounds = all_arounds[temp_ind]
             flat_arounds = all_arounds[:, 0:self.objs[self.case]["product"].lind_flat_arr]
             flat_neighbours = go_around(self.precipitations3d_init, flat_arounds)
-            arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
+            inside_produc_ind = np.where(flat_neighbours[:, 6])[0]
+
+            arr_len_in_flat = np.array([np.sum(item[:-1]) for item in flat_neighbours], dtype=int)
             homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
             needed_prob = self.probabilities.get_probabilities(arr_len_in_flat, seeds[0][2])
             needed_prob[homogeneous_ind] = self.probabilities.nucl_prob_pp[seeds[0][2]] # seeds[0][2] - current plane index
+            needed_prob[inside_produc_ind] = 1
             randomise = np.array(np.random.random_sample(arr_len_in_flat.size), dtype=np.float64)
             temp_ind = np.where(randomise < needed_prob)[0]
         # _________________________________________________________________________________________________

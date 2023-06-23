@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
                   "active_element": {"primary": {"elem": "Al",
                                                  "diffusion_condition": "Al in Ni Krupp",
-                                                 "mass_concentration": 0.1,
+                                                 "mass_concentration": 0.025,
                                                  "cells_concentration": 0.3},
                                      "secondary": {"elem": "None",
                                                    "diffusion_condition": "Al in Ni Krupp",

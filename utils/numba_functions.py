@@ -46,7 +46,7 @@ def check_in_scale(scale, cells, dirs):
     # trick to initialize an empty list with known type
     out_scale = [np.uint32(x) for x in range(0)]
     for index, coordinate in enumerate(cells.transpose()):
-        if scale[coordinate[0], coordinate[1], coordinate[2]] == 0:
+        if not scale[coordinate[0], coordinate[1], coordinate[2]]:
             out_scale.append(np.uint32(index))
         else:
             dirs[:, index] *= -1

@@ -453,7 +453,19 @@ ELAPSED TIME: {message}
                 self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
                 items = np.array(self.c.fetchall())
                 if np.any(items):
-                    ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='r',
+                    counts = np.unique(np.ravel_multi_index(items.transpose(), self.shape), return_counts=True)
+                    dec = np.array(np.unravel_index(counts[0], self.shape), dtype=np.short).transpose()
+                    counts = np.array(counts[1], dtype=np.ubyte)
+
+                    full_ind = np.where(counts == 4)[0]
+
+                    fulls = dec[full_ind]
+                    not_fulls = np.delete(dec, full_ind, axis=0)
+
+                    ax_all.scatter(fulls[:, 2], fulls[:, 1], fulls[:, 0], marker=',', color='darkred',
+                                   s=self.cell_size * (72. / fig.dpi) ** 2)
+
+                    ax_all.scatter(not_fulls[:, 2], not_fulls[:, 1], not_fulls[:, 0], marker=',', color='r',
                                    s=self.cell_size * (72. / fig.dpi) ** 2)
 
                 if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:

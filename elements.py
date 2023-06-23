@@ -123,7 +123,7 @@ class ActiveElem:
         """
         # Diffusion through the scale. If the current particle is inside the product particle
         # it will be reflected
-        out_scale = check_in_scale(self.scale.c3d, self.cells, self.dirs)
+        out_scale = check_in_scale(self.scale.full_c3d, self.cells, self.dirs)
 
         # Diffusion along grain boundaries
         # ______________________________________________________________________________________________________________
@@ -365,7 +365,7 @@ class OxidantElem:
         """
         # Diffusion through the scale. If the current particle is inside the product particle
         # it will be reflected
-        out_scale = check_in_scale(self.scale.c3d, self.cells, self.dirs)
+        out_scale = check_in_scale(self.scale.full_c3d, self.cells, self.dirs)
 
         # Diffusion along grain boundaries
         # ______________________________________________________________________________________________________________
@@ -438,7 +438,7 @@ class OxidantElem:
         # self.dirs = np.delete(self.dirs, ind, 1)
         # ___________________________________________
 
-        self.diffuse_interface()
+        # self.diffuse_interface()
 
         self.current_count = len(np.where(self.cells[2] == 0)[0])
         self.fill_first_page()
@@ -450,7 +450,7 @@ class OxidantElem:
         (in its ballistic direction) it will be boosted forwardly in n (self.diff_boost_step) steps.
         """
         all_arounds = self.utils.calc_sur_ind_interface(self.cells, self.dirs, self.extended_axis - 1)
-        neighbours = go_around(self.scale.c3d, all_arounds)
+        neighbours = go_around(self.scale.full_c3d, all_arounds)
         to_boost = np.array([sum(n_arr[:-1]) * (not n_arr[-1]) for n_arr in neighbours])
         to_boost = np.array(np.where(to_boost)[0])
 
@@ -519,6 +519,7 @@ class Product:
         cells_per_axis = settings["cells_per_axis"]
         shape = (cells_per_axis, cells_per_axis, cells_per_axis + 1)
         self.oxidation_number = settings["oxidation_number"]
+        # self.lind_flat_arr = settings["lind_flat_arr"]
 
         if self.oxidation_number == 1:
             self.fix_full_cells = self.fix_full_cells_ox_numb_single
