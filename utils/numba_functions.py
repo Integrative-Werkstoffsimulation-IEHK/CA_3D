@@ -3,7 +3,7 @@ import numpy as np
 
 
 @numba.njit(nopython=True)
-def go_around(array_3d, arrounds):
+def go_around_bool(array_3d, arrounds):
     all_neighbours = []
     # trick to initialize an empty list with known type
     single_neighbours = [np.ubyte(x) for x in range(0)]
@@ -13,6 +13,19 @@ def go_around(array_3d, arrounds):
         all_neighbours.append(single_neighbours)
         single_neighbours = [np.ubyte(x) for x in range(0)]
     return np.array(all_neighbours, dtype=np.bool_)
+
+
+@numba.njit(nopython=True)
+def go_around_int(array_3d, arrounds):
+    all_neighbours = []
+    # trick to initialize an empty list with known type
+    single_neighbours = [np.ubyte(x) for x in range(0)]
+    for seed_arrounds in arrounds:
+        for point in seed_arrounds:
+            single_neighbours.append(array_3d[point[0], point[1], point[2]])
+        all_neighbours.append(single_neighbours)
+        single_neighbours = [np.ubyte(x) for x in range(0)]
+    return np.array(all_neighbours, dtype=np.ubyte)
 
 
 @numba.njit(nopython=True)

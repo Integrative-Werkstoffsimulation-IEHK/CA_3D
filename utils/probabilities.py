@@ -9,8 +9,8 @@ class NucleationProbabilities:
         self.hf_init = param["het_factor"]
         self.hf_b = np.log(param["hf_deg_lim"])
 
-        # self.n_neigh = param["product"]["primary"]["lind_flat_arr"]
-        self.n_neigh = 6
+        self.n_neigh = param["product"]["primary"]["lind_flat_arr"] * param["product"]["primary"]["oxidation_number"]
+        # self.n_neigh = 6
 
         self.const_a_pp = (1 / (self.hf_init * self.nucl_prob_pp)) ** (-self.n_neigh / (self.n_neigh - 1))
         self.const_b_pp = np.log(1 / (self.hf_init * self.nucl_prob_pp)) * (1 / (self.n_neigh - 1))
