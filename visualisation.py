@@ -20,6 +20,10 @@ class Visualisation:
         self.generate_param_from_db()
         self.cell_size = 5
         self.linewidth = 1
+        self.cm = {1: np.array([255, 200, 200])/255.0,
+                   2: np.array([255, 75, 75])/255.0,
+                   3: np.array([220, 0, 0])/255.0,
+                   4: np.array([120, 0, 0])/255.0}
 
     def generate_param_from_db(self):
         user_input = templates.DEFAULT_PARAM
@@ -457,17 +461,10 @@ ELAPSED TIME: {message}
                     dec = np.array(np.unravel_index(counts[0], self.shape), dtype=np.short).transpose()
                     counts = np.array(counts[1], dtype=np.ubyte)
 
-                    # cm = {1: np.array([255, 200, 200])/255.0,
-                    #       2: np.array([255, 75, 75])/255.0,
-                    #       3: np.array([220, 0, 0])/255.0,
-                    #       4: np.array([120, 0, 0])/255.0}
-                    #
                     # for grade in range(1, 5):
-                    #
                     #     grade_ind = np.where(counts == grade)[0]
-                    #
-                    #     ax_all.scatter(dec[grade_ind, 2], dec[grade_ind, 1], dec[grade_ind, 0], marker=',', color=cm[grade],
-                    #                    s=self.cell_size * (72. / fig.dpi) ** 2)
+                    #     ax_all.scatter(dec[grade_ind, 2], dec[grade_ind, 1], dec[grade_ind, 0], marker=',',
+                    #                    color=self.cm[grade], s=self.cell_size * (72. / fig.dpi) ** 2)
 
                     full_ind = np.where(counts == 4)[0]
 
@@ -654,16 +651,21 @@ ELAPSED TIME: {message}
                     dec = np.array(np.unravel_index(counts[0], self.shape), dtype=np.short).transpose()
                     counts = np.array(counts[1], dtype=np.ubyte)
 
-                    full_ind = np.where(counts == 4)[0]
+                    for grade in range(1, 5):
+                        grade_ind = np.where(counts == grade)[0]
+                        ax_all.scatter(dec[grade_ind, 2], dec[grade_ind, 1], marker=',',
+                                       color=self.cm[grade], s=self.cell_size * (72. / fig.dpi) ** 2)
 
-                    fulls = dec[full_ind]
-                    not_fulls = np.delete(dec, full_ind, axis=0)
-
-                    ax_all.scatter(fulls[:, 2], fulls[:, 1], marker=',', color='darkred',
-                                   s=self.cell_size * (72. / fig.dpi) ** 2)
-
-                    ax_all.scatter(not_fulls[:, 2], not_fulls[:, 1], marker=',', color='r',
-                                   s=self.cell_size * (72. / fig.dpi) ** 2)
+                    # full_ind = np.where(counts == 4)[0]
+                    #
+                    # fulls = dec[full_ind]
+                    # not_fulls = np.delete(dec, full_ind, axis=0)
+                    #
+                    # ax_all.scatter(fulls[:, 2], fulls[:, 1], marker=',', color='darkred',
+                    #                s=self.cell_size * (72. / fig.dpi) ** 2)
+                    #
+                    # ax_all.scatter(not_fulls[:, 2], not_fulls[:, 1], marker=',', color='r',
+                    #                s=self.cell_size * (72. / fig.dpi) ** 2)
 
                     # ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='r',
                     #                s=self.cell_size * (72. / fig.dpi) ** 2)

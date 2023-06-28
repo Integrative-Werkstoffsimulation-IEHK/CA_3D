@@ -23,8 +23,8 @@ class TDATA:
 
     def gen_table_dict(self):
         # Define the composition ranges for Cr, Al, and O
-        cr_range = np.around(np.linspace(0, 25, 11), decimals=4)  # Example Cr composition values
-        al_range = np.around(np.linspace(0, 2.5, 11), decimals=4)  # Example Al composition values
+        cr_range = np.around(np.linspace(0, 26.585, 11), decimals=4)  # Example Cr composition values
+        al_range = np.around(np.linspace(0, 6, 11), decimals=4)  # Example Al composition values
         o_range = np.around(np.linspace(0, 0.001, 101), decimals=8)  # Example O composition values
 
         # Populate the lookup table with probabilities

@@ -185,7 +185,7 @@ class CellularAutomata:
                 self.diffusion_outward()
             if self.param["save_whole"]:
                 self.save_results_only_inw()
-            if self.iteration > 10000:
+            if self.iteration > 100000:
                 break
 
         end = time.time()
@@ -649,6 +649,9 @@ class CellularAutomata:
             flat_arounds = all_arounds[:, 0:self.objs[self.case]["product"].lind_flat_arr]
             flat_neighbours = self.go_around(self.precipitations3d_init, flat_arounds)
             arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
+            print()
+            print(arr_len_in_flat)
+            print()
 
             # if len(np.where(arr_len_in_flat)[0]) > 20:
             #     print("!!!!!!!!!!!!!!!!!!!")

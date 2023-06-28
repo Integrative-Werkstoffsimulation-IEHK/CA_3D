@@ -95,13 +95,13 @@ class Utils:
         # Primary
         self.param["product"]["primary"]["mass_per_cell"] = self.param["oxidant"]["primary"]["mass_per_cell"] + \
                                                             self.param["active_element"]["primary"]["mass_per_cell"]
-        self.param["product"]["primary"]["moles_per_cell"] = self.param["active_element"]["primary"]["moles_per_cell"]
+        self.param["product"]["primary"]["moles_per_cell"] = self.param["active_element"]["primary"]["moles_per_cell"]/2
         self.param["product"]["primary"]["constitution"] = self.param["active_element"]["primary"]["elem"] + "+" +\
                                                         self.param["oxidant"]["primary"]["elem"]
         # Secondary
         self.param["product"]["secondary"]["mass_per_cell"] = self.param["oxidant"]["primary"]["mass_per_cell"] + \
                                                               self.param["active_element"]["secondary"]["mass_per_cell"]
-        self.param["product"]["secondary"]["moles_per_cell"] = self.param["active_element"]["secondary"]["moles_per_cell"]
+        self.param["product"]["secondary"]["moles_per_cell"] = self.param["active_element"]["secondary"]["moles_per_cell"]/2
         self.param["product"]["secondary"]["constitution"] = self.param["active_element"]["secondary"]["elem"] + "+" + \
                                                            self.param["oxidant"]["primary"]["elem"]
         # Ternary
