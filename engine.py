@@ -185,7 +185,7 @@ class CellularAutomata:
                 self.diffusion_outward()
             if self.param["save_whole"]:
                 self.save_results_only_inw()
-            if self.iteration > 100000:
+            if self.iteration > 10000:
                 break
 
         end = time.time()
@@ -400,7 +400,6 @@ class CellularAutomata:
                 self.probabilities.reset_constants(10**-19, 10**19, self.param["hf_deg_lim"])
 
             else:
-                # print(f"comb_indexes: ", comb_indexes, "  ", "rel_prod_fraction", rel_prod_fraction[comb_indexes])
                 self.probabilities.adapt_hf(comb_indexes, rel_prod_fraction[comb_indexes])
                 self.fix_init_precip(furthest_index, self.primary_product)
                 self.precip_step(comb_indexes)
@@ -649,13 +648,6 @@ class CellularAutomata:
             flat_arounds = all_arounds[:, 0:self.objs[self.case]["product"].lind_flat_arr]
             flat_neighbours = self.go_around(self.precipitations3d_init, flat_arounds)
             arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
-            print()
-            print(arr_len_in_flat)
-            print()
-
-            # if len(np.where(arr_len_in_flat)[0]) > 20:
-            #     print("!!!!!!!!!!!!!!!!!!!")
-
             homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
             needed_prob = self.probabilities.get_probabilities(arr_len_in_flat, seeds[0][2])
             needed_prob[homogeneous_ind] = self.probabilities.nucl_prob_pp[seeds[0][2]] # seeds[0][2] - current plane index

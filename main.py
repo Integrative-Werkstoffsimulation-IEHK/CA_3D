@@ -61,8 +61,8 @@ if __name__ == '__main__':
                                      # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
                   "decompose_precip": False,
 
-                  "phase_fraction_lim": 1,
-                  "hf_deg_lim": 10**-9  # range 0 - 1
+                  "phase_fraction_lim": 0.3,
+                  "hf_deg_lim": 10**-4  # range 0 - 1
                   }
 
     eng = CellularAutomata(user_input=user_input)
