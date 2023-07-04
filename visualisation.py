@@ -18,7 +18,7 @@ class Visualisation:
         self.shape = None
         self.last_i = None
         self.generate_param_from_db()
-        self.cell_size = 5
+        self.cell_size = 10
         self.linewidth = 1
         self.cm = {1: np.array([255, 200, 200])/255.0,
                    2: np.array([255, 75, 75])/255.0,

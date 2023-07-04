@@ -108,14 +108,15 @@ class CellularAutomata:
                 self.primary_oxidant.scale = self.primary_product
                 self.primary_active.scale = self.primary_product
 
-                if self.param["product"]["primary"]["oxidation_number"] == 1:
-                    self.go_around = go_around_bool
+                self.primary_oxid_numb = self.param["product"]["primary"]["oxidation_number"]
+                if self.primary_oxid_numb == 1:
+                    self.go_around = self.go_around_single_oxid_n
                     self.fix_init_precip = self.fix_init_precip_bool
                     self.precipitations3d_init = np.full(
                         (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
                         False, dtype=bool)
                 else:
-                    self.go_around = go_around_int
+                    self.go_around = self.go_around_mult_oxid_n
                     self.fix_init_precip = self.fix_init_precip_int
                     self.precipitations3d_init = np.full(
                         (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
@@ -185,8 +186,8 @@ class CellularAutomata:
                 self.diffusion_outward()
             if self.param["save_whole"]:
                 self.save_results_only_inw()
-            if self.iteration > 10000:
-                break
+            # if self.iteration > 50000:
+            #     break
 
         end = time.time()
         self.elapsed_time = (end - self.begin)
@@ -373,12 +374,14 @@ class CellularAutomata:
         product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
                             in range(furthest_index + 1)], dtype=np.uint32)
 
+        last_nonzero_index = np.max(np.nonzero(product), initial=0)
+
         oxidant_indexes = np.where(oxidant > 0)[0]
         active_indexes = np.where(active > 0)[0]
         prod_fraction = product / self.cells_per_page
         rel_prod_fraction = prod_fraction / self.param["phase_fraction_lim"]
         product_indexes = np.where(prod_fraction < self.param["phase_fraction_lim"])[0]
-
+        product_indexes = product_indexes[:last_nonzero_index + 2]
         # if self.iteration == 0:
         #     product_indexes = np.where(prod_fraction < 0.1)[0]
         # else:
@@ -401,6 +404,7 @@ class CellularAutomata:
 
             else:
                 self.probabilities.adapt_hf(comb_indexes, rel_prod_fraction[comb_indexes])
+                # print("product_fraction: ", rel_prod_fraction[comb_indexes])
                 self.fix_init_precip(furthest_index, self.primary_product)
                 self.precip_step(comb_indexes)
 
@@ -626,13 +630,17 @@ class CellularAutomata:
                     oxidant_cells = np.vstack((oxidant_cells, np.full(len(oxidant_cells[0]), plane_index, dtype=np.short)))
                     oxidant_cells = oxidant_cells.transpose()
 
-                    # activate if microstructure ___________________________________________________________
-                    # in_gb = [self.microstructure[point[0], point[1], point[2]] for point in oxidant_cells]
-                    # temp_ind = np.where(in_gb)[0]
-                    # oxidant_cells = oxidant_cells[temp_ind]
-                    # ______________________________________________________________________________________
+                    exists = check_at_coord(self.objs[self.case]["product"].full_c3d, oxidant_cells)  # precip on place of oxidant!
+                    temp_ind = np.where(exists)[0]
+                    oxidant_cells = np.delete(oxidant_cells, temp_ind, 0)
 
-                    self.check_intersection(oxidant_cells)
+                    if len(oxidant_cells) > 0:
+                        # activate if microstructure ___________________________________________________________
+                        # in_gb = [self.microstructure[point[0], point[1], point[2]] for point in oxidant_cells]
+                        # temp_ind = np.where(in_gb)[0]
+                        # oxidant_cells = oxidant_cells[temp_ind]
+                        # ______________________________________________________________________________________
+                        self.check_intersection(oxidant_cells)
 
     def ci_single(self, seeds):
         all_arounds = self.utils.calc_sur_ind_formation(seeds, self.objs[self.case]["active"].c3d.shape[2] - 1)
@@ -646,8 +654,13 @@ class CellularAutomata:
             neighbours = neighbours[temp_ind]
             all_arounds = all_arounds[temp_ind]
             flat_arounds = all_arounds[:, 0:self.objs[self.case]["product"].lind_flat_arr]
-            flat_neighbours = self.go_around(self.precipitations3d_init, flat_arounds)
-            arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
+
+            # flat_neighbours = self.go_around(self.precipitations3d_init_full, flat_arounds)
+            # flat_neighbours = self.go_around(flat_arounds)
+            # arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
+
+            arr_len_in_flat = self.go_around(flat_arounds)
+
             homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
             needed_prob = self.probabilities.get_probabilities(arr_len_in_flat, seeds[0][2])
             needed_prob[homogeneous_ind] = self.probabilities.nucl_prob_pp[seeds[0][2]] # seeds[0][2] - current plane index
@@ -668,11 +681,11 @@ class CellularAutomata:
                 coord = np.reshape(coord, (len(coord) * self.threshold_outward, 3))
 
                 # exists = check_at_coord(self.objs[self.case]["product"].full_c3d, coord)  # precip on place of active!
-                exists = check_at_coord(self.objs[self.case]["product"].full_c3d, seeds)  # precip on place of oxidant!
+                # exists = check_at_coord(self.objs[self.case]["product"].full_c3d, seeds)  # precip on place of oxidant!
 
-                temp_ind = np.where(exists)[0]
-                coord = np.delete(coord, temp_ind, 0)
-                seeds = np.delete(seeds, temp_ind, 0)
+                # temp_ind = np.where(exists)[0]
+                # coord = np.delete(coord, temp_ind, 0)
+                # seeds = np.delete(seeds, temp_ind, 0)
 
                 # if self.objs[self.case]["to_check_with"] is not None:
                 #     # to_check_min_self = np.array(self.cumul_product - product.c3d, dtype=np.ubyte)
@@ -1035,19 +1048,34 @@ class CellularAutomata:
             u_bound = self.cells_per_axis - 2
         self.precipitations3d_init[:, :, 0:u_bound + 2] = False
         self.precipitations3d_init[:, :, 0:u_bound + 2] = product.c3d[:, :, 0:u_bound + 2]
-        #     self.precipitations3d_init = np.full(shape, False)
-        #     if u_bound == self.cells_per_axis - 1:
-        #         u_bound = self.cells_per_axis - 2
-        #     current_precip = np.array(product.c3d[:, :, 0:u_bound + 2], dtype=np.ubyte)
-        #     current_precip = np.array(np.nonzero(current_precip), dtype=np.short)
-        #     if len(current_precip[0]) > 0:
-        #         self.precipitations3d_init[current_precip[0], current_precip[1], current_precip[2]] = True
 
     def fix_init_precip_int(self, u_bound, product):
         if u_bound == self.cells_per_axis - 1:
             u_bound = self.cells_per_axis - 2
         self.precipitations3d_init[:, :, 0:u_bound + 2] = 0
         self.precipitations3d_init[:, :, 0:u_bound + 2] = product.c3d[:, :, 0:u_bound + 2]
+
+    def go_around_single_oxid_n(self, around_coords):
+        flat_neighbours = go_around_bool(self.precipitations3d_init, around_coords)
+        return np.array([np.sum(item) for item in flat_neighbours], dtype=int)
+
+    def go_around_mult_oxid_n(self, around_coords):
+        all_neigh = go_around_int(self.precipitations3d_init, around_coords)
+        neigh_in_prod = all_neigh[:, 6].view()
+
+        nonzero_neigh_in_prod = np.array(np.nonzero(neigh_in_prod)[0])
+        where_full = np.unique(np.where(all_neigh[:, :6].view() == self.primary_oxid_numb)[0])
+
+        # if len(nonzero_neigh_in_prod) > 0 or len(where_full) > 0:
+        #     print()
+
+        only_inside_product_program = np.setdiff1d(nonzero_neigh_in_prod, where_full, assume_unique=True)
+
+        fanal_effective_flat_counts = np.zeros(len(all_neigh), dtype=np.single)
+        fanal_effective_flat_counts[where_full] = np.sum(all_neigh[where_full], axis=1)
+        fanal_effective_flat_counts[only_inside_product_program] =\
+            neigh_in_prod[only_inside_product_program] * (7 * self.primary_oxid_numb - 1) / (self.primary_oxid_numb - 1)
+        return fanal_effective_flat_counts
 
     def generate_fetch_ind(self):
         size = 3 + (self.param["neigh_range"] - 1) * 2

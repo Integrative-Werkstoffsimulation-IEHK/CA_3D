@@ -40,8 +40,8 @@ if __name__ == '__main__':
                   "threshold_outward": 1,
                   "sol_prod": 0,  # 5.621 * 10 ** -10
 
-                  "nucleation_probability": 0.1,
-                  "het_factor": 10,
+                  "nucleation_probability": 0.5,
+                  "het_factor": 2,
 
                   "dissolution_p": 10**-3,
                   "dissolution_n": 300,
@@ -62,7 +62,7 @@ if __name__ == '__main__':
                   "decompose_precip": False,
 
                   "phase_fraction_lim": 0.3,
-                  "hf_deg_lim": 10**-4  # range 0 - 1
+                  "hf_deg_lim": 10**-10  # range 0 - 1
                   }
 
     eng = CellularAutomata(user_input=user_input)
