@@ -185,7 +185,7 @@ class CellularAutomata:
             if self.param["outward_diffusion"]:
                 self.diffusion_outward()
             if self.param["save_whole"]:
-                self.save_results_only_inw()
+                self.save_results_only_prod()
             # if self.iteration > 50000:
             #     break
 
@@ -380,7 +380,7 @@ class CellularAutomata:
         active_indexes = np.where(active > 0)[0]
         prod_fraction = product / self.cells_per_page
         rel_prod_fraction = prod_fraction / self.param["phase_fraction_lim"]
-        product_indexes = np.where(prod_fraction < self.param["phase_fraction_lim"])[0]
+        product_indexes = np.where(prod_fraction <= self.param["phase_fraction_lim"])[0]
         product_indexes = product_indexes[:last_nonzero_index + 2]
         # if self.iteration == 0:
         #     product_indexes = np.where(prod_fraction < 0.1)[0]
@@ -398,22 +398,27 @@ class CellularAutomata:
 
         if len(comb_indexes) > 0:
             if self.iteration == 0:
+                # print("product_fraction: ", rel_prod_fraction[comb_indexes])
+                self.probabilities.adapt_hf_n_neigh_nucl_prob(comb_indexes, rel_prod_fraction[comb_indexes])
                 self.fix_init_precip(furthest_index, self.primary_product)
                 self.precip_step(comb_indexes)
-                self.probabilities.reset_constants(10**-19, 10**19, self.param["hf_deg_lim"])
+                # self.probabilities.reset_constants(10**-10, 10**10, self.param["hf_deg_lim"])
+                # print(np.sum(self.primary_product.c3d))
 
             else:
-                self.probabilities.adapt_hf(comb_indexes, rel_prod_fraction[comb_indexes])
                 # print("product_fraction: ", rel_prod_fraction[comb_indexes])
+                self.probabilities.adapt_hf_n_neigh_nucl_prob(comb_indexes, rel_prod_fraction[comb_indexes])
                 self.fix_init_precip(furthest_index, self.primary_product)
                 self.precip_step(comb_indexes)
+                # print(np.sum(self.primary_product.c3d))
 
                 self.primary_oxidant.transform_to_descards()
-
                 # decomp_ind = np.array(np.where(prod_fraction[comb_indexes] >= 0.1)[0])
                 #
                 # if len(decomp_ind) > 0:
                 #     self.decomposition_0(comb_indexes[decomp_ind])
+                self.decomposition_0(product_indexes)
+                # print(np.sum(self.primary_product.c3d))
 
         else:
             self.primary_oxidant.transform_to_descards()

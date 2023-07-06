@@ -209,12 +209,12 @@ ELAPSED TIME: {message}
             def animate(iteration):
                 ax_all.cla()
                 # ax_all.dist = 4
-                if self.param["inward_diffusion"]:
-                    self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
-                    items = np.array(self.c.fetchall())
-                    if np.any(items):
-                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b',
-                                       s=self.cell_size * (72. / fig.dpi) ** 2)
+                # if self.param["inward_diffusion"]:
+                #     self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
+                #     items = np.array(self.c.fetchall())
+                #     if np.any(items):
+                #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b',
+                #                        s=self.cell_size * (72. / fig.dpi) ** 2)
                 #     if self.param["secondary_oxidant_exists"]:
                 #         self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
                 #         items = np.array(self.c.fetchall())
@@ -233,18 +233,18 @@ ELAPSED TIME: {message}
                 #         if np.any(items):
                 #             ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='darkorange',
                 #                            s=self.cell_size * (72. / fig.dpi) ** 2)
-                # if self.param["compute_precipitations"]:
-                #     self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
-                #     items = np.array(self.c.fetchall())
-                #     if np.any(items):
-                #         # items = items.transpose()
-                #         # data = np.zeros(self.shape, dtype=bool)
-                #         # data[items[0], items[1], items[2]] = True
-                #         # ax_all.voxels(data, facecolors="r")
-                #         # plt.savefig(f'W:/SIMCA/test_runs_data/{iteration}.jpeg')
-                #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='r',
-                #                        s=self.cell_size * (72. / fig.dpi) ** 2)
-                #
+                if self.param["compute_precipitations"]:
+                    self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
+                    items = np.array(self.c.fetchall())
+                    if np.any(items):
+                        # items = items.transpose()
+                        # data = np.zeros(self.shape, dtype=bool)
+                        # data[items[0], items[1], items[2]] = True
+                        # ax_all.voxels(data, facecolors="r")
+                        # plt.savefig(f'W:/SIMCA/test_runs_data/{iteration}.jpeg')
+                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='r',
+                                       s=self.cell_size * (72. / fig.dpi) ** 2)
+
                 #     if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
                 #         self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
                 #         items = np.array(self.c.fetchall())

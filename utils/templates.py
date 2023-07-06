@@ -53,7 +53,9 @@ DEFAULT_PARAM = {
     "decompose_precip": False,
 
     "phase_fraction_lim": 0.123456789,
-    "hf_deg_lim": 0.123456789
+    "hf_deg_lim": 0.123456789,
+    "lowest_neigh_numb": 0.123456789,
+    "final_nucl_prob": 0.123456789
 }
 
 DEFAULT_OBJ_REF = {
