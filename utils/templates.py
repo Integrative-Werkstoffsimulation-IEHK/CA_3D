@@ -54,8 +54,15 @@ DEFAULT_PARAM = {
 
     "phase_fraction_lim": 0.123456789,
     "hf_deg_lim": 0.123456789,
+
     "lowest_neigh_numb": 0.123456789,
-    "final_nucl_prob": 0.123456789
+    "final_nucl_prob": 0.123456789,
+
+    "min_dissol_prob": 0.123456789,
+    "het_factor_dissolution": 0.123456789,
+
+    "final_dissol_prob": 0.123456789,
+    "final_het_factor_dissol": 0.123456789
 }
 
 DEFAULT_OBJ_REF = {
