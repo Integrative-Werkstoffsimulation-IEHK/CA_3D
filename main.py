@@ -43,7 +43,7 @@ if __name__ == '__main__':
                   "nucleation_probability": 10**-0,
                   "het_factor": 10**0,
 
-                  "dissolution_p": 10**-1,
+                  "dissolution_p": 1 * 10**-1,
                   "dissolution_n": 5,  # not used anymore
                   "exponent_power": 0,  # not used anymore
                   "block_scale_factor": 1,
@@ -62,14 +62,14 @@ if __name__ == '__main__':
                   "decompose_precip": True,
 
                   "phase_fraction_lim": 0.5,
-                  "hf_deg_lim": 10**19,  # range 0 - 1
-                  "lowest_neigh_numb": 27,
-                  "final_nucl_prob": 10**-19,
+                  "hf_deg_lim": 10**5,  # range 0 - 1
+                  "lowest_neigh_numb": 4,
+                  "final_nucl_prob": 10**-10,
 
-                  "min_dissol_prob": 10 ** -1,
+                  "min_dissol_prob": 1 * 10 ** -1,
                   "het_factor_dissolution": 10 ** 0,
-                  "final_dissol_prob": 1,
-                  "final_het_factor_dissol": 10 ** 1
+                  "final_dissol_prob": 1 * 10 ** -1,
+                  "final_het_factor_dissol": 10 ** 0
 
                   }
 

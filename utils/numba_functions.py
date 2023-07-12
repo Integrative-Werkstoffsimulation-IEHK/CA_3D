@@ -40,6 +40,29 @@ def go_around_int(array_3d, arrounds):
 
 
 @numba.njit(nopython=True)
+def go_around_bool_dissol(array_3d, arrounds):
+    all_neigh = []
+    # trick to initialize an empty list with known type
+    single_neigh = [np.bool_(x) for x in range(0)]
+    for seed_arrounds in arrounds:
+        for point in seed_arrounds:
+            single_neigh.append(array_3d[point[0], point[1], point[2]])
+        all_neigh.append(single_neigh)
+        single_neigh = [np.bool_(x) for x in range(0)]
+    return np.array(all_neigh, dtype=np.bool_)
+
+
+@numba.njit(nopython=True)
+def check_at_coord_dissol(array_3d, cells):
+    # trick to initialize an empty list with known type
+    where_full = [np.uint32(x) for x in range(0)]
+    for index, coordinate in enumerate(cells.transpose()):
+        if array_3d[coordinate[0], coordinate[1], coordinate[2]]:
+            where_full.append(np.uint32(index))
+    return np.array(where_full, dtype=np.uint32)
+
+
+@numba.njit(nopython=True)
 def check_at_coord(array_3d, coordinates):
     # trick to initialize an empty list with known type
     result_coords = [np.bool_(x) for x in range(0)]
