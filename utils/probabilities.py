@@ -60,7 +60,10 @@ class NucleationProbabilities:
     def adapt_hf_nucl_prob(self, page_ind, rel_phase_fraction):
         self.hf_pp[page_ind] = self.hf_init * np.e ** (self.hf_b * rel_phase_fraction)
         self.nucl_prob_pp[page_ind] = self.nucl_prob_a * np.e ** (self.nucl_prob_b * rel_phase_fraction)
-        # self.update_constants()
+        self.update_constants()
+
+    def adapt_nucl_prob(self, page_ind, rel_phase_fraction):
+        self.nucl_prob_pp[page_ind] = self.nucl_prob_a * np.e ** (self.nucl_prob_b * rel_phase_fraction)
 
 
 class DissolutionProbabilities:
