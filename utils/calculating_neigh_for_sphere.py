@@ -6,6 +6,9 @@ import numba
 import gc
 import math
 
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
 
 user_input = {"start_real_radius": 0.5,
               "delta_radius": 0.1,
@@ -30,7 +33,7 @@ class Sphere:
         self.n_cells_per_axis = params["n_cells_per_axis"]
 
         self.s_coord = int((self.n_cells_per_axis - 1) / 2)
-        # self.curr_side_lim = math.ceil(self.real_radius - 1 / 2)
+        self.curr_side_lim = math.ceil(self.real_radius - 1 / 2)
 
         self.on_surface = np.empty((self.n_cells_per_axis ** 3, 3), dtype=np.short)
         self.on_surface[0] = [self.s_coord, self.s_coord, self.s_coord]
@@ -48,6 +51,9 @@ class Sphere:
                                                     4: 0,
                                                     5: 0}}
 
+        self.fig = plt.figure()
+        self.ax = self.fig.add_subplot(111, projection='3d')
+        self.cell_size = 0.5
         # self.inside = np.empty((self.n_cells_per_axis**3, 3), dtype=np.short)
         # self.last_inside_ind = 0
 
@@ -61,8 +67,15 @@ class Sphere:
 
     def expand_radius(self):
         self.real_radius += self.delta_radius
-        # self.curr_side_lim = math.ceil(self.real_radius - (1 / 2))
-        # self.stats[self.real_radius] = {"mean": 0, 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        self.curr_side_lim = math.ceil(self.real_radius - (1 / 2))
+        self.stats[self.real_radius] = {"mean": 0, 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+
+    def update_stats(self, mean, freq, neig_n):
+        self.stats[self.real_radius]["mean"] = mean
+
+        for freq_i, number in zip(freq, neig_n):
+            self.stats[self.real_radius][number] = freq_i
+
 
     def calc_mean_neigh(self):
         self.expand_radius()
@@ -82,11 +95,26 @@ class Sphere:
         self.on_surface[:self.last_on_surface_ind] = self.on_surface[on_surface_ind]
 
         mean = np.mean(flat_arr_len[on_surface_ind])
-        # unique_numbs = np.array(np.unique(flat_arr_len[on_surface_ind], return_counts=True))
-        # freq = np.array(unique_numbs[1] / np.sum(unique_numbs[1]))
+        unique_numbs = np.array(np.unique(flat_arr_len[on_surface_ind], return_counts=True))
+        freq = np.array(unique_numbs[1] / np.sum(unique_numbs[1]))
+
+        self.update_stats(mean, freq, unique_numbs[0])
         print(self.real_radius, " ", mean)
         # return np.mean(on_surface), unique_numbs[0], freq
         # return np.mean(on_surface)
+
+    def plot_on_surface(self):
+        self.ax.cla()
+        curr_lim = self.curr_side_lim + 5
+        self.ax.set_xlim3d(self.s_coord - curr_lim, self.s_coord + curr_lim)
+        self.ax.set_ylim3d(self.s_coord - curr_lim, self.s_coord + curr_lim)
+        self.ax.set_zlim3d(self.s_coord - curr_lim, self.s_coord + curr_lim)
+        self.ax.scatter(self.on_surface[:self.last_on_surface_ind][:, 2],
+                        self.on_surface[:self.last_on_surface_ind][:, 1],
+                        self.on_surface[:self.last_on_surface_ind][:, 0],
+                        marker=',', color='r', s=self.cell_size * (72. / self.fig.dpi) ** 2)
+
+        plt.savefig(f'W:/SIMCA/test_runs_data/{self.real_radius}.jpeg')
 
 
 ind_formation = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]], dtype=np.byte)
@@ -172,13 +200,8 @@ sphere = Sphere(user_input)
 for _ in range(1000):
     sphere.calc_mean_neigh()
 
-# init_rad = 0.5
-# for s_step in range(100):
-#     mean = calc_mean_neigh(init_rad)
-#     init_rad += 0.1
+for key in sphere.stats:
+    print(f"""{key:.3f} {sphere.stats[key]["mean"]:.3f} {sphere.stats[key][0]:.3f} {sphere.stats[key][1]:.3f} {sphere.stats[key][2]:.3f} {sphere.stats[key][3]:.3f} {sphere.stats[key][4]:.3f} {sphere.stats[key][5]:.3f}""")
 
-#     print(f"""{s_step}   {mean}
-# {unique}
-# {fre}
-# """)
+
 

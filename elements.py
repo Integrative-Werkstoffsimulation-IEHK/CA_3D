@@ -268,7 +268,7 @@ class OxidantElem:
         self.c3d = np.full(self.extended_shape, 0, dtype=np.ubyte)
         self.scale = None
         self.diffuse = None
-        self.diff_boost_step = 1
+        self.diff_boost_step = 2
         self.utils = utils
 
         self.cells = np.array([[], [], []], dtype=np.short)
@@ -438,7 +438,7 @@ class OxidantElem:
         # self.dirs = np.delete(self.dirs, ind, 1)
         # ___________________________________________
 
-        # self.diffuse_interface()
+        self.diffuse_interface()
 
         self.current_count = len(np.where(self.cells[2] == 0)[0])
         self.fill_first_page()
@@ -524,11 +524,9 @@ class Product:
         if self.oxidation_number == 1:
             self.fix_full_cells = self.fix_full_cells_ox_numb_single
             self.transform_c3d = self.transform_c3d_single
-            # self.lind_flat_arr = 6
         else:
             self.fix_full_cells = self.fix_full_cells_ox_numb_mult
             self.transform_c3d = self.transform_c3d_mult
-            # self.lind_flat_arr = 7
 
         self.c3d = np.full(shape, 0, dtype=np.ubyte)
         self.full_c3d = np.full((shape[0], shape[1], shape[2] - 1), False)

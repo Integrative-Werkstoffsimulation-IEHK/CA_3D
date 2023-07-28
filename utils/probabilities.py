@@ -25,6 +25,8 @@ class NucleationProbabilities:
         self.const_a_pp = (1 / (self.hf_init * self.nucl_prob_pp)) ** (-self.n_neigh_init / (self.n_neigh_init - 1))
         self.const_b_pp = np.log(1 / (self.hf_init * self.nucl_prob_pp)) * (1 / (self.n_neigh_init - 1))
 
+        self.prob_map = {0: 0, 1: 0.0049, 2: 0.006, 3: 0.27, 4: 0.293, 5: 0.42, 6: 1}
+
     def reset_constants(self, nucleation_probability, het_factor, hf_deg_lim):
         self.nucl_prob_pp[:] = nucleation_probability
         self.hf_pp[:] = het_factor
@@ -41,6 +43,10 @@ class NucleationProbabilities:
 
     def get_probabilities(self, numb_of_neighbours, page_ind):
         return self.const_a_pp[page_ind] * np.e ** (self.const_b_pp[page_ind] * numb_of_neighbours)
+
+    def get_probabilities_from_map(self, numb_of_neighbours):
+        rescaled = np.array(numb_of_neighbours / 4, dtype=int)
+        return np.array([self.prob_map[key] for key in rescaled], dtype=float)
 
     def adapt_hf(self, page_ind, rel_phase_fraction):
         self.hf_pp[page_ind] = self.hf_init * np.e ** (self.hf_b * rel_phase_fraction)
@@ -122,9 +128,7 @@ class DissolutionProbabilities:
         self.update_constants()
 
     def adapt_dissol_prob(self, page_ind, rel_phase_fraction):
-        self.hf_pp[page_ind] = self.hf_init * np.e ** (self.hf_b * rel_phase_fraction)
         self.dissol_prob_pp[page_ind] = self.dissol_prob_a * np.e ** (self.dissol_prob_b * rel_phase_fraction)
-        # self.update_constants()
 
     def adapt_hf_n_neigh(self, page_ind, rel_phase_fraction):
         self.n_neigh_pp[page_ind] = self.n_neigh_a * np.e ** (self.n_neigh_b * rel_phase_fraction)
@@ -136,3 +140,4 @@ class DissolutionProbabilities:
         self.hf_pp[page_ind] = self.hf_init * np.e ** (self.hf_b * rel_phase_fraction)
         self.dissol_prob_pp[page_ind] = self.const_a_pp * np.e ** (self.const_b_pp * rel_phase_fraction)
         self.update_constants()
+

@@ -40,10 +40,10 @@ if __name__ == '__main__':
                   "threshold_outward": 1,
                   "sol_prod": 0,  # 5.621 * 10 ** -10
 
-                  "nucleation_probability": 10**-0,
-                  "het_factor": 10**0,
+                  "nucleation_probability": 10**-1,
+                  "het_factor": 10**1,
 
-                  "dissolution_p": 1 * 10**-19,
+                  "dissolution_p": 1 * 10**-6,
                   "dissolution_n": 2,
                   "exponent_power": 0,  # not used anymore
                   "block_scale_factor": 1,
@@ -61,16 +61,15 @@ if __name__ == '__main__':
                                      # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
                   "decompose_precip": True,
 
-                  "phase_fraction_lim": 5,
-                  "hf_deg_lim": 10**0,  # range 0 - 1
-                  "lowest_neigh_numb": 27,
-                  "final_nucl_prob": 10**-0,
+                  "phase_fraction_lim": 0.5,
+                  "hf_deg_lim": 10**12,  # range 0 - 1
+                  "lowest_neigh_numb": 4,
+                  "final_nucl_prob": 10**-19,
 
-                  "min_dissol_prob": 1 * 10 ** -1,
+                  "min_dissol_prob": 1 * 10 ** -6,
                   "het_factor_dissolution": 10 ** 0,
-                  "final_dissol_prob": 1 * 10 ** -1,
+                  "final_dissol_prob": 1 * 10 ** -0,
                   "final_het_factor_dissol": 10 ** 0
-
                   }
 
     eng = CellularAutomata(user_input=user_input)

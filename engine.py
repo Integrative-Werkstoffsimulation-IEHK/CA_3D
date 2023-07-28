@@ -155,6 +155,16 @@ class CellularAutomata:
             # self.primary_product.full_c3d[2, 2, 50] = True
             #
             #
+            # self.primary_product.c3d[2, 0, 50] = 4
+            # self.primary_product.full_c3d[2, 0, 50] = True
+            #
+            # self.primary_product.c3d[2, 1, 51] = 4
+            # self.primary_product.full_c3d[2, 1, 51] = True
+            #
+            # self.primary_product.c3d[3, 1, 50] = 4
+            # self.primary_product.full_c3d[3, 1, 50] = True
+            #
+            #
             # self.primary_product.c3d[3, 3, 50] = 2
             # self.primary_product.c3d[10, 3, 50] = 2
             # self.primary_product.c3d[35, 3, 50] = 2
@@ -212,7 +222,7 @@ class CellularAutomata:
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
             if self.param["compute_precipitations"]:
                 self.precip_func()
-                # self.dissolution_0_cells()
+                self.dissolution_0_cells()
             # if self.param["decompose_precip"]:
             #     self.decomposition_0()
             if self.param["inward_diffusion"]:
@@ -221,7 +231,7 @@ class CellularAutomata:
                 self.diffusion_outward()
             if self.param["save_whole"]:
                 self.save_results_only_prod()
-            # if self.iteration > 10000:
+            # if self.iteration > 50000:
             #     break
 
         end = time.time()
@@ -376,8 +386,7 @@ class CellularAutomata:
                 # arr_len_all = arr_len_flat + arr_len_corners + arr_len_side_corners
 
                 index_outside = np.where((arr_len_flat < 6))[0]
-                index_inside = np.delete(full_ind, index_outside)
-
+                # index_inside = np.delete(full_ind, index_outside)
                 # self.to_dissol_pn_buffer.append_to_buffer(self.coord_buffer.get_elem_instead_ind(full_ind[index_inside]))
 
                 self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(full_ind[index_outside]))
@@ -394,21 +403,26 @@ class CellularAutomata:
                     self.to_dissol_pn_buffer.append_to_buffer(self.coord_buffer.get_elem_instead_ind(ind_where_blocks))
                     self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(ind_where_blocks))
                 else:
-                    self.to_dissol_pn_buffer.append_to_buffer(self.coord_buffer.get_elem_instead_ind(full_ind[index_inside]))
+                    # self.to_dissol_pn_buffer.append_to_buffer(
+                    #     self.coord_buffer.get_elem_instead_ind(full_ind[index_inside]))
+                    self.to_dissol_pn_buffer.append_to_buffer(self.coord_buffer.get_buffer())
                     self.coord_buffer.reset_buffer()
             else:
                 self.to_dissol_pn_buffer.copy_to_buffer(self.coord_buffer.get_elem_instead_ind(full_ind))
                 self.coord_buffer.reset_buffer()
 
             to_dissolve_pn = self.to_dissol_pn_buffer.get_buffer()
+            probs_pn = self.dissol_prob.dissol_prob_pp[to_dissolve_pn[2]]
+
             to_dissolve_p = self.coord_buffer.get_buffer()
+            probs_p = self.dissol_prob.dissol_prob_pp[to_dissolve_p[2]] ** self.param["dissolution_n"]
 
             randomise = np.random.random_sample(len(to_dissolve_pn[0]))
-            temp_ind = np.where(randomise < self.dissol_pn)[0]
+            temp_ind = np.where(randomise < probs_pn)[0]
             to_dissolve_pn = to_dissolve_pn[:, temp_ind]
 
             randomise = np.random.random_sample(len(to_dissolve_p[0]))
-            temp_ind = np.where(randomise < self.param["dissolution_p"])[0]
+            temp_ind = np.where(randomise < probs_p)[0]
             to_dissolve_p = to_dissolve_p[:, temp_ind]
 
             to_dissolve = np.concatenate((to_dissolve_pn, to_dissolve_p), axis=1)
@@ -483,7 +497,7 @@ class CellularAutomata:
         product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
                             in range(self.furthest_index + 1)], dtype=np.uint32)
 
-        last_nonzero_index = np.max(np.nonzero(product), initial=0)
+        # last_nonzero_index = np.max(np.nonzero(product), initial=0)
 
         oxidant_indexes = np.where(oxidant > 0)[0]
         active_indexes = np.where(active > 0)[0]
@@ -556,8 +570,8 @@ class CellularAutomata:
             #
             # else:
 
-            # self.nucl_prob.adapt_nucl_prob(self.comb_indexes, self.rel_prod_fraction[self.comb_indexes])
-            # self.fix_init_precip(self.furthest_index, self.primary_product)
+            self.nucl_prob.adapt_hf_n_neigh_nucl_prob(self.comb_indexes, self.rel_prod_fraction[self.comb_indexes])
+            self.fix_init_precip(self.furthest_index, self.primary_product)
             self.precip_step(self.comb_indexes)
             # print(np.sum(self.primary_product.c3d))
 
@@ -574,7 +588,7 @@ class CellularAutomata:
 
     def dissolution_0_cells(self):
         self.get_combi_ind()
-        # self.dissol_prob.adapt_dissol_prob(self.product_indexes, self.rel_prod_fraction[self.product_indexes])
+        self.dissol_prob.adapt_dissol_prob(self.product_indexes, self.rel_prod_fraction[self.product_indexes])
         self.decomposition_original(self.product_indexes)
 
     def precipitation_1(self):
@@ -808,67 +822,74 @@ class CellularAutomata:
         temp_ind = np.where(arr_len_out >= self.threshold_outward)[0]
 
         # activate for dependent growth___________________________________________________________________
-        # if len(temp_ind) > 0:
-        #     seeds = seeds[temp_ind]
-        #     neighbours = neighbours[temp_ind]
-        #     all_arounds = all_arounds[temp_ind]
-        #     flat_arounds = all_arounds[:, 0:self.objs[self.case]["product"].lind_flat_arr]
-        #
-        #     # flat_neighbours = self.go_around(self.precipitations3d_init_full, flat_arounds)
-        #     # flat_neighbours = self.go_around(flat_arounds)
-        #     # arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
-        #
-        #     arr_len_in_flat = self.go_around(self.precipitations3d_init, flat_arounds)
-        #
-        #     homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
-        #     needed_prob = self.nucl_prob.get_probabilities(arr_len_in_flat, seeds[0][2])
-        #     needed_prob[homogeneous_ind] = self.nucl_prob.nucl_prob_pp[seeds[0][2]] # seeds[0][2] - current plane index
-        #     randomise = np.array(np.random.random_sample(arr_len_in_flat.size), dtype=np.float64)
-        #     temp_ind = np.where(randomise < needed_prob)[0]
-        # _________________________________________________________________________________________________
-
         if len(temp_ind) > 0:
             seeds = seeds[temp_ind]
             neighbours = neighbours[temp_ind]
             all_arounds = all_arounds[temp_ind]
-            out_to_del = np.array(np.nonzero(neighbours))
-            start_seed_index = np.unique(out_to_del[0], return_index=True)[1]
-            to_del = np.array([out_to_del[1, indx:indx + self.threshold_outward] for indx in start_seed_index],
-                              dtype=np.ubyte)
-            coord = np.array([all_arounds[seed_ind][point_ind] for seed_ind, point_ind in enumerate(to_del)],
-                             dtype=np.short)
-            coord = np.reshape(coord, (len(coord) * self.threshold_outward, 3))
+            flat_arounds = all_arounds[:, 0:self.objs[self.case]["product"].lind_flat_arr]
 
-            # exists = check_at_coord(self.objs[self.case]["product"].full_c3d, coord)  # precip on place of active!
-            # exists = check_at_coord(self.objs[self.case]["product"].full_c3d, seeds)  # precip on place of oxidant!
+            # flat_neighbours = self.go_around(self.precipitations3d_init_full, flat_arounds)
+            # flat_neighbours = self.go_around(flat_arounds)
+            # arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
 
-            # temp_ind = np.where(exists)[0]
-            # coord = np.delete(coord, temp_ind, 0)
-            # seeds = np.delete(seeds, temp_ind, 0)
+            arr_len_in_flat = self.go_around(self.precipitations3d_init, flat_arounds)
 
-            # if self.objs[self.case]["to_check_with"] is not None:
-            #     # to_check_min_self = np.array(self.cumul_product - product.c3d, dtype=np.ubyte)
-            #     exists = np.array([self.objs[self.case]["to_check_with"].c3d[point[0], point[1], point[2]]
-            #                        for point in coord], dtype=np.ubyte)
-            #     # exists = np.array([to_check_min_self[point[0], point[1], point[2]] for point in coord],
-            #     #                   dtype=np.ubyte)
-            #     temp_ind = np.where(exists > 0)[0]
-            #     coord = np.delete(coord, temp_ind, 0)
-            #     seeds = np.delete(seeds, temp_ind, 0)
+            homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
 
-            coord = coord.transpose()
-            seeds = seeds.transpose()
+            needed_prob = self.nucl_prob.get_probabilities(arr_len_in_flat, seeds[0][2])
 
-            self.objs[self.case]["active"].c3d[coord[0], coord[1], coord[2]] -= 1
-            self.objs[self.case]["oxidant"].c3d[seeds[0], seeds[1], seeds[2]] -= 1
+            # if self.iteration < 10000:
+            #     needed_prob = self.nucl_prob.get_probabilities(arr_len_in_flat, seeds[0][2])
+            # else:
+            #     needed_prob = self.nucl_prob.get_probabilities_from_map(arr_len_in_flat)
 
-            # self.objs[self.case]["product"].c3d[coord[0], coord[1], coord[2]] += 1  # precip on place of active!
-            self.objs[self.case]["product"].c3d[seeds[0], seeds[1], seeds[2]] += 1  # precip on place of oxidant!
+            needed_prob[homogeneous_ind] = self.nucl_prob.nucl_prob_pp[seeds[0][2]]  # seeds[0][2] - current plane index
+            randomise = np.array(np.random.random_sample(arr_len_in_flat.size), dtype=np.float64)
+            temp_ind = np.where(randomise < needed_prob)[0]
+        # _________________________________________________________________________________________________
 
-            # self.objs[self.case]["product"].fix_full_cells(coord)  # precip on place of active!
-            self.objs[self.case]["product"].fix_full_cells(seeds)  # precip on place of oxidant!
+            if len(temp_ind) > 0:
+                seeds = seeds[temp_ind]
+                neighbours = neighbours[temp_ind]
+                all_arounds = all_arounds[temp_ind]
+                out_to_del = np.array(np.nonzero(neighbours))
+                start_seed_index = np.unique(out_to_del[0], return_index=True)[1]
+                to_del = np.array([out_to_del[1, indx:indx + self.threshold_outward] for indx in start_seed_index],
+                                  dtype=np.ubyte)
+                coord = np.array([all_arounds[seed_ind][point_ind] for seed_ind, point_ind in enumerate(to_del)],
+                                 dtype=np.short)
+                coord = np.reshape(coord, (len(coord) * self.threshold_outward, 3))
 
-            # self.cumul_product[coord[0], coord[1], coord[2]] += 1
+                # exists = check_at_coord(self.objs[self.case]["product"].full_c3d, coord)  # precip on place of active!
+                # exists = check_at_coord(self.objs[self.case]["product"].full_c3d, seeds)  # precip on place of oxidant!
+
+                # temp_ind = np.where(exists)[0]
+                # coord = np.delete(coord, temp_ind, 0)
+                # seeds = np.delete(seeds, temp_ind, 0)
+
+                # if self.objs[self.case]["to_check_with"] is not None:
+                #     # to_check_min_self = np.array(self.cumul_product - product.c3d, dtype=np.ubyte)
+                #     exists = np.array([self.objs[self.case]["to_check_with"].c3d[point[0], point[1], point[2]]
+                #                        for point in coord], dtype=np.ubyte)
+                #     # exists = np.array([to_check_min_self[point[0], point[1], point[2]] for point in coord],
+                #     #                   dtype=np.ubyte)
+                #     temp_ind = np.where(exists > 0)[0]
+                #     coord = np.delete(coord, temp_ind, 0)
+                #     seeds = np.delete(seeds, temp_ind, 0)
+
+                coord = coord.transpose()
+                seeds = seeds.transpose()
+
+                self.objs[self.case]["active"].c3d[coord[0], coord[1], coord[2]] -= 1
+                self.objs[self.case]["oxidant"].c3d[seeds[0], seeds[1], seeds[2]] -= 1
+
+                # self.objs[self.case]["product"].c3d[coord[0], coord[1], coord[2]] += 1  # precip on place of active!
+                self.objs[self.case]["product"].c3d[seeds[0], seeds[1], seeds[2]] += 1  # precip on place of oxidant!
+
+                # self.objs[self.case]["product"].fix_full_cells(coord)  # precip on place of active!
+                self.objs[self.case]["product"].fix_full_cells(seeds)  # precip on place of oxidant!
+
+                # self.cumul_product[coord[0], coord[1], coord[2]] += 1
 
     def ci_multi(self, seeds):
         """
