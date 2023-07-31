@@ -268,7 +268,7 @@ class OxidantElem:
         self.c3d = np.full(self.extended_shape, 0, dtype=np.ubyte)
         self.scale = None
         self.diffuse = None
-        self.diff_boost_step = 2
+        self.diff_boost_steps = 10
         self.utils = utils
 
         self.cells = np.array([[], [], []], dtype=np.short)
@@ -438,7 +438,8 @@ class OxidantElem:
         # self.dirs = np.delete(self.dirs, ind, 1)
         # ___________________________________________
 
-        self.diffuse_interface()
+        for _ in range(self.diff_boost_steps):
+            self.diffuse_interface()
 
         self.current_count = len(np.where(self.cells[2] == 0)[0])
         self.fill_first_page()
@@ -447,7 +448,7 @@ class OxidantElem:
         """
         Inward diffusion along the phase interfaces (between matrix and primary product).
         If the current particle has at least one product particle in its flat neighbourhood and no product ahead
-        (in its ballistic direction) it will be boosted forwardly in n (self.diff_boost_step) steps.
+        (in its ballistic direction) it will be boosted forwardly in 1 step.
         """
         all_arounds = self.utils.calc_sur_ind_interface(self.cells, self.dirs, self.extended_axis - 1)
         neighbours = go_around_bool(self.scale.full_c3d, all_arounds)
@@ -455,8 +456,7 @@ class OxidantElem:
         to_boost = np.array(np.where(to_boost)[0])
 
         if len(to_boost) > 0:
-            self.cells[:, to_boost] = np.add(self.cells[:, to_boost], self.dirs[:, to_boost] * self.diff_boost_step,
-                                             casting="unsafe")
+            self.cells[:, to_boost] = np.add(self.cells[:, to_boost], self.dirs[:, to_boost], casting="unsafe")
             # adjusting a coordinates of side points for correct shifting
             self.cells[0, to_boost[np.where(self.cells[0, to_boost] <= -1)]] = self.cells_per_axis - 1
             self.cells[0, to_boost[np.where(self.cells[0, to_boost] >= self.cells_per_axis)]] = 0
