@@ -42,11 +42,6 @@ class CellularAutomataFromDB:
             self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
             # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk
 
-            if self.param["secondary_oxidant_exists"]:
-                self.secondary_oxidant = elements.OxidantElem(self.param["oxidant"]["secondary"], self.utils)
-                self.objs[2]["oxidant"] = self.primary_oxidant
-                self.objs[3]["oxidant"] = self.primary_oxidant
-
         # setting objects for outward diffusion
         if self.param["outward_diffusion"]:
             self.primary_active = elements.ActiveElem(self.param["active_element"]["primary"])
@@ -54,11 +49,6 @@ class CellularAutomataFromDB:
             self.objs[2]["active"] = self.primary_active
             self.primary_active.diffuse = self.primary_active.diffuse_with_scale
             # self.primary_active.diffuse = self.primary_active.diffuse_bulk
-
-            if self.param["secondary_active_element_exists"]:
-                self.secondary_active = elements.ActiveElem(self.param["active_element"]["secondary"])
-                self.objs[1]["active"] = self.secondary_active
-                self.objs[3]["active"] = self.secondary_active
 
         # setting objects for precipitations
         if self.param["compute_precipitations"]:
@@ -71,52 +61,27 @@ class CellularAutomataFromDB:
 
             self.primary_product = elements.Product(self.param["product"]["primary"])
             self.objs[0]["product"] = self.primary_product
-            if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
-                self.secondary_product = elements.Product(self.param["product"]["secondary"])
-                self.objs[1]["product"] = self.secondary_product
-                self.ternary_product = elements.Product(self.param["product"]["ternary"])
-                self.objs[2]["product"] = self.ternary_product
-                self.quaternary_product = elements.Product(self.param["product"]["quaternary"])
-                self.objs[3]["product"] = self.quaternary_product
-                self.objs[0]["to_check_with"] = self.cumul_product
-                self.objs[1]["to_check_with"] = self.cumul_product
-                self.objs[2]["to_check_with"] = self.cumul_product
-                self.objs[3]["to_check_with"] = self.cumul_product
 
-                self.precip_func = self.precipitation_2_cells
-                self.calc_precip_front = self.calc_precip_front_2
-                # self.decomposition = self.decomposition_0
+            self.precip_func = self.precipitation_0_cells
+            # self.precip_func = self.precipitation_0
+            self.calc_precip_front = self.calc_precip_front_0
+            # self.decomposition = self.decomposition_0
+            self.primary_oxidant.scale = self.primary_product
+            self.primary_active.scale = self.primary_product
 
-            elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
-                self.secondary_product = elements.Product(self.param["product"]["secondary"])
-                self.objs[1]["product"] = self.secondary_product
-                self.objs[0]["to_check_with"] = self.secondary_product
-                self.objs[1]["to_check_with"] = self.primary_product
-                self.precip_func = self.precipitation_1_cells
-                self.calc_precip_front = self.calc_precip_front_1
-                # self.decomposition = self.decomposition_0
-
+            self.primary_oxid_numb = self.param["product"]["primary"]["oxidation_number"]
+            if self.primary_oxid_numb == 1:
+                self.go_around = self.go_around_single_oxid_n
+                self.fix_init_precip = self.fix_init_precip_bool
+                self.precipitations3d_init = np.full(
+                    (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
+                    False, dtype=bool)
             else:
-                self.precip_func = self.precipitation_0_cells
-                # self.precip_func = self.precipitation_0
-                self.calc_precip_front = self.calc_precip_front_0
-                # self.decomposition = self.decomposition_0
-                self.primary_oxidant.scale = self.primary_product
-                self.primary_active.scale = self.primary_product
-
-                self.primary_oxid_numb = self.param["product"]["primary"]["oxidation_number"]
-                if self.primary_oxid_numb == 1:
-                    self.go_around = self.go_around_single_oxid_n
-                    self.fix_init_precip = self.fix_init_precip_bool
-                    self.precipitations3d_init = np.full(
-                        (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
-                        False, dtype=bool)
-                else:
-                    self.go_around = self.go_around_mult_oxid_n
-                    self.fix_init_precip = self.fix_init_precip_int
-                    self.precipitations3d_init = np.full(
-                        (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
-                        False, dtype=np.ubyte)
+                self.go_around = self.go_around_mult_oxid_n
+                self.fix_init_precip = self.fix_init_precip_int
+                self.precipitations3d_init = np.full(
+                    (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
+                    False, dtype=np.ubyte)
 
             # self.precipitations3d = np.full(self.shape, False)
             # self.half_thickness = 20
