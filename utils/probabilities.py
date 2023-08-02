@@ -99,6 +99,8 @@ class DissolutionProbabilities:
         self.lowest_neigh_numb = param["lowest_neigh_numb"]
         self.n_neigh_b = np.log(self.lowest_neigh_numb / self.n_neigh_init)
 
+        self.bsf = param["block_scale_factor"]
+
         self.const_a_pp = (self.dissol_prob_pp ** self.case_a) / \
                           ((self.min_dissol_prob ** self.case_b) * (self.hf_pp ** self.case_a))
         self.const_b_pp = np.array(np.log((self.dissol_prob_pp ** (-self.case_b)) * (self.min_dissol_prob ** self.case_b) *
@@ -123,6 +125,9 @@ class DissolutionProbabilities:
     def get_probabilities(self, numb_of_neighbours, page_ind):
         return self.const_a_pp[page_ind] * np.e ** (self.const_b_pp[page_ind] * numb_of_neighbours)
 
+    def get_probabilities_block(self, numb_of_neighbours, page_ind):
+        return (self.const_a_pp[page_ind] * np.e ** (self.const_b_pp[page_ind] * numb_of_neighbours)) / self.bsf
+
     def adapt_hf(self, page_ind, rel_phase_fraction):
         self.hf_pp[page_ind] = self.hf_init * np.e ** (self.hf_b * rel_phase_fraction)
         self.update_constants()
@@ -138,6 +143,5 @@ class DissolutionProbabilities:
     def adapt_hf_n_neigh_dissol_prob(self, page_ind, rel_phase_fraction):
         self.n_neigh_pp[page_ind] = self.n_neigh_a * np.e ** (self.n_neigh_b * rel_phase_fraction)
         self.hf_pp[page_ind] = self.hf_init * np.e ** (self.hf_b * rel_phase_fraction)
-        self.dissol_prob_pp[page_ind] = self.const_a_pp * np.e ** (self.const_b_pp * rel_phase_fraction)
+        self.dissol_prob_pp[page_ind] = self.dissol_prob_a * np.e ** (self.dissol_prob_b * rel_phase_fraction)
         self.update_constants()
-

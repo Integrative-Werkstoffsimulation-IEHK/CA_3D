@@ -40,8 +40,8 @@ if __name__ == '__main__':
                   "threshold_outward": 1,
                   "sol_prod": 0,  # 5.621 * 10 ** -10
 
-                  "nucleation_probability": 10**-1,
-                  "het_factor": 10**1,
+                  "nucleation_probability": 10**-2,
+                  "het_factor": 10**2,
 
                   "dissolution_p": 1 * 10**-6,
                   "dissolution_n": 2,
@@ -62,7 +62,7 @@ if __name__ == '__main__':
                   "decompose_precip": True,
 
                   "phase_fraction_lim": 0.5,
-                  "hf_deg_lim": 10**12,  # range 0 - 1
+                  "hf_deg_lim": 10**11,  # range 0 - 1
                   "lowest_neigh_numb": 4,
                   "final_nucl_prob": 10**-19,
 

@@ -438,8 +438,8 @@ class OxidantElem:
         # self.dirs = np.delete(self.dirs, ind, 1)
         # ___________________________________________
 
-        for _ in range(self.diff_boost_steps):
-            self.diffuse_interface()
+        # for _ in range(self.diff_boost_steps):
+        #     self.diffuse_interface()
 
         self.current_count = len(np.where(self.cells[2] == 0)[0])
         self.fill_first_page()
