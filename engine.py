@@ -128,50 +128,50 @@ class CellularAutomata:
             # minus = middle - self.half_thickness
             # plus = middle + self.half_thickness
             # self.primary_product.c3d[minus:plus, minus:plus, minus:plus] = 4
-
-            self.primary_product.c3d[1, 1, 50] = 4
-            self.primary_product.full_c3d[1, 1, 50] = True
-
-            self.primary_product.c3d[1, 1, 49] = 4
-            self.primary_product.full_c3d[1, 1, 49] = True
-
-            self.primary_product.c3d[1, 2, 49] = 4
-            self.primary_product.full_c3d[1, 2, 49] = True
-
-            self.primary_product.c3d[1, 2, 50] = 4
-            self.primary_product.full_c3d[1, 2, 50] = True
-
-
-            self.primary_product.c3d[2, 1, 50] = 4
-            self.primary_product.full_c3d[2, 1, 50] = True
-
-            self.primary_product.c3d[2, 1, 49] = 4
-            self.primary_product.full_c3d[2, 1, 49] = True
-
-            self.primary_product.c3d[2, 2, 49] = 4
-            self.primary_product.full_c3d[2, 2, 49] = True
-
-            self.primary_product.c3d[2, 2, 50] = 4
-            self.primary_product.full_c3d[2, 2, 50] = True
-
-
-            self.primary_product.c3d[2, 0, 50] = 4
-            self.primary_product.full_c3d[2, 0, 50] = True
-
-            self.primary_product.c3d[2, 1, 51] = 4
-            self.primary_product.full_c3d[2, 1, 51] = True
-
-            self.primary_product.c3d[3, 1, 50] = 4
-            self.primary_product.full_c3d[3, 1, 50] = True
-
-
-            self.primary_product.c3d[3, 3, 50] = 2
-            self.primary_product.c3d[10, 3, 50] = 2
-            self.primary_product.c3d[35, 3, 50] = 2
-
-            self.primary_product.c3d[45, 3, 50] = 4
-            self.primary_product.full_c3d[45, 3, 50] = True
-
+            #
+            # self.primary_product.c3d[1, 1, 50] = 4
+            # self.primary_product.full_c3d[1, 1, 50] = True
+            #
+            # self.primary_product.c3d[1, 1, 49] = 4
+            # self.primary_product.full_c3d[1, 1, 49] = True
+            #
+            # self.primary_product.c3d[1, 2, 49] = 4
+            # self.primary_product.full_c3d[1, 2, 49] = True
+            #
+            # self.primary_product.c3d[1, 2, 50] = 4
+            # self.primary_product.full_c3d[1, 2, 50] = True
+            #
+            #
+            # self.primary_product.c3d[2, 1, 50] = 4
+            # self.primary_product.full_c3d[2, 1, 50] = True
+            #
+            # self.primary_product.c3d[2, 1, 49] = 4
+            # self.primary_product.full_c3d[2, 1, 49] = True
+            #
+            # self.primary_product.c3d[2, 2, 49] = 4
+            # self.primary_product.full_c3d[2, 2, 49] = True
+            #
+            # self.primary_product.c3d[2, 2, 50] = 4
+            # self.primary_product.full_c3d[2, 2, 50] = True
+            #
+            #
+            # self.primary_product.c3d[2, 0, 50] = 4
+            # self.primary_product.full_c3d[2, 0, 50] = True
+            #
+            # self.primary_product.c3d[2, 1, 51] = 4
+            # self.primary_product.full_c3d[2, 1, 51] = True
+            #
+            # self.primary_product.c3d[3, 1, 50] = 4
+            # self.primary_product.full_c3d[3, 1, 50] = True
+            #
+            #
+            # self.primary_product.c3d[3, 3, 50] = 2
+            # self.primary_product.c3d[10, 3, 50] = 2
+            # self.primary_product.c3d[35, 3, 50] = 2
+            #
+            # self.primary_product.c3d[45, 3, 50] = 4
+            # self.primary_product.full_c3d[45, 3, 50] = True
+            #
             # self.primary_product.full_c3d[minus:plus, minus:plus, minus:plus] = True
             # self.primary_product.full_c3d[1, 1, 50] = True
             # shift = 0
@@ -452,85 +452,86 @@ class CellularAutomata:
         self.coord_buffer.copy_to_buffer(nz_ind)
         self.coord_buffer.update_buffer_at_axis(plane_indxs[nz_ind[2]], axis=2)
 
-        all_arounds = self.utils.calc_sur_ind_decompose(self.coord_buffer.get_buffer())
-        all_neigh = go_around_int(self.primary_product.c3d, all_arounds)
-
-        all_neigh_pn = all_neigh[[]]
-        all_neigh_block = all_neigh[[]]
-
-        # choose all the coordinates which have at least one full side neighbour
-        where_full = np.unique(np.where(all_neigh[:, :6].view() == self.primary_oxid_numb)[0])
-
-        to_dissol_pn_no_neigh = np.array(self.coord_buffer.get_elem_instead_ind(where_full), dtype=np.short)
-        self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(where_full))
-        # self.to_dissol_pn_buffer.append_to_buffer(self.coord_buffer.get_elem_instead_ind(where_full))
-
         if self.coord_buffer.last_in_buffer > 0:
-            all_neigh = all_neigh[where_full]
+            all_arounds = self.utils.calc_sur_ind_decompose(self.coord_buffer.get_buffer())
+            all_neigh = go_around_int(self.primary_product.c3d, all_arounds)
 
-            arr_len_flat = np.array([np.sum(item[:6]) for item in all_neigh], dtype=np.ubyte)
-            index_outside = np.where((arr_len_flat < self.max_inside_neigh_number))[0]
+            all_neigh_pn = all_neigh[[]]
+            all_neigh_block = all_neigh[[]]
 
-            self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(index_outside))
-            all_neigh = all_neigh[index_outside]
+            # choose all the coordinates which have at least one full side neighbour
+            where_full = np.unique(np.where(all_neigh[:, :6].view() == self.primary_oxid_numb)[0])
 
-            aggregation = np.array([[np.sum(item[step]) for step in self.aggregated_ind] for item in all_neigh],
-                                   dtype=np.ubyte)
-            ind_where_blocks = np.unique(np.where(aggregation == self.max_block_neigh_number)[0])
+            to_dissol_pn_no_neigh = np.array(self.coord_buffer.get_elem_instead_ind(where_full), dtype=np.short)
+            self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(where_full))
+            # self.to_dissol_pn_buffer.append_to_buffer(self.coord_buffer.get_elem_instead_ind(where_full))
 
-            if len(ind_where_blocks) > 0:
-                self.to_dissol_pn_buffer.copy_to_buffer(self.coord_buffer.get_elem_instead_ind(ind_where_blocks))
-                all_neigh_pn = np.delete(all_neigh, ind_where_blocks, axis=0)
+            if self.coord_buffer.last_in_buffer > 0:
+                all_neigh = all_neigh[where_full]
 
-                self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(ind_where_blocks))
-                all_neigh_block = all_neigh[ind_where_blocks]
-            else:
-                self.to_dissol_pn_buffer.copy_to_buffer(self.coord_buffer.get_buffer())
-                all_neigh_pn = all_neigh
+                arr_len_flat = np.array([np.sum(item[:6]) for item in all_neigh], dtype=np.ubyte)
+                index_outside = np.where((arr_len_flat < self.max_inside_neigh_number))[0]
 
-                self.coord_buffer.reset_buffer()
-                all_neigh_block = all_neigh[[]]
+                self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(index_outside))
+                all_neigh = all_neigh[index_outside]
 
-        probs_pn_no_neigh = self.dissol_prob.dissol_prob_pp[to_dissol_pn_no_neigh[2]]
+                aggregation = np.array([[np.sum(item[step]) for step in self.aggregated_ind] for item in all_neigh],
+                                       dtype=np.ubyte)
+                ind_where_blocks = np.unique(np.where(aggregation == self.max_block_neigh_number)[0])
 
-        to_dissolve_pn = self.to_dissol_pn_buffer.get_buffer()
-        all_neigh_pn = np.array([np.sum(item[:6]) for item in all_neigh_pn])
-        probs_pn = self.dissol_prob.get_probabilities(all_neigh_pn, to_dissolve_pn[2])
+                if len(ind_where_blocks) > 0:
+                    self.to_dissol_pn_buffer.copy_to_buffer(self.coord_buffer.get_elem_instead_ind(ind_where_blocks))
+                    all_neigh_pn = np.delete(all_neigh, ind_where_blocks, axis=0)
 
-        to_dissolve_p = self.coord_buffer.get_buffer()
-        all_neigh_block = np.array([np.sum(item[:6]) for item in all_neigh_block])
-        probs_p = self.dissol_prob.get_probabilities_block(all_neigh_block, to_dissolve_p[2])
+                    self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(ind_where_blocks))
+                    all_neigh_block = all_neigh[ind_where_blocks]
+                else:
+                    self.to_dissol_pn_buffer.copy_to_buffer(self.coord_buffer.get_buffer())
+                    all_neigh_pn = all_neigh
 
-        randomise = np.random.random_sample(len(to_dissol_pn_no_neigh[0]))
-        temp_ind = np.where(randomise < probs_pn_no_neigh)[0]
-        to_dissol_pn_no_neigh = to_dissol_pn_no_neigh[:, temp_ind]
+                    self.coord_buffer.reset_buffer()
+                    all_neigh_block = all_neigh[[]]
 
-        randomise = np.random.random_sample(len(to_dissolve_pn[0]))
-        temp_ind = np.where(randomise < probs_pn)[0]
-        to_dissolve_pn = to_dissolve_pn[:, temp_ind]
+            probs_pn_no_neigh = self.dissol_prob.dissol_prob_pp[to_dissol_pn_no_neigh[2]]
 
-        randomise = np.random.random_sample(len(to_dissolve_p[0]))
-        temp_ind = np.where(randomise < probs_p)[0]
-        to_dissolve_p = to_dissolve_p[:, temp_ind]
+            to_dissolve_pn = self.to_dissol_pn_buffer.get_buffer()
+            all_neigh_pn = np.array([np.sum(item[:6]) for item in all_neigh_pn])
+            probs_pn = self.dissol_prob.get_probabilities(all_neigh_pn, to_dissolve_pn[2])
 
-        to_dissolve = np.concatenate((to_dissolve_pn, to_dissolve_p, to_dissol_pn_no_neigh), axis=1)
+            to_dissolve_p = self.coord_buffer.get_buffer()
+            all_neigh_block = np.array([np.sum(item[:6]) for item in all_neigh_block])
+            probs_p = self.dissol_prob.get_probabilities_block(all_neigh_block, to_dissolve_p[2])
 
-        self.coord_buffer.reset_buffer()
-        self.to_dissol_pn_buffer.reset_buffer()
+            randomise = np.random.random_sample(len(to_dissol_pn_no_neigh[0]))
+            temp_ind = np.where(randomise < probs_pn_no_neigh)[0]
+            to_dissol_pn_no_neigh = to_dissol_pn_no_neigh[:, temp_ind]
 
-        if len(to_dissolve[0]) > 0:
-            counts = self.primary_product.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]]
+            randomise = np.random.random_sample(len(to_dissolve_pn[0]))
+            temp_ind = np.where(randomise < probs_pn)[0]
+            to_dissolve_pn = to_dissolve_pn[:, temp_ind]
 
-            self.primary_product.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = 0
-            self.primary_product.full_c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = False
-            self.primary_active.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] += counts
+            randomise = np.random.random_sample(len(to_dissolve_p[0]))
+            temp_ind = np.where(randomise < probs_p)[0]
+            to_dissolve_p = to_dissolve_p[:, temp_ind]
 
-            to_dissolve = np.repeat(to_dissolve, counts, axis=1)
-            self.primary_oxidant.cells = np.concatenate((self.primary_oxidant.cells, to_dissolve), axis=1)
-            new_dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(to_dissolve[0]))
-            new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
-            new_dirs -= 1
-            self.primary_oxidant.dirs = np.concatenate((self.primary_oxidant.dirs, new_dirs), axis=1)
+            to_dissolve = np.concatenate((to_dissolve_pn, to_dissolve_p, to_dissol_pn_no_neigh), axis=1)
+
+            self.coord_buffer.reset_buffer()
+            self.to_dissol_pn_buffer.reset_buffer()
+
+            if len(to_dissolve[0]) > 0:
+                counts = self.primary_product.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]]
+
+                self.primary_product.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = 0
+                self.primary_product.full_c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = False
+                self.primary_active.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] += counts
+
+                to_dissolve = np.repeat(to_dissolve, counts, axis=1)
+                self.primary_oxidant.cells = np.concatenate((self.primary_oxidant.cells, to_dissolve), axis=1)
+                new_dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(to_dissolve[0]))
+                new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
+                new_dirs -= 1
+                self.primary_oxidant.dirs = np.concatenate((self.primary_oxidant.dirs, new_dirs), axis=1)
 
     def precipitation_0(self):
         # Only one oxidant and one active elements exist. Only one product can be created
@@ -679,7 +680,7 @@ class CellularAutomata:
 
     def dissolution_0_cells(self):
         self.get_combi_ind()
-        self.dissol_prob.adapt_hf_n_neigh_dissol_prob(self.product_indexes, self.rel_prod_fraction[self.product_indexes])
+        self.dissol_prob.adapt_dissol_prob_min_dissol_prob(self.product_indexes, self.rel_prod_fraction[self.product_indexes])
         self.decomposition_adapted(self.product_indexes)
 
     def precipitation_1(self):

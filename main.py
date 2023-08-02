@@ -69,7 +69,8 @@ if __name__ == '__main__':
                   "min_dissol_prob": 1 * 10 ** -6,
                   "het_factor_dissolution": 10 ** 0,
                   "final_dissol_prob": 1 * 10 ** -0,
-                  "final_het_factor_dissol": 10 ** 0
+                  "final_het_factor_dissol": 10 ** 0,
+                  "final_min_dissol_prob": 1 * 10 ** -15,
                   }
 
     eng = CellularAutomata(user_input=user_input)

@@ -75,7 +75,12 @@ class NucleationProbabilities:
 class DissolutionProbabilities:
     def __init__(self, param):
         self.dissol_prob_pp = np.full(param["n_cells_per_axis"], param["dissolution_p"])
-        self.min_dissol_prob = param["min_dissol_prob"]
+        self.dissol_prob_a = param["dissolution_p"]
+        self.dissol_prob_b = np.log(param["final_dissol_prob"] / param["dissolution_p"])
+
+        self.min_dissol_prob_pp = np.full(param["n_cells_per_axis"], param["min_dissol_prob"])
+        self.min_dissol_prob_a = param["min_dissol_prob"]
+        self.min_dissol_prob_b = np.log(param["final_min_dissol_prob"] / param["min_dissol_prob"])
 
         if param["product"]["primary"]["oxidation_number"] > 1:
             self.n_neigh_init = param["product"]["primary"]["lind_flat_arr"] *\
@@ -86,9 +91,6 @@ class DissolutionProbabilities:
         self.case_a = self.n_neigh_init/(self.n_neigh_init - 1)
         self.case_b = 1 / (self.n_neigh_init - 1)
         self.p3 = param["product"]["primary"]["oxidation_number"] * 3
-
-        self.dissol_prob_a = param["dissolution_p"]
-        self.dissol_prob_b = np.log(param["final_dissol_prob"] / param["dissolution_p"])
 
         self.hf_pp = np.full(param["n_cells_per_axis"], param["het_factor_dissolution"], dtype=float)
         self.hf_init = param["het_factor_dissolution"]
@@ -102,8 +104,8 @@ class DissolutionProbabilities:
         self.bsf = param["block_scale_factor"]
 
         self.const_a_pp = (self.dissol_prob_pp ** self.case_a) / \
-                          ((self.min_dissol_prob ** self.case_b) * (self.hf_pp ** self.case_a))
-        self.const_b_pp = np.array(np.log((self.dissol_prob_pp ** (-self.case_b)) * (self.min_dissol_prob ** self.case_b) *
+                          ((self.min_dissol_prob_pp ** self.case_b) * (self.hf_pp ** self.case_a))
+        self.const_b_pp = np.array(np.log((self.dissol_prob_pp ** (-self.case_b)) * (self.min_dissol_prob_pp ** self.case_b) *
                                  (self.hf_pp ** self.case_b)), dtype=float)
 
     def reset_constants(self, nucleation_probability, het_factor, hf_deg_lim):
@@ -118,8 +120,8 @@ class DissolutionProbabilities:
 
     def update_constants(self):
         self.const_a_pp = (self.dissol_prob_pp ** self.case_a) / \
-                          ((self.min_dissol_prob ** self.case_b) * (self.hf_pp ** self.case_a))
-        self.const_b_pp = np.log((self.dissol_prob_pp ** (-self.case_b)) * (self.min_dissol_prob ** self.case_b) *
+                          ((self.min_dissol_prob_pp ** self.case_b) * (self.hf_pp ** self.case_a))
+        self.const_b_pp = np.log((self.dissol_prob_pp ** (-self.case_b)) * (self.min_dissol_prob_pp ** self.case_b) *
                                  (self.hf_pp ** self.case_b))
 
     def get_probabilities(self, numb_of_neighbours, page_ind):
@@ -134,6 +136,7 @@ class DissolutionProbabilities:
 
     def adapt_dissol_prob(self, page_ind, rel_phase_fraction):
         self.dissol_prob_pp[page_ind] = self.dissol_prob_a * np.e ** (self.dissol_prob_b * rel_phase_fraction)
+        self.update_constants()
 
     def adapt_hf_n_neigh(self, page_ind, rel_phase_fraction):
         self.n_neigh_pp[page_ind] = self.n_neigh_a * np.e ** (self.n_neigh_b * rel_phase_fraction)
@@ -144,4 +147,9 @@ class DissolutionProbabilities:
         self.n_neigh_pp[page_ind] = self.n_neigh_a * np.e ** (self.n_neigh_b * rel_phase_fraction)
         self.hf_pp[page_ind] = self.hf_init * np.e ** (self.hf_b * rel_phase_fraction)
         self.dissol_prob_pp[page_ind] = self.dissol_prob_a * np.e ** (self.dissol_prob_b * rel_phase_fraction)
+        self.update_constants()
+
+    def adapt_dissol_prob_min_dissol_prob(self, page_ind, rel_phase_fraction):
+        self.dissol_prob_pp[page_ind] = self.dissol_prob_a * np.e ** (self.dissol_prob_b * rel_phase_fraction)
+        self.min_dissol_prob_pp[page_ind] = self.min_dissol_prob_a * np.e ** (self.min_dissol_prob_b * rel_phase_fraction)
         self.update_constants()

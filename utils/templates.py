@@ -62,7 +62,10 @@ DEFAULT_PARAM = {
     "het_factor_dissolution": 0.123456789,
 
     "final_dissol_prob": 0.123456789,
-    "final_het_factor_dissol": 0.123456789
+    "final_het_factor_dissol": 0.123456789,
+
+    "final_min_dissol_prob": 0.123456789,
+
 }
 
 DEFAULT_OBJ_REF = {
