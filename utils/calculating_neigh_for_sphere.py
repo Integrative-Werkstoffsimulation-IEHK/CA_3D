@@ -11,7 +11,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 user_input = {"start_real_radius": 0.5,
-              "delta_radius": 0.1,
+              "delta_radius": 1,
               "n_cells_per_axis": 501  # must be odd!!
               }
 
@@ -44,6 +44,7 @@ class Sphere:
         self.c3d[self.s_coord, self.s_coord, self.s_coord] = True
 
         self.stats = {params["start_real_radius"]: {"mean": 0,
+                                                    "n_cells": 0,
                                                     0: 0,
                                                     1: 0,
                                                     2: 0,
@@ -71,11 +72,12 @@ class Sphere:
         self.stats[self.real_radius] = {"mean": 0, 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
 
     def update_stats(self, mean, freq, neig_n):
-        self.stats[self.real_radius]["mean"] = mean
+        # self.stats[self.real_radius]["mean"] = mean
 
-        for freq_i, number in zip(freq, neig_n):
-            self.stats[self.real_radius][number] = freq_i
+        self.stats[self.real_radius]["n_cells"] = int(np.sum(self.c3d[:, :, self.s_coord]))
 
+        # for freq_i, number in zip(freq, neig_n):
+        #     self.stats[self.real_radius][number] = freq_i
 
     def calc_mean_neigh(self):
         self.expand_radius()
@@ -197,11 +199,12 @@ def calc_mean_neigh(real_radius):
 
 sphere = Sphere(user_input)
 
-for _ in range(1000):
+for _ in range(100):
     sphere.calc_mean_neigh()
 
 for key in sphere.stats:
-    print(f"""{key:.3f} {sphere.stats[key]["mean"]:.3f} {sphere.stats[key][0]:.3f} {sphere.stats[key][1]:.3f} {sphere.stats[key][2]:.3f} {sphere.stats[key][3]:.3f} {sphere.stats[key][4]:.3f} {sphere.stats[key][5]:.3f}""")
+    # print(f"""{key:.3f} {sphere.stats[key]["mean"]:.3f} {sphere.stats[key][0]:.3f} {sphere.stats[key][1]:.3f} {sphere.stats[key][2]:.3f} {sphere.stats[key][3]:.3f} {sphere.stats[key][4]:.3f} {sphere.stats[key][5]:.3f}""")
+    print(f"""{key:.3f} {sphere.stats[key]["n_cells"]}""")
 
 
 

@@ -21,6 +21,9 @@ class Utils:
              [1, 1, 0], [1, 0, -1], [1, 0, 1], [1, -1, 0], [0, 1, -1], [0, 1, 1],  # 19 side corners
              [0, -1, -1], [0, -1, 1], [-1, 1, 0], [-1, 0, -1], [-1, 0, 1], [-1, -1, 0]], dtype=np.byte)
 
+        self.ind_decompose_flat = np.array(
+            [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]], dtype=np.byte)
+
         if self.user_input["neigh_range"] > 1:
             self.ind_formation = self.generate_neigh_indexes()
         else:
@@ -368,6 +371,20 @@ class Utils:
         seeds = seeds.transpose()
         # generating a neighbouring coordinates for each seed (including the position of the seed itself)
         around_seeds = np.array([[item + self.ind_decompose] for item in seeds], dtype=np.short)[:, 0]
+        # applying periodic boundary conditions
+        around_seeds[around_seeds == self.n_cells_per_axis] = 0
+        around_seeds[around_seeds == -1] = self.n_cells_per_axis - 1
+        return around_seeds
+
+    def calc_sur_ind_decompose_flat(self, seeds):
+        """
+        Calculating the descarts surrounding coordinates for each seed including the position of the seed itself.
+        :param seeds: seeds in descarts coordinates
+        :return: around_seeds: array of the surrounding coordinates for each seed (26 flat coordinates for each seed)
+        """
+        seeds = seeds.transpose()
+        # generating a neighbouring coordinates for each seed (including the position of the seed itself)
+        around_seeds = np.array([[item + self.ind_decompose_flat] for item in seeds], dtype=np.short)[:, 0]
         # applying periodic boundary conditions
         around_seeds[around_seeds == self.n_cells_per_axis] = 0
         around_seeds[around_seeds == -1] = self.n_cells_per_axis - 1

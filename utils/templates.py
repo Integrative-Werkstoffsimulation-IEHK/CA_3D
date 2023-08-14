@@ -66,6 +66,7 @@ DEFAULT_PARAM = {
 
     "final_min_dissol_prob": 0.123456789,
 
+    "max_neigh_numb": 0.123456789,
 }
 
 DEFAULT_OBJ_REF = {

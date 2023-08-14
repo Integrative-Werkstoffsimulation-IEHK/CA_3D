@@ -9,11 +9,6 @@ from thermodynamics import td_data
 
 
 class CellularAutomata:
-    """
-    TODO: 1 -> Write comments.
-          2 -> Check aggregated indexes!
-    """
-
     def __init__(self, user_input=None):
         # pre settings
         if user_input is None:
@@ -213,9 +208,15 @@ class CellularAutomata:
             self.comb_indexes = None
             self.rel_prod_fraction = None
             self.product_indexes = None
+            self.switch_ind = None
 
             self.max_inside_neigh_number = 6 * self.primary_oxid_numb
             self.max_block_neigh_number = 7 * self.primary_oxid_numb
+
+            self.product_x_nzs = np.full(self.cells_per_axis, False, dtype=bool)
+
+            self.prev_prod_fraction = np.full(self.cells_per_axis, 0, dtype=float)
+            self.cumul_prod_fraction = np.full(self.cells_per_axis, 0, dtype=float)
 
             # self.look_up_table = td_data.TDATA()
 
@@ -446,11 +447,11 @@ class CellularAutomata:
                 new_dirs -= 1
                 self.primary_oxidant.dirs = np.concatenate((self.primary_oxidant.dirs, new_dirs), axis=1)
 
-    def decomposition_adapted(self, plane_indxs):
+    def decomposition_adapted(self):
         # plane_indxs = np.array([50])
-        nz_ind = np.array(np.nonzero(self.primary_product.c3d[:, :, plane_indxs]))
+        nz_ind = np.array(np.nonzero(self.primary_product.c3d[:, :, self.product_indexes]))
         self.coord_buffer.copy_to_buffer(nz_ind)
-        self.coord_buffer.update_buffer_at_axis(plane_indxs[nz_ind[2]], axis=2)
+        self.coord_buffer.update_buffer_at_axis(self.product_indexes[nz_ind[2]], axis=2)
 
         if self.coord_buffer.last_in_buffer > 0:
             all_arounds = self.utils.calc_sur_ind_decompose(self.coord_buffer.get_buffer())
@@ -500,7 +501,7 @@ class CellularAutomata:
 
             to_dissolve_p = self.coord_buffer.get_buffer()
             all_neigh_block = np.array([np.sum(item[:6]) for item in all_neigh_block])
-            probs_p = self.dissol_prob.get_probabilities_block(all_neigh_block, to_dissolve_p[2])
+            probs_p = self.dissol_prob.get_probabilities(all_neigh_block, to_dissolve_p[2])
 
             randomise = np.random.random_sample(len(to_dissol_pn_no_neigh[0]))
             temp_ind = np.where(randomise < probs_pn_no_neigh)[0]
@@ -515,6 +516,98 @@ class CellularAutomata:
             to_dissolve_p = to_dissolve_p[:, temp_ind]
 
             to_dissolve = np.concatenate((to_dissolve_pn, to_dissolve_p, to_dissol_pn_no_neigh), axis=1)
+
+            self.coord_buffer.reset_buffer()
+            self.to_dissol_pn_buffer.reset_buffer()
+
+            if len(to_dissolve[0]) > 0:
+                counts = self.primary_product.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]]
+
+                self.primary_product.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = 0
+                self.primary_product.full_c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = False
+                self.primary_active.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] += counts
+
+                to_dissolve = np.repeat(to_dissolve, counts, axis=1)
+                self.primary_oxidant.cells = np.concatenate((self.primary_oxidant.cells, to_dissolve), axis=1)
+                new_dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(to_dissolve[0]))
+                new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
+                new_dirs -= 1
+                self.primary_oxidant.dirs = np.concatenate((self.primary_oxidant.dirs, new_dirs), axis=1)
+
+    def decomposition_no_bsf(self):
+        # plane_indxs = np.array([50])
+        nz_ind = np.array(np.nonzero(self.primary_product.c3d[:, :, self.product_indexes]))
+        self.coord_buffer.copy_to_buffer(nz_ind)
+        self.coord_buffer.update_buffer_at_axis(self.product_indexes[nz_ind[2]], axis=2)
+
+        if self.coord_buffer.last_in_buffer > 0:
+            all_arounds = self.utils.calc_sur_ind_decompose_flat(self.coord_buffer.get_buffer())
+            all_neigh = go_around_int(self.primary_product.c3d, all_arounds)
+
+            all_neigh_pn = all_neigh[[]]
+            # all_neigh_block = all_neigh[[]]
+
+            # choose all the coordinates which have at least one full side neighbour
+            where_full = np.unique(np.where(all_neigh == self.primary_oxid_numb)[0])
+
+            to_dissol_pn_no_neigh = np.array(self.coord_buffer.get_elem_instead_ind(where_full), dtype=np.short)
+            self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(where_full))
+            # self.to_dissol_pn_buffer.append_to_buffer(self.coord_buffer.get_elem_instead_ind(where_full))
+
+            if self.coord_buffer.last_in_buffer > 0:
+                all_neigh = all_neigh[where_full]
+
+                arr_len_flat = np.array([np.sum(item) for item in all_neigh], dtype=np.ubyte)
+                index_outside = np.where((arr_len_flat < self.max_inside_neigh_number))[0]
+
+                self.to_dissol_pn_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(index_outside))
+                all_neigh_pn = arr_len_flat[index_outside]
+            else:
+                all_neigh_pn = np.array([np.sum(item) for item in all_neigh_pn])
+
+                # self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(index_outside))
+                # all_neigh = all_neigh[index_outside]
+
+                # aggregation = np.array([[np.sum(item[step]) for step in self.aggregated_ind] for item in all_neigh],
+                #                        dtype=np.ubyte)
+                # ind_where_blocks = np.unique(np.where(aggregation == self.max_block_neigh_number)[0])
+
+                # if len(ind_where_blocks) > 0:
+                #     self.to_dissol_pn_buffer.copy_to_buffer(self.coord_buffer.get_elem_instead_ind(ind_where_blocks))
+                #     all_neigh_pn = np.delete(all_neigh, ind_where_blocks, axis=0)
+
+                    # self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(ind_where_blocks))
+                    # all_neigh_block = all_neigh[ind_where_blocks]
+                # else:
+                    # self.to_dissol_pn_buffer.copy_to_buffer(self.coord_buffer.get_buffer())
+                    # all_neigh_pn = all_neigh
+
+                    # self.coord_buffer.reset_buffer()
+                    # all_neigh_block = all_neigh[[]]
+
+            probs_pn_no_neigh = self.dissol_prob.dissol_prob_pp[to_dissol_pn_no_neigh[2]]
+
+            to_dissolve_pn = self.to_dissol_pn_buffer.get_buffer()
+            probs_pn = self.dissol_prob.get_probabilities(all_neigh_pn, to_dissolve_pn[2])
+
+            # to_dissolve_p = self.coord_buffer.get_buffer()
+            # all_neigh_block = np.array([np.sum(item[:6]) for item in all_neigh_block])
+            # probs_p = self.dissol_prob.get_probabilities(all_neigh_block, to_dissolve_p[2])
+
+            randomise = np.random.random_sample(len(to_dissol_pn_no_neigh[0]))
+            temp_ind = np.where(randomise < probs_pn_no_neigh)[0]
+            to_dissol_pn_no_neigh = to_dissol_pn_no_neigh[:, temp_ind]
+
+            randomise = np.random.random_sample(len(to_dissolve_pn[0]))
+            temp_ind = np.where(randomise < probs_pn)[0]
+            to_dissolve_pn = to_dissolve_pn[:, temp_ind]
+
+            # randomise = np.random.random_sample(len(to_dissolve_p[0]))
+            # temp_ind = np.where(randomise < probs_p)[0]
+            # to_dissolve_p = to_dissolve_p[:, temp_ind]
+
+            # to_dissolve = np.concatenate((to_dissolve_pn, to_dissolve_p, to_dissol_pn_no_neigh), axis=1)
+            to_dissolve = np.concatenate((to_dissolve_pn, to_dissol_pn_no_neigh), axis=1)
 
             self.coord_buffer.reset_buffer()
             self.to_dissol_pn_buffer.reset_buffer()
@@ -589,19 +682,14 @@ class CellularAutomata:
         product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
                             in range(self.furthest_index + 1)], dtype=np.uint32)
 
-        # last_nonzero_index = np.max(np.nonzero(product), initial=0)
-
         oxidant_indexes = np.where(oxidant > 0)[0]
         active_indexes = np.where(active > 0)[0]
-        prod_fraction = product / self.cells_per_page
-        self.rel_prod_fraction = prod_fraction / self.param["phase_fraction_lim"]
-        self.product_indexes = np.where(prod_fraction <= self.param["phase_fraction_lim"])[0]
-        # self.product_indexes = product_indexes[:last_nonzero_index + 2]
 
-        # if self.iteration == 0:
-        #     product_indexes = np.where(prod_fraction < 0.1)[0]
-        # else:
-        #     product_indexes = np.where((prod_fraction < 0.1) & (prod_fraction > 0))[0]
+        prod_fraction = product / self.cells_per_page
+
+        # self.rel_prod_fraction = prod_fraction / self.param["phase_fraction_lim"]
+
+        self.product_indexes = np.where(prod_fraction <= self.param["phase_fraction_lim"])[0]
 
         min_act = active_indexes.min(initial=self.cells_per_axis)
         if min_act < self.cells_per_axis:
@@ -662,9 +750,9 @@ class CellularAutomata:
             #
             # else:
 
-            self.nucl_prob.adapt_hf_n_neigh_nucl_prob(self.comb_indexes, self.rel_prod_fraction[self.comb_indexes])
+            # self.nucl_prob.adapt_hf_nucl_prob(self.comb_indexes, self.rel_prod_fraction[self.comb_indexes])
             self.fix_init_precip(self.furthest_index, self.primary_product)
-            self.precip_step(self.comb_indexes)
+            self.precip_step()
             # print(np.sum(self.primary_product.c3d))
 
             # self.primary_oxidant.transform_to_descards()
@@ -679,9 +767,26 @@ class CellularAutomata:
         self.primary_oxidant.transform_to_descards()
 
     def dissolution_0_cells(self):
-        self.get_combi_ind()
-        self.dissol_prob.adapt_dissol_prob_min_dissol_prob(self.product_indexes, self.rel_prod_fraction[self.product_indexes])
-        self.decomposition_adapted(self.product_indexes)
+        nz_prod_plane = np.where(self.product_x_nzs)[0]
+
+        product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind])
+                            for plane_ind in nz_prod_plane], dtype=np.uint32)
+
+        prod_fraction = product / self.cells_per_page
+
+        delt_prod_fraction = prod_fraction - self.prev_prod_fraction[nz_prod_plane]
+
+        self.cumul_prod_fraction[nz_prod_plane] += delt_prod_fraction
+
+        # self.rel_prod_fraction = prod_fraction / self.param["phase_fraction_lim"]
+
+        temp_ind = np.where(self.cumul_prod_fraction[nz_prod_plane] > 0.2)[0]
+        self.product_indexes = nz_prod_plane[temp_ind]
+
+        self.cumul_prod_fraction[nz_prod_plane[temp_ind]] = 0
+
+        # self.dissol_prob.adapt_dissol_prob_hf(self.product_indexes, self.rel_prod_fraction[self.product_indexes])
+        self.decomposition_no_bsf()
 
     def precipitation_1(self):
         # ONE oxidant and TWO active elements exist. TWO products can be created.
@@ -885,8 +990,8 @@ class CellularAutomata:
         self.primary_oxidant.transform_to_descards()
         self.secondary_oxidant.transform_to_descards()
 
-    def precip_step(self, indexes):
-        for plane_index in reversed(indexes):
+    def precip_step(self):
+        for plane_index in reversed(self.comb_indexes):
             for fetch_ind in self.fetch_ind:
                 oxidant_cells = self.objs[self.case]["oxidant"].c3d[fetch_ind[0], fetch_ind[1], plane_index]
                 oxidant_cells = fetch_ind[:, np.nonzero(oxidant_cells)[0]]
@@ -980,6 +1085,10 @@ class CellularAutomata:
 
                 # self.objs[self.case]["product"].fix_full_cells(coord)  # precip on place of active!
                 self.objs[self.case]["product"].fix_full_cells(seeds)  # precip on place of oxidant!
+
+                # mark the x-plane where the precipitate has happened, so the index of this plane can be called in the
+                # dissolution function
+                self.product_x_nzs[seeds[2][0]] = True
 
                 # self.cumul_product[coord[0], coord[1], coord[2]] += 1
 
@@ -1338,12 +1447,12 @@ class CellularAutomata:
         nonzero_neigh_in_prod = np.array(np.nonzero(neigh_in_prod)[0])
         where_full = np.unique(np.where(all_neigh[:, :6].view() == self.primary_oxid_numb)[0])
 
-        only_inside_product_program = np.setdiff1d(nonzero_neigh_in_prod, where_full, assume_unique=True)
+        only_inside_product = np.setdiff1d(nonzero_neigh_in_prod, where_full, assume_unique=True)
 
         fanal_effective_flat_counts = np.zeros(len(all_neigh), dtype=np.single)
         fanal_effective_flat_counts[where_full] = np.sum(all_neigh[where_full], axis=1)
-        fanal_effective_flat_counts[only_inside_product_program] =\
-            neigh_in_prod[only_inside_product_program] * (7 * self.primary_oxid_numb - 1) / (self.primary_oxid_numb - 1)
+        fanal_effective_flat_counts[only_inside_product] =  \
+            neigh_in_prod[only_inside_product] * (7 * self.primary_oxid_numb - 1) / (self.primary_oxid_numb - 1)
 
         return fanal_effective_flat_counts
 

@@ -41,9 +41,9 @@ if __name__ == '__main__':
                   "sol_prod": 0,  # 5.621 * 10 ** -10
 
                   "nucleation_probability": 10**-2,
-                  "het_factor": 10**2,
+                  "het_factor": 10**1,
 
-                  "dissolution_p": 1 * 10**-6,
+                  "dissolution_p": 1 * 10**-2,
                   "dissolution_n": 2,
                   "exponent_power": 0,  # not used anymore
                   "block_scale_factor": 1,
@@ -61,16 +61,18 @@ if __name__ == '__main__':
                                      # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
                   "decompose_precip": True,
 
-                  "phase_fraction_lim": 0.5,
-                  "hf_deg_lim": 10**11,  # range 0 - 1
-                  "lowest_neigh_numb": 4,
-                  "final_nucl_prob": 10**-19,
+                  "phase_fraction_lim": 0.4,
+                  "hf_deg_lim": 10**4,  # range 0 - 1
+                  "lowest_neigh_numb": 20,
+                  "final_nucl_prob": 10**-5,
 
-                  "min_dissol_prob": 1 * 10 ** -6,
-                  "het_factor_dissolution": 10 ** 0,
+                  "min_dissol_prob": 1 * 10 ** -8,
+                  "het_factor_dissolution": 10 ** 1,
                   "final_dissol_prob": 1 * 10 ** -0,
-                  "final_het_factor_dissol": 10 ** 0,
-                  "final_min_dissol_prob": 1 * 10 ** -15,
+                  "final_het_factor_dissol": 10 ** 3,
+                  "final_min_dissol_prob": 1 * 10 ** -8,
+
+                  "max_neigh_numb": 20,
                   }
 
     eng = CellularAutomata(user_input=user_input)
@@ -80,6 +82,10 @@ if __name__ == '__main__':
     finally:
         if not user_input["save_whole"]:
             eng.save_results()
+
+            # for iter in range(eng.iteration):
+            #     print(iter, " ", eng.cumul_fraction[iter])
+
         eng.insert_last_it()
         eng.utils.db.conn.commit()
         print()
