@@ -4,7 +4,8 @@ import time
 
 class Database:
     def __init__(self, user_input):
-        db_name = user_input["save_path"] + str(int(time.time())) + '.db'
+        user_input["db_id"] = str(int(time.time()))
+        db_name = user_input["save_path"] + user_input["db_id"] + '.db'
         user_input["save_path"] = db_name
         self.conn = sql.connect(db_name)
         self.c = self.conn.cursor()

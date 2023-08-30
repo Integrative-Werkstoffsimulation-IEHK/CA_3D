@@ -10,9 +10,9 @@ from . import probabilities
 class Utils:
     def __init__(self, user_input):
         self.user_input = user_input
-        self.param = None
+        self.param = self.user_input
         self.db = None
-        self.n_cells_per_axis = None
+        self.n_cells_per_axis = user_input["n_cells_per_axis"]
 
         self.ind_decompose = np.array(
             [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1],   # 5 flat
@@ -66,22 +66,23 @@ class Utils:
         self.db = data_base.Database(self.user_input)
 
     def generate_param(self):
-        self.param = self.user_input
+        # self.param = self.user_input
         self.param["tau"] = self.param["sim_time"] / self.param["n_iterations"]
         self.param["l_ambda"] = self.param["size"] / self.param["n_cells_per_axis"]
         self.param["dissolution_pn"] = self.param["dissolution_p"] ** (1 / self.param["dissolution_n"])
-        self.param["const_a"] = (1 / (self.param["het_factor"] * self.param["nucleation_probability"])) ** (-6 / 5)
-        self.param["const_b"] = log(1 / (self.param["het_factor"] * self.param["nucleation_probability"])) * (1 / 5)
+        # self.param["const_a"] = (1 / (self.param["het_factor"] * self.param["nucleation_probability"])) ** (-6 / 5)
+        # self.param["const_b"] = log(1 / (self.param["het_factor"] * self.param["nucleation_probability"])) * (1 / 5)
 
         if self.param["active_element"]["secondary"]["elem"] == "None":
             self.param["active_element"]["secondary"]["mass_concentration"] = 0
-            self.param["active_element"]["secondary"]["cells_concentration"] = 1
+            self.param["active_element"]["secondary"]["cells_concentration"] = 0
             self.param[f"secondary_active_element_exists"] = False
         else:
             self.param[f"secondary_active_element_exists"] = True
 
         if self.param["oxidant"]["secondary"]["elem"] == "None":
             self.param[f"secondary_oxidant_exists"] = False
+            self.param["oxidant"]["secondary"]["cells_concentration"] = 0
         else:
             self.param[f"secondary_oxidant_exists"] = True
 
@@ -91,7 +92,9 @@ class Utils:
         self.calc_active_data()
         self.calc_oxidant_data()
         self.calc_product_data()
-        self.n_cells_per_axis = self.param["n_cells_per_axis"]
+        self.calc_initial_conc_and_moles()
+
+        # self.n_cells_per_axis = self.param["n_cells_per_axis"]
 
     def calc_product_data(self):
         self.param["product"] = {"primary": {}, "secondary": {}, "ternary": {}, "quaternary": {}}
@@ -259,7 +262,10 @@ class Utils:
         self.param["active_element"]["primary"]["eq_matrix_mass_per_cell"] = \
             self.param["active_element"]["primary"]["eq_matrix_moles_per_cell"] * matrix_molar_mass
 
-        moles_per_cell2 = atomic_c_2 * matrix_moles / (cells_conc2 * denom)
+        if cells_conc2 > 0:
+            moles_per_cell2 = atomic_c_2 * matrix_moles / (cells_conc2 * denom)
+        else:
+            moles_per_cell2 = 0
         self.param["active_element"]["secondary"]["moles_per_cell"] = moles_per_cell2
         self.param["active_element"]["secondary"]["mass_per_cell"] = moles_per_cell2 * molar_mass2
         self.param["active_element"]["secondary"]["eq_matrix_moles_per_cell"] = moles_per_cell2 * t_2
@@ -320,6 +326,87 @@ class Utils:
         self.param["active_element"]["secondary"]["atomic_concentration"] = \
             mass_conc2 / (mass_conc2 + (molar_mass2 / molar_mass1) * mass_conc1 + (molar_mass2 / molar_mass_matr) *
                           (1 - mass_conc1 - mass_conc2))
+
+    def calc_initial_conc_and_moles(self):
+        inward = self.param["oxidant"]["primary"]["n_per_page"]
+        inward_moles = inward * self.param["oxidant"]["primary"]["moles_per_cell"]
+        inward_mass = inward * self.param["oxidant"]["primary"]["mass_per_cell"]
+
+        sinward = self.param["oxidant"]["secondary"]["n_per_page"]
+        sinward_moles = sinward * self.param["oxidant"]["secondary"]["moles_per_cell"]
+        sinward_mass = sinward * self.param["oxidant"]["secondary"]["mass_per_cell"]
+
+        outward = self.param["active_element"]["primary"]["n_per_page"]
+        outward_moles = outward * self.param["active_element"]["primary"]["moles_per_cell"]
+        outward_mass = outward * self.param["active_element"]["primary"]["mass_per_cell"]
+        outward_eq_mat_moles = outward * self.param["active_element"]["primary"]["eq_matrix_moles_per_cell"]
+
+        soutward = self.param["active_element"]["secondary"]["n_per_page"]
+        soutward_moles = soutward * self.param["active_element"]["secondary"]["moles_per_cell"]
+        soutward_mass = soutward * self.param["active_element"]["secondary"]["mass_per_cell"]
+        soutward_eq_mat_moles = soutward * self.param["active_element"]["secondary"]["eq_matrix_moles_per_cell"]
+
+        n_cells_page = (self.n_cells_per_axis ** 2)
+        matrix_moles = n_cells_page * self.param["matrix_elem"]["moles_per_cell"] - outward_eq_mat_moles \
+                       - soutward_eq_mat_moles
+        matrix_mass = matrix_moles * self.param["matrix_elem"]["molar_mass"]
+
+        whole_moles = matrix_moles + inward_moles + sinward_moles + outward_moles + soutward_moles
+        whole_mass = matrix_mass + inward_mass + sinward_mass + outward_mass + soutward_mass
+
+        inward_c_moles = inward_moles / whole_moles
+        sinward_c_moles = sinward_moles / whole_moles
+        outward_c_moles = outward_moles / whole_moles
+        soutward_c_moles = soutward_moles / whole_moles
+        matrix_c_moles = matrix_moles / whole_moles
+
+        inward_c_mass = inward_mass / whole_mass
+        sinward_c_mass = sinward_mass / whole_mass
+        outward_c_mass = outward_mass / whole_mass
+        soutward_c_mass = soutward_mass / whole_mass
+        matrix_c_mass = matrix_mass / whole_mass
+
+        self.param["initial_conc_and_moles"] = {}
+        self.param["initial_conc_and_moles"]["inward_moles"] = inward_moles
+        self.param["initial_conc_and_moles"]["inward_mass"] = inward_mass
+
+        self.param["initial_conc_and_moles"]["sinward_moles"] = sinward_moles
+        self.param["initial_conc_and_moles"]["sinward_mass"] = sinward_mass
+
+        self.param["initial_conc_and_moles"]["outward_moles"] = outward_moles
+        self.param["initial_conc_and_moles"]["outward_mass"] = outward_mass
+        self.param["initial_conc_and_moles"]["outward_eq_mat_moles"] = outward_eq_mat_moles
+
+        self.param["initial_conc_and_moles"]["soutward_moles"] = soutward_moles
+        self.param["initial_conc_and_moles"]["soutward_mass"] = soutward_mass
+        self.param["initial_conc_and_moles"]["soutward_eq_mat_moles"] = soutward_eq_mat_moles
+
+        self.param["initial_conc_and_moles"]["matrix_moles"] = matrix_moles
+        self.param["initial_conc_and_moles"]["matrix_mass"] = matrix_mass
+
+        self.param["initial_conc_and_moles"]["whole_moles"] = whole_moles
+        self.param["initial_conc_and_moles"]["whole_mass"] = whole_mass
+
+        self.param["initial_conc_and_moles"]["inward_c_moles"] = inward_c_moles
+        self.param["initial_conc_and_moles"]["inward_c_mass"] = inward_c_mass
+
+        self.param["initial_conc_and_moles"]["sinward_c_moles"] = sinward_c_moles
+        self.param["initial_conc_and_moles"]["sinward_c_mass"] = sinward_c_mass
+
+        self.param["initial_conc_and_moles"]["outward_c_moles"] = outward_c_moles
+        self.param["initial_conc_and_moles"]["outward_c_mass"] = outward_c_mass
+
+        self.param["initial_conc_and_moles"]["soutward_c_moles"] = soutward_c_moles
+        self.param["initial_conc_and_moles"]["soutward_c_mass"] = soutward_c_mass
+
+        self.param["initial_conc_and_moles"]["matrix_c_moles"] = matrix_c_moles
+        self.param["initial_conc_and_moles"]["matrix_c_mass"] = matrix_c_mass
+
+        if self.param["sol_prod"] != 0:
+            self.param["initial_conc_and_moles"]["max_gamma_min_one"] = (((inward_c_moles ** 3) * (outward_c_moles ** 2))/
+                                                                         self.param["sol_prod"]) - 1
+        else:
+            self.param["initial_conc_and_moles"]["max_gamma_min_one"] = 0
 
     def calc_prob(self, diff_coeff, stridden=False):
         if not stridden:
@@ -463,7 +550,7 @@ class Utils:
 
     def print_init_var(self):
         expn = 2.71828182845904523536
-        nucl_prob = self.param["const_a"] * expn ** (self.param["const_b"] * np.array([1, 2, 3, 4, 5, 6]))
+        # nucl_prob = self.param["const_a"] * expn ** (self.param["const_b"] * np.array([1, 2, 3, 4, 5, 6]))
         # dissol_prob = self.param["dissolution_pn"] * \
         #               expn ** (-self.param["exponent_power"] * np.array([0, 1, 2, 3, 4, 5]))
         # dissol_p_block = dissol_prob[3] / self.param["block_scale_factor"]
@@ -483,23 +570,23 @@ class Utils:
         print(f"""-------------------------------------------------------""")
         print(f"""DATA BASE AT: {self.param["save_path"]}""")
         print(f"""-------------------------------------------------------""", end="")
-        print(f"""
-SYSTEM PARAMETERS:----------------------------------------------------/PRECIPITATION:--------------------------------------------------------------------------------------
-            * Number of Cells Per Axis: {self.param["n_cells_per_axis"]:<30}/    * Solubility product: {self.param["sol_prod"]:<20}Zhou and Wei Parameters:
-            * Total Iterations: _______ {self.param["n_iterations"]:<30}/    * Threshold Inward:   {self.param["threshold_inward"]:<20}* p: {self.param["dissolution_p"]}
-            * Stirde: _________________ {self.param["stride"]:<30}/    * Threshold Outward:  {self.param["threshold_outward"]:<20}* n: {self.param["dissolution_n"]}
-            * Time [sek]: _____________ {self.param["sim_time"]:<30}/    * Neighbourhood distance: {self.param["neigh_range"]:<20}* block factor: {self.param["block_scale_factor"]}
-            * Time [h]: _______________ {self.param["sim_time"] / 3600:<30}/
-            * Length [m]: _____________ {self.param["size"]:<30}/    * Heterogeneous Factor:  {self.param["het_factor"]}
-                                                                      /    * Nucleation probability: {self.param["nucleation_probability"]}                   
-            Modules:                                                  /    * Neighbourhood distance: {self.param["neigh_range"]}
-            * inward_diffusion: _______ {bool(self.param["inward_diffusion"]):<30}/        
-            * outward_diffusion: ______ {bool(self.param["outward_diffusion"]):<30}/    * Number of sides covered:              0       1       2        3        4        5       6
-            * compute_precipitations: _ {bool(self.param["compute_precipitations"]):<30}/    * Nucleation Probabilities:           {self.param["nucleation_probability"]}    {nucl_prob[0]:.2f}    {nucl_prob[1]:.2f}     {nucl_prob[2]:.2f}     {nucl_prob[3]:.2f}     {nucl_prob[4]:.2f}     1
-            * diffusion_in_precip: ____ {bool(self.param["diffusion_in_precipitation"]):<30}/    * Dissolution Probabilities:          {dissol_prob[0]:.4f}  {dissol_prob[1]:.4f}  {dissol_prob[2]:.4f}   {dissol_prob[3]:.4f}   {dissol_prob[4]:.4f}   {dissol_prob[5]:.4f}    0
-            * decompose_precip: _______ {bool(self.param["decompose_precip"]):<30}/    * Dissolution Probabilities in block:   -       -       -      {dissol_prob_block[0]:.4f}   {dissol_prob_block[1]:.4f}   {dissol_prob_block[2]:.4f}    -
-            * full_cells: _____________ {bool(self.param["full_cells"]):<30}
-""", end="")
+#         print(f"""
+# SYSTEM PARAMETERS:----------------------------------------------------/PRECIPITATION:--------------------------------------------------------------------------------------
+#             * Number of Cells Per Axis: {self.param["n_cells_per_axis"]:<30}/    * Solubility product: {self.param["sol_prod"]:<20}Zhou and Wei Parameters:
+#             * Total Iterations: _______ {self.param["n_iterations"]:<30}/    * Threshold Inward:   {self.param["threshold_inward"]:<20}* p: {self.param["dissolution_p"]}
+#             * Stirde: _________________ {self.param["stride"]:<30}/    * Threshold Outward:  {self.param["threshold_outward"]:<20}* n: {self.param["dissolution_n"]}
+#             * Time [sek]: _____________ {self.param["sim_time"]:<30}/    * Neighbourhood distance: {self.param["neigh_range"]:<20}* block factor: {self.param["block_scale_factor"]}
+#             * Time [h]: _______________ {self.param["sim_time"] / 3600:<30}/
+#             * Length [m]: _____________ {self.param["size"]:<30}/    * Heterogeneous Factor:  {self.param["het_factor"]}
+#                                                                       /    * Nucleation probability: {self.param["nucleation_probability"]}
+#             Modules:                                                  /    * Neighbourhood distance: {self.param["neigh_range"]}
+#             * inward_diffusion: _______ {bool(self.param["inward_diffusion"]):<30}/
+#             * outward_diffusion: ______ {bool(self.param["outward_diffusion"]):<30}/    * Number of sides covered:              0       1       2        3        4        5       6
+#             * compute_precipitations: _ {bool(self.param["compute_precipitations"]):<30}/    * Nucleation Probabilities:           {self.param["nucleation_probability"]}    {nucl_prob[0]:.2f}    {nucl_prob[1]:.2f}     {nucl_prob[2]:.2f}     {nucl_prob[3]:.2f}     {nucl_prob[4]:.2f}     1
+#             * diffusion_in_precip: ____ {bool(self.param["diffusion_in_precipitation"]):<30}/    * Dissolution Probabilities:          {dissol_prob[0]:.4f}  {dissol_prob[1]:.4f}  {dissol_prob[2]:.4f}   {dissol_prob[3]:.4f}   {dissol_prob[4]:.4f}   {dissol_prob[5]:.4f}    0
+#             * decompose_precip: _______ {bool(self.param["decompose_precip"]):<30}/    * Dissolution Probabilities in block:   -       -       -      {dissol_prob_block[0]:.4f}   {dissol_prob_block[1]:.4f}   {dissol_prob_block[2]:.4f}    -
+#             * full_cells: _____________ {bool(self.param["full_cells"]):<30}
+# """, end="")
         print(f"""
 ELEMENTS:---------------------------------------------------------------------------------------------------------------------------------------------------------------
 Primary Oxidant: {self.param["oxidant"]["primary"]["elem"]}                                                                        Primary Active: {self.param["active_element"]["primary"]["elem"]}

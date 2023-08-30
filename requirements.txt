@@ -1,6 +1,5 @@
 matplotlib
 numpy
-pandas
 progressbar
 progressbar2==4.0.0   
 pyvoro

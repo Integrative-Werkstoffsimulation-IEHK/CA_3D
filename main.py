@@ -9,9 +9,8 @@ if __name__ == '__main__':
                                           "cells_concentration": 0.01},
                               "secondary": {"elem": "None",
                                             "diffusion_condition": "N in Ni Krupp",
-                                            "cells_concentration": 0.01}
+                                            "cells_concentration": 0.1}
                               },
-
                   "active_element": {"primary": {"elem": "Al",
                                                  "diffusion_condition": "Al in Ni Krupp",
                                                  "mass_concentration": 0.025,
@@ -21,7 +20,6 @@ if __name__ == '__main__':
                                                    "mass_concentration": 0.025,
                                                    "cells_concentration": 0.077037037}
                                      },
-
                   "matrix_elem": {"elem": "Ni",
                                   "diffusion_condition": "not_used",
                                   "concentration": 0},
@@ -38,12 +36,12 @@ if __name__ == '__main__':
 
                   "threshold_inward": 1,
                   "threshold_outward": 1,
-                  "sol_prod": 0,  # 5.621 * 10 ** -10
+                  "sol_prod": 6.25 * 10 ** -31,  # 5.621 * 10 ** -10
 
-                  "nucleation_probability": 10**-2,
-                  "het_factor": 10**1,
+                  "nucleation_probability": 0,
+                  "het_factor": 10**0.5,
 
-                  "dissolution_p": 1 * 10**-2,
+                  "dissolution_p": 1 * 10**-3,
                   "dissolution_n": 2,
                   "exponent_power": 0,  # not used anymore
                   "block_scale_factor": 1,
@@ -61,18 +59,25 @@ if __name__ == '__main__':
                                      # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
                   "decompose_precip": True,
 
-                  "phase_fraction_lim": 0.4,
-                  "hf_deg_lim": 10**4,  # range 0 - 1
-                  "lowest_neigh_numb": 20,
-                  "final_nucl_prob": 10**-5,
+                  "phase_fraction_lim": 0.036,
+                  "hf_deg_lim": 10**10,
+                  "lowest_neigh_numb": 16,
+                  "final_nucl_prob": 10**-3,
 
-                  "min_dissol_prob": 1 * 10 ** -8,
+                  "min_dissol_prob": 1 * 10 ** -4,
                   "het_factor_dissolution": 10 ** 1,
-                  "final_dissol_prob": 1 * 10 ** -0,
+                  "final_dissol_prob": 1 * 10 ** 0,
                   "final_het_factor_dissol": 10 ** 3,
-                  "final_min_dissol_prob": 1 * 10 ** -8,
+                  "final_min_dissol_prob": 1 * 10 ** -2,
 
                   "max_neigh_numb": 20,
+                  "product_kinetic_const": 0.0000003,
+                  "error_prod_conc": 1.01,
+
+                  "init_P1": 1 * 10 ** -0.01,
+                  "final_P1": 1 * 10 ** -3,
+                  "b_const_P1": -3
+
                   }
 
     eng = CellularAutomata(user_input=user_input)
@@ -83,8 +88,12 @@ if __name__ == '__main__':
         if not user_input["save_whole"]:
             eng.save_results()
 
-            # for iter in range(eng.iteration):
-            #     print(iter, " ", eng.cumul_fraction[iter])
+        data = np.column_stack(
+            (np.arange(eng.iteration), eng.cumul_prod[:eng.iteration]))
+        output_file_path = "W:/SIMCA/test_runs_data/" + eng.utils.param["db_id"] + ".txt"
+        with open(output_file_path, "w") as f:
+            for row in data:
+                f.write(" ".join(map(str, row)) + "\n")
 
         eng.insert_last_it()
         eng.utils.db.conn.commit()

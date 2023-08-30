@@ -67,6 +67,14 @@ DEFAULT_PARAM = {
     "final_min_dissol_prob": 0.123456789,
 
     "max_neigh_numb": 0.123456789,
+
+    "product_kinetic_const": 0.123456789,
+
+    "error_prod_conc": 0.123456789,
+
+    "init_P1": 0.123456789,
+    "final_P1": 0.123456789,
+    "b_const_P1": 0.123456789
 }
 
 DEFAULT_OBJ_REF = {

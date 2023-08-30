@@ -20,8 +20,12 @@ visualise.plot_2d(plot_separate=False)
 
 # visualise.animate_concentration(conc_type="cells", analytic_sol=False)
 
-visualise.plot_concentration(plot_separate=False, conc_type="cells", analytic_sol=False)
+visualise.plot_concentration(plot_separate=False, conc_type="atomic", analytic_sol=False)
 # visualise.plot_concentration(plot_separate=False, conc_type="cells", analytic_sol=False, iteration=956)
 
 # visualise.plot_h()
+
+
+# for plane_ind in range(102):
+#     visualise.plot_2d(plot_separate=False, slice_pos=plane_ind)
 

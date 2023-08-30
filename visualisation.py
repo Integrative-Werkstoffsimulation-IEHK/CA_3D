@@ -698,7 +698,7 @@ ELAPSED TIME: {message}
             ax_all.set_xlim(0, self.axlim)
             ax_all.set_ylim(0, self.axlim)
         self.conn.commit()
-        # plt.savefig(f'{iteration}.jpeg')
+        # plt.savefig(f'{slice_pos}.jpeg')
         plt.show()
 
     def animate_2d(self, plot_separate=False, slice_pos=None):
