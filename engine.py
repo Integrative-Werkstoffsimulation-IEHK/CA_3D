@@ -5,7 +5,7 @@ from utils.numba_functions import *
 import progressbar
 import elements
 import time
-from thermodynamics import td_data
+# from thermodynamics import td_data
 
 
 class CellularAutomata:
@@ -40,8 +40,8 @@ class CellularAutomata:
             self.primary_oxidant = elements.OxidantElem(self.param["oxidant"]["primary"], self.utils)
             self.objs[0]["oxidant"] = self.primary_oxidant
             self.objs[1]["oxidant"] = self.primary_oxidant
-            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
-            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk
+            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
+            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk
 
             if self.param["secondary_oxidant_exists"]:
                 self.secondary_oxidant = elements.OxidantElem(self.param["oxidant"]["secondary"], self.utils)
@@ -53,8 +53,8 @@ class CellularAutomata:
             self.primary_active = elements.ActiveElem(self.param["active_element"]["primary"])
             self.objs[0]["active"] = self.primary_active
             self.objs[2]["active"] = self.primary_active
-            # self.primary_active.diffuse = self.primary_active.diffuse_with_scale
-            self.primary_active.diffuse = self.primary_active.diffuse_bulk
+            self.primary_active.diffuse = self.primary_active.diffuse_with_scale
+            # self.primary_active.diffuse = self.primary_active.diffuse_bulk
 
             if self.param["secondary_active_element_exists"]:
                 self.secondary_active = elements.ActiveElem(self.param["active_element"]["secondary"])
@@ -211,21 +211,22 @@ class CellularAutomata:
             self.rel_prod_fraction = None
             self.gamma_primes = None
             self.product_indexes = None
-            self.switch_ind = None
+            self.delayed_indexes = np.array([])
 
             self.max_inside_neigh_number = 6 * self.primary_oxid_numb
             self.max_block_neigh_number = 7 * self.primary_oxid_numb
 
             self.product_x_nzs = np.full(self.cells_per_axis, False, dtype=bool)
+            # self.ripening_not_started = np.full(self.cells_per_axis, True, dtype=bool)
 
-            self.prev_prod_fraction = np.full(self.cells_per_axis, 0, dtype=float)
-            self.cumul_prod_fraction = np.full(self.cells_per_axis, 0, dtype=float)
+            # self.prev_prod_fraction = np.full(self.cells_per_axis, 0, dtype=float)
+            # self.cumul_prod_fraction = np.full(self.cells_per_axis, 0, dtype=float)
 
             self.prod_increment_const = self.param["product_kinetic_const"]
             self.error_prod_conc = self.param["error_prod_conc"]
 
             self.cumul_prod = np.empty(self.n_iter, dtype=float)
-            self.growth_rate = np.empty(self.n_iter, dtype=float)
+            # self.growth_rate = np.empty(self.n_iter, dtype=float)
 
             # self.look_up_table = td_data.TDATA()
 
@@ -776,7 +777,9 @@ class CellularAutomata:
         else:
             self.comb_indexes = [self.furthest_index]
 
-        self.comb_indexes = np.unique(np.concatenate((self.product_indexes, where_solub_prod)))
+        self.comb_indexes = np.unique(np.concatenate((self.comb_indexes, where_solub_prod)))
+
+        # self.comb_indexes = np.setdiff1d(self.comb_indexes, self.delayed_indexes)
 
     def precipitation_0_cells(self):
         # Only one oxidant and one active elements exist. Only one product can be created
@@ -830,8 +833,8 @@ class CellularAutomata:
             # else:
 
             # self.nucl_prob.adapt_hf_nucl_prob(self.comb_indexes, self.rel_prod_fraction[self.comb_indexes])
-            self.nucl_prob.adapt_p1_nucl_prob(self.comb_indexes, self.rel_prod_fraction[self.comb_indexes],
-                                              self.gamma_primes[self.comb_indexes])
+            self.nucl_prob.adapt_probabilities(self.comb_indexes, self.rel_prod_fraction[self.comb_indexes],
+                                               self.gamma_primes[self.comb_indexes])
             self.fix_init_precip(self.furthest_index, self.primary_product)
             self.precip_step()
             # print(np.sum(self.primary_product.c3d[:, :, 0]))
@@ -880,7 +883,19 @@ class CellularAutomata:
 
         # self.cumul_prod_fraction[nz_prod_plane] += delt_prod_fraction
 
-        self.rel_prod_fraction = product_c / self.param["phase_fraction_lim"]
+        rel_prod_fraction = product_c / self.param["phase_fraction_lim"]
+        tem_ind = np.where(rel_prod_fraction > 0.8)[0]
+
+        rel_prod_fraction[tem_ind] = 1
+        # adapt_indexes = self.product_indexes[tem_ind]
+
+
+
+        # self.ripening_not_started[self.product_indexes[tem_ind]] = False
+
+        # temp_ind = np.where(self.ripening_not_started)[0]
+        # temp_ind = np.where(self.product_indexes == adapt_indexes)[0]
+        # self.rel_prod_fraction = self.rel_prod_fraction[temp_ind]
 
         # temp_ind = np.where(self.cumul_prod_fraction[nz_prod_plane] >
         #                     self.prod_increment_const * self.tau * (self.iteration + 1))[0]
@@ -902,7 +917,7 @@ class CellularAutomata:
 
         # self.cumul_prod_fraction[nz_prod_plane[temp_ind]] = 0
 
-        self.dissol_prob.adapt_dissol_prob_min_dissol_prob(self.product_indexes, self.rel_prod_fraction)
+        self.dissol_prob.adapt_probabilities(self.product_indexes, rel_prod_fraction)
         self.decomposition_no_bsf()
 
         self.cumul_prod[self.iteration] = np.sum(self.primary_product.c3d[:, :, 0])/self.cells_per_page

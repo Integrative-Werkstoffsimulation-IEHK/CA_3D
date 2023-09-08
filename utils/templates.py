@@ -74,7 +74,14 @@ DEFAULT_PARAM = {
 
     "init_P1": 0.123456789,
     "final_P1": 0.123456789,
-    "b_const_P1": 0.123456789
+    "b_const_P1": 0.123456789,
+
+    "nucl_adapt_function": 0.123456789,
+    "dissol_adapt_function": 0.123456789,
+
+    "init_P1_diss": 0.123456789,
+    "final_P1_diss": 0.123456789,
+    "b_const_P1_diss": 0.123456789,
 }
 
 DEFAULT_OBJ_REF = {

@@ -177,7 +177,7 @@ class DissolutionProbabilities:
 class NucleationProbabilitiesADJ:
     def __init__(self, param):
         self.nucl_prob = ExpFunct(param["n_cells_per_axis"], param["nucleation_probability"], param["final_nucl_prob"],
-                                  -1, -10)
+                                  -1, -(10**10))
         self.p1 = ExpFunct(param["n_cells_per_axis"], param["init_P1"], param["final_P1"], 1, param["b_const_P1"])
 
         if param["max_neigh_numb"] == 0:
@@ -207,6 +207,14 @@ class NucleationProbabilitiesADJ:
         self.const_d_pp = self.p1.values_pp - self.const_a_pp * np.e ** (self.const_b_pp * self.oxidation_number +
                                                                          self.const_c_pp)
 
+        self.adapt_probabilities = None
+        if param["nucl_adapt_function"] == 0:
+            self.adapt_probabilities = self.adapt_nucl_prob
+        elif param["nucl_adapt_function"] == 1:
+            self.adapt_probabilities = self.adapt_p1
+        elif param["nucl_adapt_function"] == 2:
+            self.adapt_probabilities = self.adapt_p1_nucl_prob
+
     def update_constants(self):
         self.const_c_pp = np.log((1 - self.p1.values_pp) / (self.const_a_pp *
                                                             (np.e ** (self.const_b_pp * self.n_neigh_init) -
@@ -218,19 +226,20 @@ class NucleationProbabilitiesADJ:
         return self.const_a_pp[page_ind] * np.e ** (self.const_b_pp[page_ind] * numb_of_neighbours +
                                                     self.const_c_pp[page_ind]) + self.const_d_pp[page_ind]
 
-    def adapt_p1(self, page_ind, rel_phase_fraction):
-        self.p1.update_values_at_pos(page_ind, rel_phase_fraction)
+    def adapt_nucl_prob(self, page_ind, gamma_primes):
+        self.nucl_prob.update_values_at_pos(page_ind, gamma_primes)
         self.update_constants()
 
-    def adapt_p1_nucl_prob(self, page_ind, rel_phase_fraction, gamma_primes):
+    def adapt_p1(self, page_ind, rel_phase_fraction):
         self.p1.update_values_at_pos(page_ind, rel_phase_fraction)
-        self.nucl_prob.update_values_at_pos(page_ind, gamma_primes)
-
         self.const_b_pp[page_ind] = self.delt_b * rel_phase_fraction + self.b0
 
         self.update_constants()
 
-    def adapt_p0(self, page_ind, gamma_primes):
+    def adapt_p1_nucl_prob(self, page_ind, rel_phase_fraction, gamma_primes):
+        self.p1.update_values_at_pos(page_ind, rel_phase_fraction)
+        self.const_b_pp[page_ind] = self.delt_b * rel_phase_fraction + self.b0
+
         self.nucl_prob.update_values_at_pos(page_ind, gamma_primes)
         self.update_constants()
 
@@ -242,27 +251,27 @@ class DissolutionProbabilitiesADJ:
         # self.dissol_prob_b = np.log(param["final_dissol_prob"] / param["dissolution_p"])
 
         self.dissol_prob = ExpFunct(param["n_cells_per_axis"], param["dissolution_p"], param["final_dissol_prob"],
-                                       1, 50)
+                                    1, 50)
 
         # self.min_dissol_prob_pp = np.full(param["n_cells_per_axis"], param["min_dissol_prob"])
         # self.min_dissol_prob_a = param["min_dissol_prob"]
         # self.min_dissol_prob_b = np.log(param["final_min_dissol_prob"] / param["min_dissol_prob"])
 
-        self.min_dissol_prob = ExpFunct(param["n_cells_per_axis"], param["min_dissol_prob"], param["final_min_dissol_prob"],
-                                       1, 50)
+        self.min_dissol_prob = ExpFunct(param["n_cells_per_axis"], param["min_dissol_prob"],
+                                        param["final_min_dissol_prob"], 1, 50)
 
         # self.hf_pp = np.full(param["n_cells_per_axis"], param["het_factor_dissolution"], dtype=float)
         # self.hf_init = param["het_factor_dissolution"]
         # self.hf_b = np.log(param["final_het_factor_dissol"] / param["het_factor_dissolution"])
 
-        self.hf = ExpFunct(param["n_cells_per_axis"], param["het_factor_dissolution"], param["final_het_factor_dissol"],
-                                        1, 100)
+        self.p1 = ExpFunct(param["n_cells_per_axis"], param["init_P1_diss"], param["final_P1_diss"],
+                           1, param["b_const_P1_diss"])
 
         self.oxidation_number = param["product"]["primary"]["oxidation_number"]
         self.n_neigh_init = self.oxidation_number * 6
 
-        self.case_a = self.n_neigh_init / (self.n_neigh_init - self.oxidation_number)
-        self.case_b = self.oxidation_number / (self.n_neigh_init - self.oxidation_number)
+        # self.case_a = self.n_neigh_init / (self.n_neigh_init - self.oxidation_number)
+        # self.case_b = self.oxidation_number / (self.n_neigh_init - self.oxidation_number)
         self.p3 = self.oxidation_number * 3
 
         # self.n_neigh_pp = np.full(param["n_cells_per_axis"], self.n_neigh_init, dtype=float)
@@ -272,31 +281,63 @@ class DissolutionProbabilitiesADJ:
 
         self.bsf = param["block_scale_factor"]
 
-        self.const_a_pp = (self.dissol_prob.values_pp ** self.case_a) / \
-                          ((self.min_dissol_prob.values_pp ** self.case_b) * (self.hf.values_pp ** self.case_a))
-        # self.const_b_pp = np.array(np.log((self.dissol_prob_pp ** (-self.case_b)) * (self.min_dissol_prob_pp ** self.case_b) *
-        #                          (self.hf_pp ** self.case_b)), dtype=float)
-        self.const_b_pp = np.array(np.log(self.dissol_prob.values_pp / (self.hf.values_pp * self.const_a_pp)) /
-                                   self.oxidation_number, dtype=float)
+        # self.const_a_pp = (self.dissol_prob.values_pp ** self.case_a) / \
+        #                   ((self.min_dissol_prob.values_pp ** self.case_b) * (self.hf.values_pp ** self.case_a))
+        # self.const_b_pp = np.array(np.log(self.dissol_prob.values_pp / (self.hf.values_pp * self.const_a_pp)) /
+        #                            self.oxidation_number, dtype=float)
+
+        self.const_a_pp = np.full(param["n_cells_per_axis"], 1, dtype=float)
+
+        self.b0 = -0.00001
+        self.b1 = -0.2
+        self.delt_b = self.b1 - self.b0
+        self.const_b_pp = np.full(param["n_cells_per_axis"], self.b0, dtype=float)
+
+        self.const_c_pp = np.log((self.min_dissol_prob.values_pp - self.p1.values_pp) / (self.const_a_pp *
+                                                            (np.e ** (self.const_b_pp * self.n_neigh_init) -
+                                                             np.e ** (self.const_b_pp * self.oxidation_number))))
+        self.const_d_pp = self.p1.values_pp - self.const_a_pp * np.e ** (self.const_b_pp * self.oxidation_number +
+                                                                         self.const_c_pp)
+
+        self.adapt_probabilities = None
+        if param["dissol_adapt_function"] == 0:
+            self.adapt_probabilities = self.adapt_dissol_prob
+        elif param["dissol_adapt_function"] == 1:
+            self.adapt_probabilities = self.adapt_p1
+        elif param["dissol_adapt_function"] == 2:
+            self.adapt_probabilities = self.adapt_dissol_prob_min_dissol_prob
+        elif param["dissol_adapt_function"] == 3:
+            self.adapt_probabilities = self.adapt_dissol_prob_min_dissol_prob_p1
+        elif param["dissol_adapt_function"] == 4:
+            self.adapt_probabilities = self.adapt_dissol_prob_p1
 
     def update_constants(self):
-        self.const_a_pp = (self.dissol_prob.values_pp ** self.case_a) / \
-                          ((self.min_dissol_prob.values_pp ** self.case_b) * (self.hf.values_pp ** self.case_a))
-        self.const_b_pp = np.array(np.log(self.dissol_prob.values_pp / (self.hf.values_pp * self.const_a_pp)) /
-                                   self.oxidation_number, dtype=float)
+        # self.const_a_pp = (self.dissol_prob.values_pp ** self.case_a) / \
+        #                   ((self.min_dissol_prob.values_pp ** self.case_b) * (self.hf.values_pp ** self.case_a))
+        # self.const_b_pp = np.array(np.log(self.dissol_prob.values_pp / (self.hf.values_pp * self.const_a_pp)) /
+        #                            self.oxidation_number, dtype=float)
+        self.const_c_pp = np.log((self.min_dissol_prob.values_pp - self.p1.values_pp) / (self.const_a_pp *
+                                                            (np.e ** (self.const_b_pp * self.n_neigh_init) -
+                                                             np.e ** (self.const_b_pp * self.oxidation_number))))
+        self.const_d_pp = self.p1.values_pp - self.const_a_pp * np.e ** (self.const_b_pp * self.oxidation_number +
+                                                                         self.const_c_pp)
 
     def get_probabilities(self, numb_of_neighbours, page_ind):
-        return self.const_a_pp[page_ind] * np.e ** (self.const_b_pp[page_ind] * numb_of_neighbours)
+        return self.const_a_pp[page_ind] * np.e ** (self.const_b_pp[page_ind] * numb_of_neighbours +
+                                                    self.const_c_pp[page_ind]) + self.const_d_pp[page_ind]
 
     def get_probabilities_block(self, numb_of_neighbours, page_ind):
-        return (self.const_a_pp[page_ind] * np.e ** (self.const_b_pp[page_ind] * numb_of_neighbours)) / self.bsf
-
-    def adapt_hf(self, page_ind, rel_phase_fraction):
-        self.hf.update_values_at_pos(page_ind, rel_phase_fraction)
-        self.update_constants()
+        return (self.const_a_pp[page_ind] * np.e ** (self.const_b_pp[page_ind] * numb_of_neighbours +
+                                                     self.const_c_pp[page_ind]) + self.const_d_pp[page_ind]) / self.bsf
 
     def adapt_dissol_prob(self, page_ind, rel_phase_fraction):
         self.dissol_prob.update_values_at_pos(page_ind, rel_phase_fraction)
+        self.update_constants()
+
+    def adapt_p1(self, page_ind, rel_phase_fraction):
+        self.p1.update_values_at_pos(page_ind, rel_phase_fraction)
+        self.const_b_pp[page_ind] = self.delt_b * rel_phase_fraction + self.b0
+
         self.update_constants()
 
     def adapt_dissol_prob_min_dissol_prob(self, page_ind, rel_phase_fraction):
@@ -304,15 +345,19 @@ class DissolutionProbabilitiesADJ:
         self.min_dissol_prob.update_values_at_pos(page_ind, rel_phase_fraction)
         self.update_constants()
 
-    def adapt_dissol_prob_min_dissol_prob_hf(self, page_ind, rel_phase_fraction):
+    def adapt_dissol_prob_min_dissol_prob_p1(self, page_ind, rel_phase_fraction):
         self.dissol_prob.update_values_at_pos(page_ind, rel_phase_fraction)
         self.min_dissol_prob.update_values_at_pos(page_ind, rel_phase_fraction)
-        self.hf.update_values_at_pos(page_ind, rel_phase_fraction)
+        self.p1.update_values_at_pos(page_ind, rel_phase_fraction)
+        self.const_b_pp[page_ind] = self.delt_b * rel_phase_fraction + self.b0
+
         self.update_constants()
 
-    def adapt_dissol_prob_hf(self, page_ind, rel_phase_fraction):
+    def adapt_dissol_prob_p1(self, page_ind, rel_phase_fraction):
         self.dissol_prob.update_values_at_pos(page_ind, rel_phase_fraction)
-        self.hf.update_values_at_pos(page_ind, rel_phase_fraction)
+        self.p1.update_values_at_pos(page_ind, rel_phase_fraction)
+        self.const_b_pp[page_ind] = self.delt_b * rel_phase_fraction + self.b0
+
         self.update_constants()
 
 

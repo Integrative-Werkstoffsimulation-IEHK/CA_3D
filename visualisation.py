@@ -2,10 +2,12 @@ import matplotlib.pyplot as plt
 import sqlite3 as sql
 from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from scipy import special
 from math import *
 import numpy as np
 from utils import utilities, physical_data, templates
+from scipy import ndimage
 
 
 class Visualisation:
@@ -461,6 +463,41 @@ ELAPSED TIME: {message}
                     dec = np.array(np.unravel_index(counts[0], self.shape), dtype=np.short).transpose()
                     counts = np.array(counts[1], dtype=np.ubyte)
 
+                    # cube_size = 1
+                    # some_max_numb = 4
+                    #
+                    # # Create and plot a cube for each center coordinate
+                    # for center, transparency in zip(dec, counts):
+                    #     # Map transparency to the alpha value (1 is fully opaque, 0 is fully transparent)
+                    #     alpha = 1 - (transparency - 1) / (some_max_numb - 1)
+                    #
+                    #     # Define the vertices of the cube based on the center and size
+                    #     r = cube_size / 2
+                    #     vertices = np.array([
+                    #         [center[2] - r, center[1] - r, center[0] - r],
+                    #         [center[2] + r, center[1] - r, center[0] - r],
+                    #         [center[2] + r, center[1] + r, center[0] - r],
+                    #         [center[2] - r, center[1] + r, center[0] - r],
+                    #         [center[2] - r, center[1] - r, center[0] + r],
+                    #         [center[2] + r, center[1] - r, center[0] + r],
+                    #         [center[2] + r, center[1] + r, center[0] + r],
+                    #         [center[2] - r, center[1] + r, center[0] + r]
+                    #     ])
+                    #
+                    #     # Define the faces of the cube
+                    #     faces = [
+                    #         [vertices[j] for j in [0, 1, 2, 3]],
+                    #         [vertices[j] for j in [4, 5, 6, 7]],
+                    #         [vertices[j] for j in [0, 3, 7, 4]],
+                    #         [vertices[j] for j in [1, 2, 6, 5]],
+                    #         [vertices[j] for j in [0, 1, 5, 4]],
+                    #         [vertices[j] for j in [2, 3, 7, 6]]
+                    #     ]
+                    #
+                    #     # Create a Poly3DCollection for the cube with opaque faces
+                    #     cube = Poly3DCollection(faces, alpha=alpha, linewidths=0.1, edgecolors='k', facecolors='r')
+                    #     ax_all.add_collection3d(cube)
+
                     # for grade in range(1, 5):
                     #     grade_ind = np.where(counts == grade)[0]
                     #     ax_all.scatter(dec[grade_ind, 2], dec[grade_ind, 1], dec[grade_ind, 0], marker=',',
@@ -643,7 +680,8 @@ ELAPSED TIME: {message}
                 self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
                 items = np.array(self.c.fetchall())
                 if np.any(items):
-                    ind = np.where(items[:, 0] == slice_pos)
+                    # ind = np.where(items[:, 0] == slice_pos)
+                    ind = np.where(items[:, 2] == slice_pos)
 
                     items = np.array(items[ind]).transpose()
 
@@ -651,24 +689,31 @@ ELAPSED TIME: {message}
                     dec = np.array(np.unravel_index(counts[0], self.shape), dtype=np.short).transpose()
                     counts = np.array(counts[1], dtype=np.ubyte)
 
-                    for grade in range(1, 5):
-                        grade_ind = np.where(counts == grade)[0]
-                        ax_all.scatter(dec[grade_ind, 2], dec[grade_ind, 1], marker=',',
-                                       color=self.cm[grade], s=self.cell_size * (72. / fig.dpi) ** 2)
+                    # for grade in range(1, 5):
+                    #     grade_ind = np.where(counts == grade)[0]
+                    #     ax_all.scatter(dec[grade_ind, 2], dec[grade_ind, 1], marker=',',
+                    #                    color=self.cm[grade], s=self.cell_size * (72. / fig.dpi) ** 2)
 
-                    # full_ind = np.where(counts == 4)[0]
+                    full_ind = np.where(counts == 4)[0]
                     #
-                    # fulls = dec[full_ind]
-                    # not_fulls = np.delete(dec, full_ind, axis=0)
-                    #
-                    # ax_all.scatter(fulls[:, 2], fulls[:, 1], marker=',', color='darkred',
+                    fulls = dec[full_ind]
+                    not_fulls = np.delete(dec, full_ind, axis=0)
+
+                    # ax_all.scatter(fulls[:, 2], fulls[:, 1], marker=',', color='r',
                     #                s=self.cell_size * (72. / fig.dpi) ** 2)
                     #
                     # ax_all.scatter(not_fulls[:, 2], not_fulls[:, 1], marker=',', color='r',
                     #                s=self.cell_size * (72. / fig.dpi) ** 2)
 
+                    ax_all.scatter(fulls[:, 1], fulls[:, 0], marker=',', color='r',
+                                   s=self.cell_size * (72. / fig.dpi) ** 2)
+
+                    ax_all.scatter(not_fulls[:, 1], not_fulls[:, 0], marker=',', color='r',
+                                   s=self.cell_size * (72. / fig.dpi) ** 2)
+
                     # ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='r',
                     #                s=self.cell_size * (72. / fig.dpi) ** 2)
+
                 if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
                     self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
                     items = np.array(self.c.fetchall())
@@ -698,7 +743,7 @@ ELAPSED TIME: {message}
             ax_all.set_xlim(0, self.axlim)
             ax_all.set_ylim(0, self.axlim)
         self.conn.commit()
-        # plt.savefig(f'{slice_pos}.jpeg')
+        # plt.savefig(f'W:/SIMCA/test_runs_data/{slice_pos}.jpeg')
         plt.show()
 
     def animate_2d(self, plot_separate=False, slice_pos=None):
@@ -1391,6 +1436,95 @@ ELAPSED TIME: {message}
             #     ax.plot(x, analytical_concentration_sand, color='k')
         # plt.savefig(f'{self.db_name}_{iteration}.jpeg')
         plt.show()
+
+    def calculate_phase_size(self, iteration=None):
+        array_3d = np.full((self.axlim, self.axlim, self.axlim), False, dtype=bool)
+
+        if iteration is None:
+            iteration = self.last_i
+
+        if self.param["compute_precipitations"]:
+            self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
+            items = np.array(self.c.fetchall())
+            if np.any(items):
+                array_3d[items[:, 0], items[:, 1], items[:, 2]] = True
+
+                # xs_mean = []
+                # xs_stdiv = []
+                # xs_mean_n = []
+                #
+                # for x in range(self.axlim):
+                #     segments_l = []
+                #
+                #     # mean along y
+                #     for z in range(self.axlim):
+                #         start_coord = 0
+                #         line_started = False
+                #         for y in range(self.axlim):
+                #             if array_3d[z, y, x] and not line_started:
+                #                 start_coord = y
+                #                 line_started = True
+                #                 continue
+                #
+                #             if not array_3d[z, y, x] and line_started:
+                #                 new_segment_l = y - start_coord
+                #
+                #                 segments_l.append(new_segment_l)
+                #                 line_started = False
+                #
+                #     # mean along z
+                #     for y in range(self.axlim):
+                #         start_coord = 0
+                #         line_started = False
+                #         for z in range(self.axlim):
+                #             if array_3d[z, y, x] and not line_started:
+                #                 start_coord = z
+                #                 line_started = True
+                #                 continue
+                #
+                #             if not array_3d[z, y, x] and line_started:
+                #                 new_segment_l = z - start_coord
+                #
+                #                 segments_l.append(new_segment_l)
+                #                 line_started = False
+                #
+                #     # stats for x plane
+                #     xs_mean.append(np.mean(segments_l))
+                #     xs_stdiv.append(np.std(segments_l))
+                #
+                # for mean, stdiv in zip(xs_mean, xs_stdiv):
+                #     print(mean, " ", stdiv)
+
+                # Label connected components (clusters)
+                labeled_array, num_features = ndimage.label(array_3d)
+
+                # Initialize a dictionary to store cluster statistics for each X position
+                cluster_stats_by_x = {}
+
+                # Iterate over slices along the X-axis
+                for x in range(array_3d.shape[0]):
+                    x_slice = labeled_array[:, :, x]
+
+                    # Count cluster sizes in this slice
+                    cluster_sizes = np.bincount(x_slice.ravel())
+
+                    # Remove clusters with label 0 (background)
+                    cluster_sizes = cluster_sizes[1:]
+
+                    # Store cluster statistics for this X position
+                    cluster_stats_by_x[x] = {
+                        'num_clusters': len(cluster_sizes),
+                        'cluster_sizes': cluster_sizes
+                    }
+
+                for x_pos in range(self.axlim):
+
+                    clusters = np.array(cluster_stats_by_x[x_pos]["cluster_sizes"])
+                    clusters = clusters[np.nonzero(clusters)]
+
+                    mean = np.mean(clusters)
+                    nz_len = len(clusters)
+                    print(nz_len, " ", mean)
 
     def plot_h(self):
         fig = plt.figure()
