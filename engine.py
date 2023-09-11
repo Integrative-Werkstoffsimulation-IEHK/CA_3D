@@ -40,8 +40,8 @@ class CellularAutomata:
             self.primary_oxidant = elements.OxidantElem(self.param["oxidant"]["primary"], self.utils)
             self.objs[0]["oxidant"] = self.primary_oxidant
             self.objs[1]["oxidant"] = self.primary_oxidant
-            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
-            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk
+            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
+            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk  # CHANGE!!!!!!
 
             if self.param["secondary_oxidant_exists"]:
                 self.secondary_oxidant = elements.OxidantElem(self.param["oxidant"]["secondary"], self.utils)
@@ -53,8 +53,8 @@ class CellularAutomata:
             self.primary_active = elements.ActiveElem(self.param["active_element"]["primary"])
             self.objs[0]["active"] = self.primary_active
             self.objs[2]["active"] = self.primary_active
-            self.primary_active.diffuse = self.primary_active.diffuse_with_scale
-            # self.primary_active.diffuse = self.primary_active.diffuse_bulk
+            # self.primary_active.diffuse = self.primary_active.diffuse_with_scale
+            self.primary_active.diffuse = self.primary_active.diffuse_bulk  # CHANGE!!!!!!
 
             if self.param["secondary_active_element_exists"]:
                 self.secondary_active = elements.ActiveElem(self.param["active_element"]["secondary"])
@@ -98,7 +98,8 @@ class CellularAutomata:
                 # self.decomposition = self.decomposition_0
 
             else:
-                self.precip_func = self.precipitation_0_cells
+                self.precip_func = self.precipitation_0_cells_no_growth  # CHANGE!!!!!!!!!!!!
+                # self.precip_func = self.precipitation_0_cells
                 # self.precip_func = self.precipitation_0
                 self.calc_precip_front = self.calc_precip_front_0
                 # self.decomposition = self.decomposition_0
@@ -238,7 +239,7 @@ class CellularAutomata:
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
             if self.param["compute_precipitations"]:
                 self.precip_func()
-                self.dissolution_0_cells()
+                # self.dissolution_0_cells()
             # if self.param["decompose_precip"]:
             #     self.decomposition_0()
             if self.param["inward_diffusion"]:
@@ -693,7 +694,7 @@ class CellularAutomata:
         #                     in range(self.furthest_index + 1)], dtype=np.uint32)
 
         oxidant_indexes = np.where(oxidant > 0)[0]
-        active_indexes = np.where(active > 1)[0]
+        active_indexes = np.where(active > 0)[0]
 
         # prod_fraction = product / self.cells_per_page
 
@@ -704,8 +705,8 @@ class CellularAutomata:
         min_act = active_indexes.min(initial=self.cells_per_axis)
         if min_act < self.cells_per_axis:
             indexs = np.where(oxidant_indexes >= min_act - 1)[0]
-            comb_indexes = oxidant_indexes[indexs]
-            self.comb_indexes = comb_indexes # REPLACE WITH BELOW!!!!!!!!!
+            self.comb_indexes = oxidant_indexes[indexs]
+            # self.comb_indexes = comb_indexes # REPLACE WITH BELOW!!!!!!!!!
             # self.comb_indexes = np.intersect1d(comb_indexes, self.product_indexes)
         else:
             self.comb_indexes = [self.furthest_index]
@@ -847,6 +848,25 @@ class CellularAutomata:
 
             # print(np.sum(self.primary_product.c3d))
 
+        self.primary_oxidant.transform_to_descards()
+
+    def precipitation_0_cells_no_growth(self):
+        """
+        Created only for tests of saturation of the IOZ when permeability of active element is sufficient
+        """
+        # Only one oxidant and one active elements exist. Only one product can be created
+        self.furthest_index = self.primary_oxidant.calc_furthest_index()
+        self.primary_oxidant.transform_to_3d(self.furthest_index)
+
+        if self.iteration % self.param["stride"] == 0:
+            if self.furthest_index >= self.curr_max_furthest:
+                self.curr_max_furthest = self.furthest_index
+            self.primary_active.transform_to_3d(self.curr_max_furthest)
+
+        self.get_combi_ind()
+
+        if len(self.comb_indexes) > 0:
+            self.precip_step_no_growth()
         self.primary_oxidant.transform_to_descards()
 
     def dissolution_0_cells(self):
@@ -1147,6 +1167,26 @@ class CellularAutomata:
                         # ______________________________________________________________________________________
                         self.check_intersection(oxidant_cells)
 
+    def precip_step_no_growth(self):
+        """
+        Created only for tests of saturation of the IOZ when permeability of active element is sufficient
+        """
+        for plane_index in reversed(self.comb_indexes):
+            for fetch_ind in self.fetch_ind:
+                oxidant_cells = self.objs[self.case]["oxidant"].c3d[fetch_ind[0], fetch_ind[1], plane_index]
+                oxidant_cells = fetch_ind[:, np.nonzero(oxidant_cells)[0]]
+
+                if len(oxidant_cells[0]) != 0:
+                    oxidant_cells = np.vstack((oxidant_cells, np.full(len(oxidant_cells[0]), plane_index, dtype=np.short)))
+                    oxidant_cells = oxidant_cells.transpose()
+
+                    exists = check_at_coord(self.objs[self.case]["product"].full_c3d, oxidant_cells)  # precip on place of oxidant!
+                    temp_ind = np.where(exists)[0]
+                    oxidant_cells = np.delete(oxidant_cells, temp_ind, 0)
+
+                    if len(oxidant_cells) > 0:
+                        self.ci_single_no_growth(oxidant_cells)
+
     def ci_single(self, seeds):
         all_arounds = self.utils.calc_sur_ind_formation(seeds, self.objs[self.case]["active"].c3d.shape[2] - 1)
         neighbours = go_around_bool(self.objs[self.case]["active"].c3d, all_arounds)
@@ -1331,6 +1371,41 @@ class CellularAutomata:
 
                     self.objs[self.case]["oxidant"].c3d[seeds[0], seeds[1], seeds[2]] -= 1
                     self.objs[self.case]["oxidant"].c3d[coord_in[0], coord_in[1], coord_in[2]] -= 1
+
+    def ci_single_no_growth(self, seeds):
+        """
+        Created only for tests of saturation of the IOZ when permeability of active element is sufficient
+        :param seeds:
+        :return:
+        """
+        all_arounds = self.utils.calc_sur_ind_formation(seeds, self.objs[self.case]["active"].c3d.shape[2] - 1)
+        neighbours = go_around_bool(self.objs[self.case]["active"].c3d, all_arounds)
+        arr_len_out = np.array([np.sum(item) for item in neighbours], dtype=np.ubyte)
+        temp_ind = np.where(arr_len_out >= self.threshold_outward)[0]
+
+        if len(temp_ind) > 0:
+            seeds = seeds[temp_ind]
+            neighbours = neighbours[temp_ind]
+            all_arounds = all_arounds[temp_ind]
+            out_to_del = np.array(np.nonzero(neighbours))
+            start_seed_index = np.unique(out_to_del[0], return_index=True)[1]
+            to_del = np.array([out_to_del[1, indx:indx + self.threshold_outward] for indx in start_seed_index],
+                              dtype=np.ubyte)
+            coord = np.array([all_arounds[seed_ind][point_ind] for seed_ind, point_ind in enumerate(to_del)],
+                             dtype=np.short)
+            coord = np.reshape(coord, (len(coord) * self.threshold_outward, 3))
+
+            coord = coord.transpose()
+            seeds = seeds.transpose()
+
+            self.objs[self.case]["active"].c3d[coord[0], coord[1], coord[2]] -= 1
+            self.objs[self.case]["oxidant"].c3d[seeds[0], seeds[1], seeds[2]] -= 1
+
+            # self.objs[self.case]["product"].c3d[coord[0], coord[1], coord[2]] += 1  # precip on place of active!
+            self.objs[self.case]["product"].c3d[seeds[0], seeds[1], seeds[2]] += 1  # precip on place of oxidant!
+
+            # self.objs[self.case]["product"].fix_full_cells(coord)  # precip on place of active!
+            self.objs[self.case]["product"].fix_full_cells(seeds)  # precip on place of oxidant!
 
     def diffusion_inward(self):
         self.primary_oxidant.diffuse()
