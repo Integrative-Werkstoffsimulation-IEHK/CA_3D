@@ -98,7 +98,7 @@ class CellularAutomata:
                 # self.decomposition = self.decomposition_0
 
             else:
-                self.precip_func = self.precipitation_0_cells_no_growth  # CHANGE!!!!!!!!!!!!
+                self.precip_func = self.precipitation_0_cells_no_growth_solub_prod_test  # CHANGE!!!!!!!!!!!!
                 # self.precip_func = self.precipitation_0_cells
                 # self.precip_func = self.precipitation_0
                 self.calc_precip_front = self.calc_precip_front_0
@@ -246,8 +246,8 @@ class CellularAutomata:
                 self.diffusion_inward()
             if self.param["outward_diffusion"]:
                 self.diffusion_outward()
-            # if self.param["save_whole"]:
-            #     self.save_results_only_prod()
+            if self.param["save_whole"]:
+                self.save_results()
             # if self.iteration > 50000:
             #     break
 
@@ -782,6 +782,54 @@ class CellularAutomata:
 
         # self.comb_indexes = np.setdiff1d(self.comb_indexes, self.delayed_indexes)
 
+    def get_combi_ind_atomic_solub_prod_test(self):
+        """
+        Created only for tests of the solubility product probability function
+        """
+
+        oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
+                            in range(self.furthest_index + 1)], dtype=np.uint32)
+        oxidant_moles = oxidant * self.param["oxidant"]["primary"]["moles_per_cell"]
+
+        active = np.array([np.sum(self.primary_active.c3d[:, :, plane_ind]) for plane_ind
+                           in range(self.furthest_index + 1)], dtype=np.uint32)
+        active_moles = active * self.param["active_element"]["primary"]["moles_per_cell"]
+        outward_eq_mat_moles = active * self.param["active_element"]["primary"]["eq_matrix_moles_per_cell"]
+
+        product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
+                            in range(self.furthest_index + 1)], dtype=np.uint32)
+        product_moles = product * self.param["product"]["primary"]["moles_per_cell"]
+        product_eq_mat_moles = product * self.param["active_element"]["primary"]["eq_matrix_moles_per_cell"]
+
+        matrix_moles = self.matrix_moles_per_page - outward_eq_mat_moles - product_eq_mat_moles
+
+        whole_moles = matrix_moles + oxidant_moles + active_moles + product_moles
+
+        oxidant_c = oxidant_moles / whole_moles
+        active_c = active_moles / whole_moles
+        # product_c = product_moles / whole_moles
+
+        self.gamma_primes = ((((oxidant_c ** 3) * (active_c ** 2)) / self.param["sol_prod"]) - 1) /\
+                            self.param["initial_conc_and_moles"]["max_gamma_min_one"]
+
+        where_solub_prod = np.where(self.gamma_primes > 0)[0]
+        # temp_ind = np.where(product_c[where_solub_prod] < self.param["phase_fraction_lim"])[0]
+        # where_solub_prod = where_solub_prod[temp_ind]
+
+        oxidant_indexes = np.where(oxidant > 0)[0]
+        active_indexes = np.where(active > 0)[0]
+        min_act = active_indexes.min(initial=self.cells_per_axis)
+        if min_act < self.cells_per_axis:
+            indexs = np.where(oxidant_indexes >= min_act - 1)[0]
+            self.comb_indexes = oxidant_indexes[indexs]
+            # self.comb_indexes = comb_indexes
+            # self.comb_indexes = np.intersect1d(comb_indexes, self.product_indexes)
+        else:
+            self.comb_indexes = [self.furthest_index]
+
+        # self.comb_indexes = np.unique(np.concatenate((self.comb_indexes, where_solub_prod)))
+        self.comb_indexes = np.intersect1d(self.comb_indexes, where_solub_prod)
+
     def precipitation_0_cells(self):
         # Only one oxidant and one active elements exist. Only one product can be created
         self.furthest_index = self.primary_oxidant.calc_furthest_index()
@@ -867,6 +915,26 @@ class CellularAutomata:
 
         if len(self.comb_indexes) > 0:
             self.precip_step_no_growth()
+        self.primary_oxidant.transform_to_descards()
+
+    def precipitation_0_cells_no_growth_solub_prod_test(self):
+        """
+        Created only for tests of the solubility product probability function
+        """
+        # Only one oxidant and one active elements exist. Only one product can be created
+        self.furthest_index = self.primary_oxidant.calc_furthest_index()
+        self.primary_oxidant.transform_to_3d(self.furthest_index)
+
+        if self.iteration % self.param["stride"] == 0:
+            if self.furthest_index >= self.curr_max_furthest:
+                self.curr_max_furthest = self.furthest_index
+            self.primary_active.transform_to_3d(self.curr_max_furthest)
+
+        self.get_combi_ind_atomic_solub_prod_test()
+
+        if len(self.comb_indexes) > 0:
+            self.nucl_prob.adapt_probabilities(self.comb_indexes, self.gamma_primes[self.comb_indexes])
+            self.precip_step_no_growth_solub_prod_test()
         self.primary_oxidant.transform_to_descards()
 
     def dissolution_0_cells(self):
@@ -1187,6 +1255,26 @@ class CellularAutomata:
                     if len(oxidant_cells) > 0:
                         self.ci_single_no_growth(oxidant_cells)
 
+    def precip_step_no_growth_solub_prod_test(self):
+        """
+        Created only for tests of the solubility product probability function
+        """
+        for plane_index in reversed(self.comb_indexes):
+            for fetch_ind in self.fetch_ind:
+                oxidant_cells = self.objs[self.case]["oxidant"].c3d[fetch_ind[0], fetch_ind[1], plane_index]
+                oxidant_cells = fetch_ind[:, np.nonzero(oxidant_cells)[0]]
+
+                if len(oxidant_cells[0]) != 0:
+                    oxidant_cells = np.vstack((oxidant_cells, np.full(len(oxidant_cells[0]), plane_index, dtype=np.short)))
+                    oxidant_cells = oxidant_cells.transpose()
+
+                    exists = check_at_coord(self.objs[self.case]["product"].full_c3d, oxidant_cells)  # precip on place of oxidant!
+                    temp_ind = np.where(exists)[0]
+                    oxidant_cells = np.delete(oxidant_cells, temp_ind, 0)
+
+                    if len(oxidant_cells) > 0:
+                        self.ci_single_no_growth_solub_prod_test(oxidant_cells)
+
     def ci_single(self, seeds):
         all_arounds = self.utils.calc_sur_ind_formation(seeds, self.objs[self.case]["active"].c3d.shape[2] - 1)
         neighbours = go_around_bool(self.objs[self.case]["active"].c3d, all_arounds)
@@ -1406,6 +1494,62 @@ class CellularAutomata:
 
             # self.objs[self.case]["product"].fix_full_cells(coord)  # precip on place of active!
             self.objs[self.case]["product"].fix_full_cells(seeds)  # precip on place of oxidant!
+
+    def ci_single_no_growth_solub_prod_test(self, seeds):
+        """
+        Created only for tests of the solubility product probability function
+        """
+        all_arounds = self.utils.calc_sur_ind_formation(seeds, self.objs[self.case]["active"].c3d.shape[2] - 1)
+        neighbours = go_around_bool(self.objs[self.case]["active"].c3d, all_arounds)
+        arr_len_out = np.array([np.sum(item) for item in neighbours], dtype=np.ubyte)
+        temp_ind = np.where(arr_len_out >= self.threshold_outward)[0]
+
+        # activate for dependent growth___________________________________________________________________
+        if len(temp_ind) > 0:
+            seeds = seeds[temp_ind]
+            neighbours = neighbours[temp_ind]
+            all_arounds = all_arounds[temp_ind]
+            # flat_arounds = all_arounds[:, 0:self.objs[self.case]["product"].lind_flat_arr]
+
+            # flat_neighbours = self.go_around(self.precipitations3d_init_full, flat_arounds)
+            # flat_neighbours = self.go_around(flat_arounds)
+            # arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
+
+            # arr_len_in_flat = self.go_around(self.precipitations3d_init, flat_arounds)
+
+            # arr_len_in_flat = np.zeros(len(flat_arounds))  # REMOVE!!!!!!!!!!!!!!!!!!
+
+            # homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
+
+            # needed_prob = self.nucl_prob.get_probabilities(arr_len_in_flat, seeds[0][2])
+            needed_prob = self.nucl_prob.nucl_prob.values_pp[seeds[0][2]]  # seeds[0][2] - current plane index
+            randomise = np.array(np.random.random_sample(len(seeds)), dtype=np.float64)
+            temp_ind = np.where(randomise < needed_prob)[0]
+            # _________________________________________________________________________________________________
+
+            if len(temp_ind) > 0:
+                seeds = seeds[temp_ind]
+                neighbours = neighbours[temp_ind]
+                all_arounds = all_arounds[temp_ind]
+                out_to_del = np.array(np.nonzero(neighbours))
+                start_seed_index = np.unique(out_to_del[0], return_index=True)[1]
+                to_del = np.array([out_to_del[1, indx:indx + self.threshold_outward] for indx in start_seed_index],
+                                  dtype=np.ubyte)
+                coord = np.array([all_arounds[seed_ind][point_ind] for seed_ind, point_ind in enumerate(to_del)],
+                                 dtype=np.short)
+                coord = np.reshape(coord, (len(coord) * self.threshold_outward, 3))
+
+                coord = coord.transpose()
+                seeds = seeds.transpose()
+
+                self.objs[self.case]["active"].c3d[coord[0], coord[1], coord[2]] -= 1
+                self.objs[self.case]["oxidant"].c3d[seeds[0], seeds[1], seeds[2]] -= 1
+
+                # self.objs[self.case]["product"].c3d[coord[0], coord[1], coord[2]] += 1  # precip on place of active!
+                self.objs[self.case]["product"].c3d[seeds[0], seeds[1], seeds[2]] += 1  # precip on place of oxidant!
+
+                # self.objs[self.case]["product"].fix_full_cells(coord)  # precip on place of active!
+                self.objs[self.case]["product"].fix_full_cells(seeds)  # precip on place of oxidant!
 
     def diffusion_inward(self):
         self.primary_oxidant.diffuse()

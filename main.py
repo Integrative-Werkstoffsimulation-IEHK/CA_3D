@@ -11,6 +11,7 @@ if __name__ == '__main__':
                                             "diffusion_condition": "N in Ni Krupp",
                                             "cells_concentration": 0.1}
                               },
+
                   "active_element": {"primary": {"elem": "Al",
                                                  "diffusion_condition": "Al in Ni Krupp",
                                                  "mass_concentration": 0.025,
@@ -57,12 +58,12 @@ if __name__ == '__main__':
                   "neigh_range": 1,  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
                                      #          and           |  |  |  |  |   |   |   |   |   |
                                      # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
-                  "decompose_precip": True,
+                  "decompose_precip": False,
 
                   "phase_fraction_lim": 0.045,
                   "hf_deg_lim": 10**10,
                   "lowest_neigh_numb": 16,
-                  "final_nucl_prob": 10**-3,
+                  "final_nucl_prob": 10**0,
 
                   "min_dissol_prob": 1 * 10 ** -4.00001,
                   "het_factor_dissolution": 10 ** 1,  # not used anymore
@@ -78,7 +79,7 @@ if __name__ == '__main__':
                   "final_P1": 1 * 10 ** -3,
                   "b_const_P1": -3,
 
-                  "nucl_adapt_function": 2,
+                  "nucl_adapt_function": 0,
                   "dissol_adapt_function": 4,
 
                   "init_P1_diss": 1 * 10 ** -4,
@@ -87,32 +88,28 @@ if __name__ == '__main__':
 
                   }
 
-    conz_list = [0.25, 0.55, 0.6, 0.65, 0.75, 0.8, 0.85]
-    for conc in conz_list:
-        backup_user_input = copy.deepcopy(user_input)
-        backup_user_input["active_element"]["primary"]["cells_concentration"] = conc
+    backup_user_input = copy.deepcopy(user_input)
+    eng = CellularAutomata(user_input=user_input)
 
-        eng = CellularAutomata(user_input=backup_user_input)
-
+    try:
+        eng.simulation()
+    finally:
         try:
-            eng.simulation()
-        finally:
-            try:
-                if not backup_user_input["save_whole"]:
-                    eng.save_results()
-
-            except (Exception, ):
-                backup_user_input["save_path"] = "C:/Users/aseregin/Safe_folder_if_server_crash/"
-                eng.utils = Utils(backup_user_input)
-                eng.utils.create_database()
-                eng.utils.generate_param()
+            if not user_input["save_whole"]:
                 eng.save_results()
-                print()
-                print("____________________________________________________________")
-                print("Saving To Standard Folder Crashed!!!")
-                print("Saved To ->> C:/Users/aseregin/Safe_folder_if_server_crash/!!!")
-                print("____________________________________________________________")
-                print()
+
+        except (Exception,):
+            backup_user_input["save_path"] = "C:/Users/aseregin/Safe_folder_if_server_crash/"
+            eng.utils = Utils(backup_user_input)
+            eng.utils.create_database()
+            eng.utils.generate_param()
+            eng.save_results()
+            print()
+            print("____________________________________________________________")
+            print("Saving To Standard Folder Crashed!!!")
+            print("Saved To ->> C:/Users/aseregin/Safe_folder_if_server_crash/!!!")
+            print("____________________________________________________________")
+            print()
 
             # data = np.column_stack(
             #     (np.arange(eng.iteration), eng.cumul_prod[:eng.iteration]))
@@ -121,14 +118,57 @@ if __name__ == '__main__':
             #     for row in data:
             #         f.write(" ".join(map(str, row)) + "\n")
 
-            eng.insert_last_it()
-            eng.utils.db.conn.commit()
-            print()
-            print("____________________________________________________________")
-            print("Simulation was closed at Iteration: ", eng.iteration)
-            print("____________________________________________________________")
-            print()
-            traceback.print_exc()
+        eng.insert_last_it()
+        eng.utils.db.conn.commit()
+        print()
+        print("____________________________________________________________")
+        print("Simulation was closed at Iteration: ", eng.iteration)
+        print("____________________________________________________________")
+        print()
+        traceback.print_exc()
+
+    # conz_list = [0.25, 0.55, 0.6, 0.65, 0.75, 0.8, 0.85]
+    # for conc in conz_list:
+    #     backup_user_input = copy.deepcopy(user_input)
+    #     backup_user_input["active_element"]["primary"]["cells_concentration"] = conc
+    #
+    #     eng = CellularAutomata(user_input=backup_user_input)
+    #
+    #     try:
+    #         eng.simulation()
+    #     finally:
+    #         try:
+    #             if not backup_user_input["save_whole"]:
+    #                 eng.save_results()
+    #
+    #         except (Exception, ):
+    #             backup_user_input["save_path"] = "C:/Users/aseregin/Safe_folder_if_server_crash/"
+    #             eng.utils = Utils(backup_user_input)
+    #             eng.utils.create_database()
+    #             eng.utils.generate_param()
+    #             eng.save_results()
+    #             print()
+    #             print("____________________________________________________________")
+    #             print("Saving To Standard Folder Crashed!!!")
+    #             print("Saved To ->> C:/Users/aseregin/Safe_folder_if_server_crash/!!!")
+    #             print("____________________________________________________________")
+    #             print()
+    #
+    #         # data = np.column_stack(
+    #         #     (np.arange(eng.iteration), eng.cumul_prod[:eng.iteration]))
+    #         # output_file_path = "W:/SIMCA/test_runs_data/" + eng.utils.param["db_id"] + ".txt"
+    #         # with open(output_file_path, "w") as f:
+    #         #     for row in data:
+    #         #         f.write(" ".join(map(str, row)) + "\n")
+    #
+    #         eng.insert_last_it()
+    #         eng.utils.db.conn.commit()
+    #         print()
+    #         print("____________________________________________________________")
+    #         print("Simulation was closed at Iteration: ", eng.iteration)
+    #         print("____________________________________________________________")
+    #         print()
+    #         traceback.print_exc()
 
     # hf_list = [-19, -18, -17, -16, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0]
     #

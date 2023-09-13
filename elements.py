@@ -17,7 +17,7 @@ class ActiveElem:
         self.p_r_range = self.p4_range + settings["probabilities"][1]
         self.n_per_page = settings["n_per_page"]
         # self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
-        self.precip_transform_depth = int(41)  # min self.neigh_range !!!
+        self.precip_transform_depth = int(5)  # min self.neigh_range !!!
 
         self.extended_axis = self.cells_per_axis + self.neigh_range
         self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
@@ -45,6 +45,16 @@ class ActiveElem:
         self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
                                        dtype=np.short)
         # ____________________________________________
+        # free two first pages (to avoid high concentrations there)
+        # ____________________________________________
+        # ind = np.where((self.cells[2] == 0) | (self.cells[2] == 1))[0]
+        # self.cells = np.delete(self.cells, ind, 1)
+        # ____________________________________________
+        # free first page (to avoid high concentrations there)
+        # ____________________________________________
+        # ind = np.where(self.cells[2] == 0)[0]
+        # self.cells = np.delete(self.cells, ind, 1)
+        # ____________________________________________
 
         # half space fill
         # ____________________________________________
@@ -56,7 +66,7 @@ class ActiveElem:
         self.dirs = np.array(np.unravel_index(self.dirs, (3, 3, 3)), dtype=np.byte)
         self.dirs -= 1
 
-        self.current_count = self.n_per_page
+        self.current_count = None
 
     def diffuse_bulk(self):
         """
