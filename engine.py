@@ -246,8 +246,8 @@ class CellularAutomata:
                 self.diffusion_inward()
             if self.param["outward_diffusion"]:
                 self.diffusion_outward()
-            if self.param["save_whole"]:
-                self.save_results()
+            # if self.param["save_whole"]:
+            #     self.save_results()
             # if self.iteration > 50000:
             #     break
 
@@ -744,7 +744,7 @@ class CellularAutomata:
         self.gamma_primes = ((((oxidant_c ** 3) * (active_c ** 2)) / self.param["sol_prod"]) - 1) /\
                             self.param["initial_conc_and_moles"]["max_gamma_min_one"]
 
-        where_solub_prod = np.where(self.gamma_primes >= 0.01)[0]
+        where_solub_prod = np.where(self.gamma_primes > 0)[0]
         temp_ind = np.where(product_c[where_solub_prod] < self.param["phase_fraction_lim"])[0]
         where_solub_prod = where_solub_prod[temp_ind]
 
@@ -760,13 +760,6 @@ class CellularAutomata:
         some = np.where(product_c[self.product_indexes] < self.param["phase_fraction_lim"])[0]
         self.product_indexes = self.product_indexes[some]
 
-        # new_ind = np.setdiff1d(shifted_product_indexes, self.product_indexes)
-
-        # prod_zero = np.where(product_c == 0)[0]
-        # some = np.intersect1d(self.product_indexes, prod_zero)
-
-        # self.product_indexes = np.unique(np.concatenate((self.product_indexes, prod_zero)))
-
         oxidant_indexes = np.where(oxidant > 0)[0]
         active_indexes = np.where(active > 0)[0]
         min_act = active_indexes.min(initial=self.cells_per_axis)
@@ -779,8 +772,6 @@ class CellularAutomata:
             self.comb_indexes = [self.furthest_index]
 
         self.comb_indexes = np.unique(np.concatenate((self.comb_indexes, where_solub_prod)))
-
-        # self.comb_indexes = np.setdiff1d(self.comb_indexes, self.delayed_indexes)
 
     def get_combi_ind_atomic_solub_prod_test(self):
         """
@@ -972,7 +963,7 @@ class CellularAutomata:
         # self.cumul_prod_fraction[nz_prod_plane] += delt_prod_fraction
 
         rel_prod_fraction = product_c / self.param["phase_fraction_lim"]
-        tem_ind = np.where(rel_prod_fraction > 0.8)[0]
+        tem_ind = np.where(rel_prod_fraction >= 0.8)[0]
 
         rel_prod_fraction[tem_ind] = 1
         # adapt_indexes = self.product_indexes[tem_ind]
@@ -1287,17 +1278,8 @@ class CellularAutomata:
             neighbours = neighbours[temp_ind]
             all_arounds = all_arounds[temp_ind]
             flat_arounds = all_arounds[:, 0:self.objs[self.case]["product"].lind_flat_arr]
-
-            # flat_neighbours = self.go_around(self.precipitations3d_init_full, flat_arounds)
-            # flat_neighbours = self.go_around(flat_arounds)
-            # arr_len_in_flat = np.array([np.sum(item) for item in flat_neighbours], dtype=int)
-
             arr_len_in_flat = self.go_around(self.precipitations3d_init, flat_arounds)
-
-            # arr_len_in_flat = np.zeros(len(flat_arounds))  # REMOVE!!!!!!!!!!!!!!!!!!
-
             homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
-
             needed_prob = self.nucl_prob.get_probabilities(arr_len_in_flat, seeds[0][2])
             needed_prob[homogeneous_ind] = self.nucl_prob.nucl_prob.values_pp[seeds[0][2]]  # seeds[0][2] - current plane index
             randomise = np.array(np.random.random_sample(arr_len_in_flat.size), dtype=np.float64)

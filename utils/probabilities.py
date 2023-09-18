@@ -177,7 +177,7 @@ class DissolutionProbabilities:
 class NucleationProbabilitiesADJ:
     def __init__(self, param):
         self.nucl_prob = ExpFunct(param["n_cells_per_axis"], param["nucleation_probability"], param["final_nucl_prob"],
-                                  -1, -(10**10))
+                                  -1, param["b_const_P0_nucl"])
         self.p1 = ExpFunct(param["n_cells_per_axis"], param["init_P1"], param["final_P1"], 1, param["b_const_P1"])
 
         if param["max_neigh_numb"] == 0:
@@ -190,10 +190,6 @@ class NucleationProbabilitiesADJ:
             self.n_neigh_init = param["max_neigh_numb"]
 
         self.oxidation_number = param["product"]["primary"]["oxidation_number"]
-
-        # self.const_b_pp = np.log(self.hf.values_pp * self.nucl_prob.values_pp) /\
-        #                   (self.oxidation_number - self.n_neigh.values_pp)
-        # self.const_a_pp = 1 / (np.e ** (self.const_b_pp * self.n_neigh.values_pp))
         self.const_a_pp = np.full(param["n_cells_per_axis"], -1, dtype=float)
 
         self.b0 = -0.00001
@@ -258,7 +254,7 @@ class DissolutionProbabilitiesADJ:
         # self.min_dissol_prob_b = np.log(param["final_min_dissol_prob"] / param["min_dissol_prob"])
 
         self.min_dissol_prob = ExpFunct(param["n_cells_per_axis"], param["min_dissol_prob"],
-                                        param["final_min_dissol_prob"], 1, 50)
+                                        param["final_min_dissol_prob"], -1, 50)
 
         # self.hf_pp = np.full(param["n_cells_per_axis"], param["het_factor_dissolution"], dtype=float)
         # self.hf_init = param["het_factor_dissolution"]
