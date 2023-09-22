@@ -42,7 +42,7 @@ if __name__ == '__main__':
                   "nucleation_probability": 0,
                   "het_factor": 10**0.5,  # not used anymore
 
-                  "dissolution_p": 1 * 10**-3,
+                  "dissolution_p": 1 * 10**-10,
                   "dissolution_n": 2,  # not used anymore
                   "exponent_power": 0,  # not used anymore
                   "block_scale_factor": 1,
@@ -63,13 +63,13 @@ if __name__ == '__main__':
                   "phase_fraction_lim": 0.045,
                   "hf_deg_lim": 10**10,
                   "lowest_neigh_numb": 16,
-                  "final_nucl_prob": 1*10**-5,
+                  "final_nucl_prob": 1*10**-3,
 
-                  "min_dissol_prob": 1 * 10 ** -4.00001,
+                  "min_dissol_prob": 1 * 10 ** -11.00001,
                   "het_factor_dissolution": 10 ** 1,  # not used anymore
                   "final_dissol_prob": 1 * 10 ** 0,
                   "final_het_factor_dissol": 10 ** 0,  # not used anymore
-                  "final_min_dissol_prob": 1 * 10 ** -5,
+                  "final_min_dissol_prob": 1 * 10 ** -4,
 
                   "max_neigh_numb": 20,
                   "product_kinetic_const": 0.0000003,  # not used anymore
@@ -79,12 +79,12 @@ if __name__ == '__main__':
                   "final_P1": 1 * 10 ** -3,
                   "b_const_P1": -3,
 
-                  "nucl_adapt_function": 0,
-                  "dissol_adapt_function": 4,
+                  "nucl_adapt_function": 2,
+                  "dissol_adapt_function": 3,
 
-                  "init_P1_diss": 1 * 10 ** -4,
+                  "init_P1_diss": 1 * 10 ** -11,
                   "final_P1_diss": 1 * 10 ** 0,
-                  "b_const_P1_diss": 50,
+                  "b_const_P1_diss": 600,
 
                   "b_const_P0_nucl": -(10**10),
 

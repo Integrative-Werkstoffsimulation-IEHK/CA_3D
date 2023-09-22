@@ -247,14 +247,14 @@ class DissolutionProbabilitiesADJ:
         # self.dissol_prob_b = np.log(param["final_dissol_prob"] / param["dissolution_p"])
 
         self.dissol_prob = ExpFunct(param["n_cells_per_axis"], param["dissolution_p"], param["final_dissol_prob"],
-                                    1, 50)
+                                    1, 600)
 
         # self.min_dissol_prob_pp = np.full(param["n_cells_per_axis"], param["min_dissol_prob"])
         # self.min_dissol_prob_a = param["min_dissol_prob"]
         # self.min_dissol_prob_b = np.log(param["final_min_dissol_prob"] / param["min_dissol_prob"])
 
         self.min_dissol_prob = ExpFunct(param["n_cells_per_axis"], param["min_dissol_prob"],
-                                        param["final_min_dissol_prob"], -1, 50)
+                                        param["final_min_dissol_prob"], 1, 600)
 
         # self.hf_pp = np.full(param["n_cells_per_axis"], param["het_factor_dissolution"], dtype=float)
         # self.hf_init = param["het_factor_dissolution"]

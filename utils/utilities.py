@@ -70,8 +70,6 @@ class Utils:
         self.param["tau"] = self.param["sim_time"] / self.param["n_iterations"]
         self.param["l_ambda"] = self.param["size"] / self.param["n_cells_per_axis"]
         self.param["dissolution_pn"] = self.param["dissolution_p"] ** (1 / self.param["dissolution_n"])
-        # self.param["const_a"] = (1 / (self.param["het_factor"] * self.param["nucleation_probability"])) ** (-6 / 5)
-        # self.param["const_b"] = log(1 / (self.param["het_factor"] * self.param["nucleation_probability"])) * (1 / 5)
 
         if self.param["active_element"]["secondary"]["elem"] == "None":
             self.param["active_element"]["secondary"]["mass_concentration"] = 0

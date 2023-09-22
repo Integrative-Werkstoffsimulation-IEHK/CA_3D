@@ -34,7 +34,6 @@ def go_around_int(array_3d, arrounds):
 
         # all_where_full.append(single_where_full)
         # single_where_full = [np.bool_(x) for x in range(0)]
-
     # return np.array(all_neighbours, dtype=np.ubyte), np.array(all_where_full, dtype=np.bool_)
     return np.array(all_neighbours, dtype=np.ubyte)
 

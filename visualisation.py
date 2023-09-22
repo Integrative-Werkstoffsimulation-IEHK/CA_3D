@@ -20,7 +20,7 @@ class Visualisation:
         self.shape = None
         self.last_i = None
         self.generate_param_from_db()
-        self.cell_size = 5
+        self.cell_size = 10
         self.linewidth = 1
         self.cm = {1: np.array([255, 200, 200])/255.0,
                    2: np.array([255, 75, 75])/255.0,
@@ -508,7 +508,7 @@ ELAPSED TIME: {message}
                     fulls = dec[full_ind]
                     not_fulls = np.delete(dec, full_ind, axis=0)
 
-                    ax_all.scatter(fulls[:, 2], fulls[:, 1], fulls[:, 0], marker=',', color="r",
+                    ax_all.scatter(fulls[:, 2], fulls[:, 1], fulls[:, 0], marker=',', color="darkred",
                                    s=self.cell_size * (72. / fig.dpi) ** 2)
 
                     ax_all.scatter(not_fulls[:, 2], not_fulls[:, 1], not_fulls[:, 0], marker=',', color='r',
@@ -544,12 +544,13 @@ ELAPSED TIME: {message}
             ax_all.set_ylim3d(0, self.axlim)
             ax_all.set_zlim3d(0, self.axlim)
             if const_cam_pos:
-                ax_all.azim = -57
-                ax_all.elev = 30
+                ax_all.azim = -15
+                ax_all.elev = 10
                 ax_all.dist = 9
         # self.conn.commit()
         # plt.savefig(f'W:/SIMCA/test_runs_data/{iteration}.jpeg')
-        plt.show()
+        plt.savefig(f"//juno/homes/user/aseregin/Desktop/simuls/{iteration}.jpeg")
+        # plt.show()
 
     def plot_2d(self, plot_separate=False, iteration=None, slice_pos=None):
         if iteration is None:
@@ -709,7 +710,7 @@ ELAPSED TIME: {message}
                                    s=self.cell_size * (72. / fig.dpi) ** 2)
 
                     ax_all.scatter(not_fulls[:, 1], not_fulls[:, 0], marker=',', color='r',
-                                   s=self.cell_size * (72. / fig.dpi) ** 2)
+                                   s=self.cell_size * (72. / fig.dpi) ** 2, )
 
                     # ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='r',
                     #                s=self.cell_size * (72. / fig.dpi) ** 2)
@@ -744,6 +745,7 @@ ELAPSED TIME: {message}
             ax_all.set_ylim(0, self.axlim)
         self.conn.commit()
         # plt.savefig(f'W:/SIMCA/test_runs_data/{slice_pos}.jpeg')
+        # plt.savefig(f"//juno/homes/user/aseregin/Desktop/Neuer Ordner/{slice_pos}.jpeg")
         plt.show()
 
     def animate_2d(self, plot_separate=False, slice_pos=None):
@@ -1303,6 +1305,7 @@ ELAPSED TIME: {message}
         x = np.linspace(0, self.param["size"], self.axlim)
 
         if conc_type.lower() == "atomic":
+            conc_type_caption = "Concentration [at%]"
             whole_moles = matrix_moles +\
                           inward_moles + sinward_moles +\
                           outward_moles + soutward_moles +\
@@ -1320,6 +1323,7 @@ ELAPSED TIME: {message}
             quaternary_product = quaternary_product_moles * 100 / whole_moles
 
         elif conc_type.lower() == "cells":
+            conc_type_caption = "Cells concentration []"
             n_cells_page = self.axlim ** 2
             inward = inward * 100 / n_cells_page
             sinward = sinward * 100 / n_cells_page
@@ -1332,6 +1336,7 @@ ELAPSED TIME: {message}
             quaternary_product = quaternary_product * 100 / n_cells_page
 
         elif conc_type.lower() == "mass":
+            conc_type_caption = "Concentration [wt%]"
             whole_mass = matrix_mass +\
                          inward_mass + sinward_mass +\
                          outward_mass + soutward_mass +\
@@ -1349,6 +1354,7 @@ ELAPSED TIME: {message}
             quaternary_product = quaternary_product_mass * 100 / whole_mass
 
         else:
+            conc_type_caption = "None"
             print("WRONG CONCENTRATION TYPE!")
 
         fig = plt.figure()
@@ -1404,7 +1410,7 @@ ELAPSED TIME: {message}
             ax.plot(x, quaternary_product, color='steelblue')
 
             ax.set_xlabel("Depth [m]")
-            ax.set_ylabel("Concentration")
+            ax.set_ylabel(conc_type_caption)
 
             # ax.plot(x, outward,  color='g')
             # ax.plot(x, precipitations,  color='r')
