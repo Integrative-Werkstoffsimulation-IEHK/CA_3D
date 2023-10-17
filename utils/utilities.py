@@ -92,8 +92,6 @@ class Utils:
         self.calc_product_data()
         self.calc_initial_conc_and_moles()
 
-        # self.n_cells_per_axis = self.param["n_cells_per_axis"]
-
     def calc_product_data(self):
         self.param["product"] = {"primary": {}, "secondary": {}, "ternary": {}, "quaternary": {}}
 

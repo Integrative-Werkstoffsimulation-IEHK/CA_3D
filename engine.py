@@ -20,6 +20,7 @@ class CellularAutomata:
         if user_input is None:
             # setting default parameters if no user input is given
             user_input = templates.DEFAULT_PARAM
+
         self.utils = Utils(user_input)
         self.utils.create_database()
         self.utils.generate_param()
@@ -30,18 +31,14 @@ class CellularAutomata:
         # simulated space parameters
         self.cells_per_axis = self.param["n_cells_per_axis"]
         self.cells_per_page = self.cells_per_axis ** 2
-        self.extended_axis = self.cells_per_axis + self.param["neigh_range"]
         self.matrix_moles_per_page = self.cells_per_page * self.param["matrix_elem"]["moles_per_cell"]
-        self.shape = (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis)
-        self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
+
         self.n_iter = self.param["n_iterations"]
         self.iteration = None
         self.curr_max_furthest = 0
         # self.objs = templates.DEFAULT_OBJ_REF
         self.cases = templates.CaseRef()
         self.cur_case = None
-
-        self.tau = self.param["tau"]
 
         # setting objects for inward diffusion
         if self.param["inward_diffusion"]:
@@ -123,7 +120,7 @@ class CellularAutomata:
                     self.cases.first.fix_init_precip_func_ref = self.fix_init_precip_int
                     self.cases.first.precip_3d_init = np.full(
                         (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
-                        False, dtype=np.ubyte)
+                        0, dtype=np.ubyte)
 
                 if self.cases.second.product.oxidation_number == 1:
                     self.cases.second.go_around_func_ref = self.go_around_single_oxid_n
@@ -136,7 +133,7 @@ class CellularAutomata:
                     self.cases.second.fix_init_precip_func_ref = self.fix_init_precip_int
                     self.cases.second.precip_3d_init = np.full(
                         (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
-                        False, dtype=np.ubyte)
+                        0, dtype=np.ubyte)
 
             else:
                 # self.precip_func = self.precipitation_first_case_no_growth  # CHANGE!!!!!!!!!!!!
@@ -153,27 +150,12 @@ class CellularAutomata:
                     self.cases.first.go_around_func_ref = self.go_around_single_oxid_n
                     self.cases.first.fix_init_precip_func_ref = self.fix_init_precip_bool
                     self.cases.first.precip_3d_init = np.full(
-                        (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
-                        False, dtype=bool)
+                        (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1), False, dtype=bool)
                 else:
                     self.cases.first.go_around_func_ref = self.go_around_mult_oxid_n
                     self.cases.first.fix_init_precip_func_ref = self.fix_init_precip_int
                     self.cases.first.precip_3d_init = np.full(
-                        (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
-                        False, dtype=np.ubyte)
-
-                # if self.primary_oxid_numb == 1:
-                #     self.go_around = self.go_around_single_oxid_n
-                #     self.fix_init_precip = self.fix_init_precip_bool
-                #     self.precipitations3d_init = np.full(
-                #         (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
-                #         False, dtype=bool)
-                # else:
-                #     self.go_around = self.go_around_mult_oxid_n
-                #     self.fix_init_precip = self.fix_init_precip_int
-                #     self.precipitations3d_init = np.full(
-                #         (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
-                #         False, dtype=np.ubyte)
+                        (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1), 0, dtype=np.ubyte)
 
             # self.precipitations3d = np.full(self.shape, False)
             # self.half_thickness = 20
@@ -243,13 +225,6 @@ class CellularAutomata:
             self.fetch_ind = None
             self.generate_fetch_ind()
 
-            self.dissol_pn = self.param["dissolution_p"] ** (1 / self.param["dissolution_n"])
-            power = (self.param["dissolution_n"] - 1)/self.param["dissolution_n"]
-            self.const_b_dissol = (1/3) * log(self.param["block_scale_factor"] * (self.param["dissolution_p"] ** power))
-            self.p_b_3 = self.dissol_pn * 2.718281828 ** (self.const_b_dissol * 3) / (self.param["block_scale_factor"])
-            self.p_b_2 = self.dissol_pn * 2.718281828 ** (self.const_b_dissol * 4) / (self.param["block_scale_factor"]**3)
-            self.p_b_1 = self.dissol_pn * 2.718281828 ** (self.const_b_dissol * 5) / (self.param["block_scale_factor"]**10)
-
             self.aggregated_ind = [[7, 0, 1, 2, 19, 16, 14],
                                    [6, 0, 1, 5, 18, 15, 14],
                                    [8, 0, 4, 5, 20, 15, 17],
@@ -278,8 +253,8 @@ class CellularAutomata:
             # self.prev_prod_fraction = np.full(self.cells_per_axis, 0, dtype=float)
             # self.cumul_prod_fraction = np.full(self.cells_per_axis, 0, dtype=float)
 
-            self.prod_increment_const = self.param["product_kinetic_const"]
-            self.error_prod_conc = self.param["error_prod_conc"]
+            # self.prod_increment_const = self.param["product_kinetic_const"]
+            # self.error_prod_conc = self.param["error_prod_conc"]
 
             self.cumul_prod = np.empty(self.n_iter, dtype=float)
             # self.growth_rate = np.empty(self.n_iter, dtype=float)
@@ -314,7 +289,7 @@ class CellularAutomata:
         self.utils.db.conn.commit()
 
     def dissolution_zhou_wei(self):
-        """Implementation of Zhou and Wei approach. Works only for any oxidation nuber!"""
+        """Implementation of Zhou and Wei approach. Works for any oxidation nuber!"""
         # plane_indxs = np.array([50])
         nz_ind = np.array(np.nonzero(self.primary_product.c3d[:, :, self.product_indexes]))
         self.coord_buffer.copy_to_buffer(nz_ind)
@@ -1081,10 +1056,11 @@ class CellularAutomata:
                 oxidant_cells = fetch_ind[:, np.nonzero(oxidant_cells)[0]]
 
                 if len(oxidant_cells[0]) != 0:
-                    oxidant_cells = np.vstack((oxidant_cells, np.full(len(oxidant_cells[0]), plane_index, dtype=np.short)))
+                    oxidant_cells = np.vstack((oxidant_cells, np.full(len(oxidant_cells[0]), plane_index,
+                                                                      dtype=np.short)))
                     oxidant_cells = oxidant_cells.transpose()
 
-                    exists = check_at_coord(self.cur_case.product.full_c3d, oxidant_cells)  # precip on place of oxidant!
+                    exists = check_at_coord(self.cur_case.product.full_c3d, oxidant_cells) # precip on place of oxidant!
                     temp_ind = np.where(exists)[0]
                     oxidant_cells = np.delete(oxidant_cells, temp_ind, 0)
 
@@ -1782,7 +1758,6 @@ class CellularAutomata:
         return np.array([np.sum(item) for item in flat_neighbours], dtype=int)
 
     def go_around_mult_oxid_n(self, around_coords):
-        # all_neigh = go_around_int(array_3d, around_coords)
         all_neigh = go_around_int(self.cur_case.precip_3d_init, around_coords)
         neigh_in_prod = all_neigh[:, 6].view()
 
