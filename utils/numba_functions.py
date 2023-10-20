@@ -71,6 +71,19 @@ def check_at_coord(array_3d, coordinates):
 
 
 @numba.njit(nopython=True)
+def check_at_coord_new(array_3d, coordinates):
+    # trick to initialize an empty list with known type
+    result_ind = [np.uint32(x) for x in range(0)]
+    counts = [np.ubyte(x) for x in range(0)]
+    for index, coord in enumerate(coordinates):
+        array_val = array_3d[coord[0], coord[1], coord[2]]
+        if array_val:
+            result_ind.append(np.uint32(index))
+            counts.append(np.ubyte(array_val))
+    return np.array(result_ind, dtype=np.uint32), np.array(counts, dtype=np.ubyte)
+
+
+@numba.njit(nopython=True)
 def insert_counts(array_3d, points):
     for point in points.transpose():
         array_3d[point[0], point[1], point[2]] += 1

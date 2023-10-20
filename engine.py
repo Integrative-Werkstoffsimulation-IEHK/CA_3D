@@ -136,8 +136,8 @@ class CellularAutomata:
                         0, dtype=np.ubyte)
 
             else:
-                # self.precip_func = self.precipitation_first_case_no_growth  # CHANGE!!!!!!!!!!!!
-                self.precip_func = self.precipitation_first_case
+                self.precip_func = self.precipitation_first_case_no_neigbouring_area  # CHANGE!!!!!!!!!!!!
+                # self.precip_func = self.precipitation_first_case
                 # self.precip_func = self.precipitation_0
                 # self.calc_precip_front = self.calc_precip_front_0
                 # self.decomposition = self.decomposition_0
@@ -269,7 +269,7 @@ class CellularAutomata:
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
             if self.param["compute_precipitations"]:
                 self.precip_func()
-                self.dissolution_0_cells()
+                # self.dissolution_0_cells()
             # if self.param["decompose_precip"]:
             #     self.decomposition_0()
             if self.param["inward_diffusion"]:
@@ -748,6 +748,26 @@ class CellularAutomata:
             self.precip_step_no_growth()
         self.primary_oxidant.transform_to_descards()
 
+    def precipitation_first_case_no_neigbouring_area(self):
+        """
+        Created for the test of the approach with no neighbouring area
+        """
+        # Only one oxidant and one active elements exist. Only one product can be created
+        self.furthest_index = self.primary_oxidant.calc_furthest_index()
+        self.primary_oxidant.transform_to_3d()
+
+        if self.iteration % self.param["stride"] == 0:
+            if self.furthest_index >= self.curr_max_furthest:
+                self.curr_max_furthest = self.furthest_index
+            self.primary_active.transform_to_3d(self.curr_max_furthest)
+
+        self.get_combi_ind()
+
+        if len(self.comb_indexes) > 0:
+            self.cur_case = self.cases.first
+            self.precip_step_no_neigbouring_area()
+        self.primary_oxidant.transform_to_descards()
+
     def precipitation_0_cells_no_growth_solub_prod_test(self):
         """
         Created only for tests of the solubility product probability function
@@ -1148,13 +1168,14 @@ class CellularAutomata:
             if len(oxidant_cells[0]) != 0:
                 oxidant_cells = np.vstack((oxidant_cells, np.full(len(oxidant_cells[0]), plane_index, dtype=np.short)))
                 oxidant_cells = oxidant_cells.transpose()
+                self.ci_single_no_neigbouring_area(oxidant_cells)
 
-                exists = check_at_coord(self.cur_case.product.full_c3d, oxidant_cells)  # precip on place of oxidant!
-                temp_ind = np.where(exists)[0]
-                oxidant_cells = np.delete(oxidant_cells, temp_ind, 0)
-
-                if len(oxidant_cells) > 0:
-                    self.ci_single_no_neigbouring_area(oxidant_cells)
+                # exists = check_at_coord(self.cur_case.product.full_c3d, oxidant_cells)  # precip on place of oxidant!
+                # temp_ind = np.where(exists)[0]
+                # oxidant_cells = np.delete(oxidant_cells, temp_ind, 0)
+                #
+                # if len(oxidant_cells) > 0:
+                #     self.ci_single_no_neigbouring_area(oxidant_cells)
 
     def ci_single(self, seeds):
         all_arounds = self.utils.calc_sur_ind_formation(seeds, self.cur_case.active.c3d.shape[2] - 1)
@@ -1490,8 +1511,29 @@ class CellularAutomata:
                 self.cur_case.prod_indexes[seeds[2][0]] = True
 
     def ci_single_no_neigbouring_area(self, seeds):
-        active_is_present = check_at_coord(self.cur_case.active.c3d, seeds)
-        temp_ind = np.where(active_is_present)[0]
+        temp_ind, counts_active = check_at_coord_new(self.cur_case.active.c3d, seeds)
+        if len(temp_ind) > 0:
+            seeds = seeds[temp_ind]
+            seeds = seeds.transpose()
+            count_oxidant = self.cur_case.oxidant.c3d[seeds[0], seeds[1], seeds[2]]
+
+            min_counts = np.minimum(count_oxidant, counts_active)
+            cur_product_counts = self.cur_case.product.c3d[seeds[0], seeds[1], seeds[2]]
+
+            sum_array = min_counts + cur_product_counts
+            final_counts = np.array(np.where(sum_array <= self.primary_oxid_numb, min_counts,
+                                    self.primary_oxid_numb - cur_product_counts))
+
+            self.cur_case.active.c3d[seeds[0], seeds[1], seeds[2]] -= final_counts
+            self.cur_case.oxidant.c3d[seeds[0], seeds[1], seeds[2]] -= final_counts
+
+            # self.objs[self.case]["product"].c3d[coord[0], coord[1], coord[2]] += 1  # precip on place of active!
+            self.cur_case.product.c3d[seeds[0], seeds[1], seeds[2]] += final_counts  # precip on place of oxidant!
+
+            # self.objs[self.case]["product"].fix_full_cells(coord)  # precip on place of active!
+            # self.cur_case.product.fix_full_cells(seeds)  # precip on place of oxidant!
+            # print()
+            # temp_ind = np.where(active_is_present)[0]
 
         # if len(temp_ind) > 0:
         #     seeds = seeds[temp_ind]

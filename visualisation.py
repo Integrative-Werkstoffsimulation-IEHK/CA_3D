@@ -549,8 +549,8 @@ ELAPSED TIME: {message}
                 ax_all.dist = 9
         # self.conn.commit()
         # plt.savefig(f'W:/SIMCA/test_runs_data/{iteration}.jpeg')
-        plt.savefig(f"//juno/homes/user/aseregin/Desktop/simuls/{iteration}.jpeg")
-        # plt.show()
+        # plt.savefig(f"//juno/homes/user/aseregin/Desktop/simuls/{iteration}.jpeg")
+        plt.show()
 
     def plot_2d(self, plot_separate=False, iteration=None, slice_pos=None):
         if iteration is None:
