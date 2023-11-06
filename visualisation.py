@@ -650,13 +650,14 @@ ELAPSED TIME: {message}
             ax_qtprecip.set_ylim(0, self.axlim)
         else:
             ax_all = fig.add_subplot(111)
+            ax_all.set_facecolor('gainsboro')
             if self.param["inward_diffusion"]:
                 self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
                 items = np.array(self.c.fetchall())
                 if np.any(items):
                     ind = np.where(items[:, 0] == slice_pos)
                     ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='b',
-                                   s=self.cell_size * (72. / fig.dpi) ** 2)
+                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth)
                 if self.param["secondary_oxidant_exists"]:
                     self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
                     items = np.array(self.c.fetchall())
@@ -670,7 +671,7 @@ ELAPSED TIME: {message}
                 if np.any(items):
                     ind = np.where(items[:, 0] == slice_pos)
                     ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='g',
-                                   s=self.cell_size * (72. / fig.dpi) ** 2)
+                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth)
                 if self.param["secondary_active_element_exists"]:
                     self.c.execute("SELECT * from secondary_active_iter_{}".format(iteration))
                     items = np.array(self.c.fetchall())
@@ -703,10 +704,10 @@ ELAPSED TIME: {message}
                     not_fulls = np.delete(dec, full_ind, axis=0)
 
                     ax_all.scatter(fulls[:, 2], fulls[:, 1], marker=',', color='darkred',
-                                   s=self.cell_size * (72. / fig.dpi) ** 2)
+                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth)
 
                     ax_all.scatter(not_fulls[:, 2], not_fulls[:, 1], marker=',', color='r',
-                                   s=self.cell_size * (72. / fig.dpi) ** 2)
+                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth)
 
                     # ax_all.scatter(fulls[:, 1], fulls[:, 0], marker=',', color='r',
                     #                s=self.cell_size * (72. / fig.dpi) ** 2)

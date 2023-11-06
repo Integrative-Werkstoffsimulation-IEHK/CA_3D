@@ -45,8 +45,8 @@ class CellularAutomata:
             self.primary_oxidant = elements.OxidantElem(self.param["oxidant"]["primary"], self.utils)
             self.cases.first.oxidant = self.primary_oxidant
             self.cases.second.oxidant = self.primary_oxidant
-            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
-            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk  # CHANGE!!!!!!
+            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
+            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk  # CHANGE!!!!!!
 
             if self.param["secondary_oxidant_exists"]:
                 self.secondary_oxidant = elements.OxidantElem(self.param["oxidant"]["secondary"], self.utils)
@@ -58,8 +58,8 @@ class CellularAutomata:
             self.primary_active = elements.ActiveElem(self.param["active_element"]["primary"])
             self.cases.first.active = self.primary_active
             self.cases.third.active = self.primary_active
-            # self.primary_active.diffuse = self.primary_active.diffuse_with_scale
-            self.primary_active.diffuse = self.primary_active.diffuse_bulk  # CHANGE!!!!!!
+            self.primary_active.diffuse = self.primary_active.diffuse_with_scale
+            # self.primary_active.diffuse = self.primary_active.diffuse_bulk  # CHANGE!!!!!!
 
             if self.param["secondary_active_element_exists"]:
                 self.secondary_active = elements.ActiveElem(self.param["active_element"]["secondary"])
@@ -811,8 +811,9 @@ class CellularAutomata:
 
         if len(self.comb_indexes) > 0:
             self.cur_case = self.cases.first
-            self.nucl_prob.adapt_probabilities(self.comb_indexes, self.rel_prod_fraction[self.comb_indexes],
-                                               self.gamma_primes[self.comb_indexes])
+            # self.nucl_prob.adapt_probabilities(self.comb_indexes, self.rel_prod_fraction[self.comb_indexes],
+            #                                    self.gamma_primes[self.comb_indexes])
+            self.nucl_prob.adapt_probabilities(self.comb_indexes, self.gamma_primes[self.comb_indexes])
             self.cases.first.fix_init_precip_func_ref(self.furthest_index)
             self.precip_step()
 
