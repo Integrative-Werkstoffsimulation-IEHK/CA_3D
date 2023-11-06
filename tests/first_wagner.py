@@ -6,7 +6,7 @@ if __name__ == '__main__':
 
     user_input = {"oxidant": {"primary": {"elem": "O",
                                           "diffusion_condition": "O in Ni Krupp",
-                                          "cells_concentration": 0.01},
+                                          "cells_concentration": 0.001},
                               "secondary": {"elem": "None",
                                             "diffusion_condition": "N in Ni Krupp",
                                             "cells_concentration": 0.1}
@@ -15,7 +15,7 @@ if __name__ == '__main__':
                   "active_element": {"primary": {"elem": "Al",
                                                  "diffusion_condition": "Al in Ni Krupp",
                                                  "mass_concentration": 0.025,
-                                                 "cells_concentration": 0.3},
+                                                 "cells_concentration": 0.1},
                                      "secondary": {"elem": "None",
                                                    "diffusion_condition": "Al in Ni Krupp",
                                                    "mass_concentration": 0.025,
@@ -31,9 +31,9 @@ if __name__ == '__main__':
                   "temperature": 1100,  # °C
                   "n_cells_per_axis": 102,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
                   "n_iterations": 300000,  # must be >= n_cells_per_axis
-                  "stride": 40,  # n_iterations / stride = n_iterations for outward diffusion
-                  "sim_time": 72000,  # [sek]
-                  "size": 500 * (10**-6),  # [m]
+                  "stride": 90000000,  # n_iterations / stride = n_iterations for outward diffusion
+                  "sim_time": 36000,  # [sek]
+                  "size": 250 * (10**-6),  # [m]
 
                   "threshold_inward": 1,
                   "threshold_outward": 1,
@@ -91,10 +91,13 @@ if __name__ == '__main__':
                   "bend_b_init": -0.00001,
                   "bend_b_final": -20,
 
+
                   }
 
     backup_user_input = copy.deepcopy(user_input)
     eng = CellularAutomata(user_input=user_input)
+
+    eng.precip_func = eng.precipitation_first_case_no_growth
 
     try:
         eng.simulation()

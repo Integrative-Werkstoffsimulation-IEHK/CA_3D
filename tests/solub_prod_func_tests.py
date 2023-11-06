@@ -63,7 +63,7 @@ if __name__ == '__main__':
                   "phase_fraction_lim": 0.045,
                   "hf_deg_lim": 10**10,
                   "lowest_neigh_numb": 16,
-                  "final_nucl_prob": 1*10**-3,
+                  "final_nucl_prob": 1*10**-1,
 
                   "min_dissol_prob": 1 * 10 ** -11.00001,
                   "het_factor_dissolution": 10 ** 1,  # not used anymore
@@ -79,22 +79,26 @@ if __name__ == '__main__':
                   "final_P1": 1 * 10 ** -3,
                   "b_const_P1": -3,
 
-                  "nucl_adapt_function": 2,
+                  "nucl_adapt_function": 0,
                   "dissol_adapt_function": 3,
 
                   "init_P1_diss": 1 * 10 ** -11,
                   "final_P1_diss": 1 * 10 ** 0,
                   "b_const_P1_diss": 600,
 
-                  "b_const_P0_nucl": -(10**10),
+                  "b_const_P0_nucl": -3,
 
                   "bend_b_init": -0.00001,
                   "bend_b_final": -20,
+
 
                   }
 
     backup_user_input = copy.deepcopy(user_input)
     eng = CellularAutomata(user_input=user_input)
+
+    eng.precip_func = eng.precipitation_0_cells_no_growth_solub_prod_test
+    eng.cur_case = eng.cases.first
 
     try:
         eng.simulation()

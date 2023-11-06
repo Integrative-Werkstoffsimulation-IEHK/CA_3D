@@ -192,8 +192,8 @@ class NucleationProbabilitiesADJ:
         self.oxidation_number = param["product"]["primary"]["oxidation_number"]
         self.const_a_pp = np.full(param["n_cells_per_axis"], -1, dtype=float)
 
-        self.b0 = -0.00001
-        self.b1 = -0.5
+        self.b0 = param["bend_b_init"]
+        self.b1 = param["bend_b_final"]
         self.delt_b = self.b1 - self.b0
         self.const_b_pp = np.full(param["n_cells_per_axis"], self.b0, dtype=float)
 
@@ -210,6 +210,8 @@ class NucleationProbabilitiesADJ:
             self.adapt_probabilities = self.adapt_p1
         elif param["nucl_adapt_function"] == 2:
             self.adapt_probabilities = self.adapt_p1_nucl_prob
+        elif param["nucl_adapt_function"] == 3:
+            self.adapt_probabilities = self.dummy_function
 
     def update_constants(self):
         self.const_c_pp = np.log((1 - self.p1.values_pp) / (self.const_a_pp *
@@ -238,6 +240,9 @@ class NucleationProbabilitiesADJ:
 
         self.nucl_prob.update_values_at_pos(page_ind, gamma_primes)
         self.update_constants()
+
+    def dummy_function(self, page_ind, rel_phase_fraction):
+        pass
 
 
 class DissolutionProbabilitiesADJ:
@@ -284,7 +289,7 @@ class DissolutionProbabilitiesADJ:
 
         self.const_a_pp = np.full(param["n_cells_per_axis"], 1, dtype=float)
 
-        self.b0 = -0.00001
+        self.b0 = -0.4975
         self.b1 = -0.2
         self.delt_b = self.b1 - self.b0
         self.const_b_pp = np.full(param["n_cells_per_axis"], self.b0, dtype=float)

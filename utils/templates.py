@@ -84,6 +84,9 @@ DEFAULT_PARAM = {
     "b_const_P1_diss": 0.123456789,
 
     "b_const_P0_nucl": 0.123456789,
+
+    "bend_b_init":  0.123456789,
+    "bend_b_final":  0.123456789,
 }
 
 DEFAULT_OBJ_REF = {

@@ -33,7 +33,7 @@ if __name__ == '__main__':
                   "n_iterations": 300000,  # must be >= n_cells_per_axis
                   "stride": 40,  # n_iterations / stride = n_iterations for outward diffusion
                   "sim_time": 72000,  # [sek]
-                  "size": 500 * (10**-6),  # [m]
+                  "size": 30 * (10**-6),  # [m]
 
                   "threshold_inward": 1,
                   "threshold_outward": 1,
@@ -42,7 +42,7 @@ if __name__ == '__main__':
                   "nucleation_probability": 0,
                   "het_factor": 10**0.5,  # not used anymore
 
-                  "dissolution_p": 1 * 10**-10,
+                  "dissolution_p": 1 * 10**-3,
                   "dissolution_n": 2,  # not used anymore
                   "exponent_power": 0,  # not used anymore
                   "block_scale_factor": 1,
@@ -63,13 +63,13 @@ if __name__ == '__main__':
                   "phase_fraction_lim": 0.045,
                   "hf_deg_lim": 10**10,
                   "lowest_neigh_numb": 16,
-                  "final_nucl_prob": 1*10**-3,
+                  "final_nucl_prob": 1*10**-5,
 
-                  "min_dissol_prob": 1 * 10 ** -11.00001,
+                  "min_dissol_prob": 1 * 10 ** -4.00001,
                   "het_factor_dissolution": 10 ** 1,  # not used anymore
                   "final_dissol_prob": 1 * 10 ** 0,
                   "final_het_factor_dissol": 10 ** 0,  # not used anymore
-                  "final_min_dissol_prob": 1 * 10 ** -4,
+                  "final_min_dissol_prob": 1 * 10 ** -5,
 
                   "max_neigh_numb": 20,
                   "product_kinetic_const": 0.0000003,  # not used anymore
@@ -80,21 +80,22 @@ if __name__ == '__main__':
                   "b_const_P1": -3,
 
                   "nucl_adapt_function": 2,
-                  "dissol_adapt_function": 3,
+                  "dissol_adapt_function": 4,
 
-                  "init_P1_diss": 1 * 10 ** -11,
+                  "init_P1_diss": 1 * 10 ** -4,
                   "final_P1_diss": 1 * 10 ** 0,
-                  "b_const_P1_diss": 600,
+                  "b_const_P1_diss": 50,
 
                   "b_const_P0_nucl": -(10**10),
-
-                  "bend_b_init": -0.00001,
-                  "bend_b_final": -20,
 
                   }
 
     backup_user_input = copy.deepcopy(user_input)
     eng = CellularAutomata(user_input=user_input)
+
+
+
+
 
     try:
         eng.simulation()
