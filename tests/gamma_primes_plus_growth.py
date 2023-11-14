@@ -67,7 +67,7 @@ if __name__ == '__main__':
                   "phase_fraction_lim": 1,
                   "hf_deg_lim": 10**10,
                   "lowest_neigh_numb": 16,  # not used anymore
-                  "final_nucl_prob": 5*10**-1,
+                  "final_nucl_prob": 1*10**-4,
 
                   "min_dissol_prob": 1 * 10 ** -11.00001,
                   "het_factor_dissolution": 10 ** 1,  # not used anymore

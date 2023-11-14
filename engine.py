@@ -854,7 +854,6 @@ class CellularAutomata:
 
     def precipitation_first_case_no_growth(self):
         """
-
         """
         # Only one oxidant and one active elements exist. Only one product can be created
         self.furthest_index = self.primary_oxidant.calc_furthest_index()
@@ -1244,7 +1243,6 @@ class CellularAutomata:
 
     def precip_step_no_growth(self):
         """
-
         """
         for plane_index in reversed(self.comb_indexes):
             for fetch_ind in self.fetch_ind:

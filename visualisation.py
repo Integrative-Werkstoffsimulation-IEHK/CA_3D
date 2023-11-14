@@ -20,8 +20,9 @@ class Visualisation:
         self.shape = None
         self.last_i = None
         self.generate_param_from_db()
-        self.cell_size = 20
-        self.linewidth = 0.3
+        self.cell_size = 100
+        self.linewidth = 0.5
+        self.alpha = 1
         self.cm = {1: np.array([255, 200, 200])/255.0,
                    2: np.array([255, 75, 75])/255.0,
                    3: np.array([220, 0, 0])/255.0,
@@ -503,16 +504,18 @@ ELAPSED TIME: {message}
                     #     ax_all.scatter(dec[grade_ind, 2], dec[grade_ind, 1], dec[grade_ind, 0], marker=',',
                     #                    color=self.cm[grade], s=self.cell_size * (72. / fig.dpi) ** 2)
 
-                    full_ind = np.where(counts == 4)[0]
+                    full_ind = np.where(counts == 1)[0]
 
                     fulls = dec[full_ind]
                     not_fulls = np.delete(dec, full_ind, axis=0)
 
                     ax_all.scatter(fulls[:, 2], fulls[:, 1], fulls[:, 0], marker=',', color="darkred",
-                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth)
+                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
+                                   alpha=self.alpha)
 
                     ax_all.scatter(not_fulls[:, 2], not_fulls[:, 1], not_fulls[:, 0], marker=',', color='r',
-                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth)
+                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
+                                   alpha=self.alpha)
 
                 # if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
                 #     self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
@@ -698,7 +701,7 @@ ELAPSED TIME: {message}
                     #     ax_all.scatter(dec[grade_ind, 2], dec[grade_ind, 1], marker=',',
                     #                    color=self.cm[grade], s=self.cell_size * (72. / fig.dpi) ** 2)
 
-                    full_ind = np.where(counts == 4)[0]
+                    full_ind = np.where(counts == 8)[0]
                     #
                     fulls = dec[full_ind]
                     not_fulls = np.delete(dec, full_ind, axis=0)
@@ -1431,7 +1434,8 @@ ELAPSED TIME: {message}
 
             ax.set_xlabel("Depth [µm]", **csfont)
             ax.set_ylabel(conc_type_caption, **csfont)
-            plt.xticks([0, 100, 200, 300, 400, 500])
+            # plt.xticks([0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500])
+            plt.xticks([0, 50, 100, 150, 200, 250, 300])
             plt.yticks(fontsize=20 * cm, **csfont)
             plt.xticks(fontsize=20 * cm, **csfont)
 

@@ -19,6 +19,13 @@ def calc_saturation(c_b):
     curr_phi = d_o / d_b
     left_side = c_o / (nu * c_b)
 
+
+    # DELETE_:______
+    r_val = calculate_right_site(0.1168995, curr_phi)
+    print(r_val)
+    # ___________
+
+
     gammas = np.linspace(0, 1, 10000001)
 
     res_right_side = []
@@ -43,6 +50,8 @@ def calc_saturation(c_b):
 conz_list = [0.25, 0.55, 0.6, 0.65, 0.75, 0.8, 0.85]
 # conz_list = [0.3]
 print()
+
+
 
 for active_conz in conz_list:
     calc_saturation(active_conz)

@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
                   "active_element": {"primary": {"elem": "Al",
                                                  "diffusion_condition": "Al in Ni Krupp",
-                                                 "mass_concentration": 0.025,
+                                                 "mass_concentration": 0.05,
                                                  "cells_concentration": 0.3},
                                      "secondary": {"elem": "None",
                                                    "diffusion_condition": "Al in Ni Krupp",
@@ -32,8 +32,8 @@ if __name__ == '__main__':
                   "n_cells_per_axis": 102,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
                   "n_iterations": 300000,  # must be >= n_cells_per_axis
                   "stride": 40,  # n_iterations / stride = n_iterations for outward diffusion
-                  "sim_time": 72000,  # [sek]
-                  "size": 500 * (10**-6),  # [m]
+                  "sim_time": 36000,  # [sek]
+                  "size": 300 * (10**-6),  # [m]
 
                   "threshold_inward": 1,
                   "threshold_outward": 1,
@@ -53,8 +53,7 @@ if __name__ == '__main__':
                   "diffusion_in_precipitation": False,
 
                   "save_whole": False,
-                  "save_path": 'W:/SIMCA/test_runs_data/Test_solub_product_probablity_function/',
-                  # 'W:/SIMCA/test_runs_data/Test_solub_product_probablity_function/',
+                  "save_path": 'W:/SIMCA/test_runs_data/',
 
                   "neigh_range": 1,  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
                                      #          and           |  |  |  |  |   |   |   |   |   |
@@ -64,7 +63,7 @@ if __name__ == '__main__':
                   "phase_fraction_lim": 0.045,
                   "hf_deg_lim": 10**10,
                   "lowest_neigh_numb": 16,
-                  "final_nucl_prob": 0.5*10**-0,
+                  "final_nucl_prob": 1*10**-3,
 
                   "min_dissol_prob": 1 * 10 ** -11.00001,
                   "het_factor_dissolution": 10 ** 1,  # not used anymore
@@ -80,14 +79,14 @@ if __name__ == '__main__':
                   "final_P1": 1 * 10 ** -3,
                   "b_const_P1": -3,
 
-                  "nucl_adapt_function": 0,
+                  "nucl_adapt_function": 2,
                   "dissol_adapt_function": 3,
 
                   "init_P1_diss": 1 * 10 ** -11,
                   "final_P1_diss": 1 * 10 ** 0,
                   "b_const_P1_diss": 600,
 
-                  "b_const_P0_nucl": -3,
+                  "b_const_P0_nucl": -(10**10),
 
                   "bend_b_init": -0.00001,
                   "bend_b_final": -20,
@@ -95,69 +94,46 @@ if __name__ == '__main__':
 
                   }
 
-    b_const_P0_nucl = [-1000, -10, -1, -0.001]
-    final_nucl_prob = [0.1, 0.001]
+    backup_user_input = copy.deepcopy(user_input)
+    eng = CellularAutomata(user_input=user_input)
 
-    # backup_user_input = copy.deepcopy(user_input)
-    # eng = CellularAutomata(user_input=user_input)
-    #
-    # eng.precip_func = eng.precipitation_0_cells_no_growth_solub_prod_test
-    # eng.cur_case = eng.cases.first
+    eng.precip_func = eng.precipitation_first_case_no_growth
 
-    for p0_final in final_nucl_prob:
-        for b0 in b_const_P0_nucl:
-            print("_______________________________________")
-            print("final p0= ", p0_final, "  ", "b0= ", b0)
+    try:
+        eng.simulation()
+    finally:
+        try:
+            if not user_input["save_whole"]:
+                eng.save_results()
 
-            backup_user_input = copy.deepcopy(user_input)
-            backup_user_input2 = copy.deepcopy(backup_user_input)
+        except (Exception,):
+            backup_user_input["save_path"] = "C:/Users/aseregin/Safe_folder_if_server_crash/"
+            eng.utils = Utils(backup_user_input)
+            eng.utils.create_database()
+            eng.utils.generate_param()
+            eng.save_results()
+            print()
+            print("____________________________________________________________")
+            print("Saving To Standard Folder Crashed!!!")
+            print("Saved To ->> C:/Users/aseregin/Safe_folder_if_server_crash/!!!")
+            print("____________________________________________________________")
+            print()
 
-            backup_user_input2["b_const_P0_nucl"] = b0
-            backup_user_input["b_const_P0_nucl"] = b0
+            # data = np.column_stack(
+            #     (np.arange(eng.iteration), eng.cumul_prod[:eng.iteration]))
+            # output_file_path = "W:/SIMCA/test_runs_data/" + eng.utils.param["db_id"] + ".txt"
+            # with open(output_file_path, "w") as f:
+            #     for row in data:
+            #         f.write(" ".join(map(str, row)) + "\n")
 
-            backup_user_input2["final_nucl_prob"] = p0_final
-            backup_user_input["final_nucl_prob"] = p0_final
-
-            eng = CellularAutomata(user_input=backup_user_input2)
-
-            eng.precip_func = eng.precipitation_0_cells_no_growth_solub_prod_test
-            eng.cur_case = eng.cases.first
-
-            try:
-                eng.simulation()
-            finally:
-                try:
-                    if not user_input["save_whole"]:
-                        eng.save_results()
-
-                except (Exception,):
-                    backup_user_input["save_path"] = "C:/Users/aseregin/Safe_folder_if_server_crash/"
-                    eng.utils = Utils(backup_user_input)
-                    eng.utils.create_database()
-                    eng.utils.generate_param()
-                    eng.save_results()
-                    print()
-                    print("____________________________________________________________")
-                    print("Saving To Standard Folder Crashed!!!")
-                    print("Saved To ->> C:/Users/aseregin/Safe_folder_if_server_crash/!!!")
-                    print("____________________________________________________________")
-                    print()
-
-                    # data = np.column_stack(
-                    #     (np.arange(eng.iteration), eng.cumul_prod[:eng.iteration]))
-                    # output_file_path = "W:/SIMCA/test_runs_data/" + eng.utils.param["db_id"] + ".txt"
-                    # with open(output_file_path, "w") as f:
-                    #     for row in data:
-                    #         f.write(" ".join(map(str, row)) + "\n")
-
-                eng.insert_last_it()
-                eng.utils.db.conn.commit()
-                print()
-                print("____________________________________________________________")
-                print("Simulation was closed at Iteration: ", eng.iteration)
-                print("____________________________________________________________")
-                print()
-                traceback.print_exc()
+        eng.insert_last_it()
+        eng.utils.db.conn.commit()
+        print()
+        print("____________________________________________________________")
+        print("Simulation was closed at Iteration: ", eng.iteration)
+        print("____________________________________________________________")
+        print()
+        traceback.print_exc()
 
     # conz_list = [0.25, 0.55, 0.6, 0.65, 0.75, 0.8, 0.85]
     # for conc in conz_list:
