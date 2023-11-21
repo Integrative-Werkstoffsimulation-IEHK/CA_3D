@@ -19,9 +19,10 @@ class Visualisation:
         self.axlim = None
         self.shape = None
         self.last_i = None
+        self.oxid_numb = None
         self.generate_param_from_db()
-        self.cell_size = 100
-        self.linewidth = 0.5
+        self.cell_size = 10
+        self.linewidth = 0.3
         self.alpha = 1
         self.cm = {1: np.array([255, 200, 200])/255.0,
                    2: np.array([255, 75, 75])/255.0,
@@ -72,6 +73,7 @@ class Visualisation:
         self.param = utils.param
         self.axlim = self.param["n_cells_per_axis"]
         self.shape = (self.axlim, self.axlim, self.axlim)
+        self.oxid_numb = self.param["product"]["primary"]["oxidation_number"]
 
         if not self.param["inward_diffusion"]:
             print("No INWARD data!")
@@ -245,8 +247,26 @@ ELAPSED TIME: {message}
                         # data[items[0], items[1], items[2]] = True
                         # ax_all.voxels(data, facecolors="r")
                         # plt.savefig(f'W:/SIMCA/test_runs_data/{iteration}.jpeg')
-                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='r',
-                                       s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth)
+                        # ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='r',
+                        #                s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth)
+                        #
+                        counts = np.unique(np.ravel_multi_index(items.transpose(), self.shape), return_counts=True)
+                        dec = np.array(np.unravel_index(counts[0], self.shape), dtype=np.short).transpose()
+                        counts = np.array(counts[1], dtype=np.ubyte)
+                        full_ind = np.where(counts == self.oxid_numb)[0]
+
+                        fulls = dec[full_ind]
+                        not_fulls = np.delete(dec, full_ind, axis=0)
+
+                        ax_all.scatter(fulls[:, 2], fulls[:, 1], fulls[:, 0], marker=',', color="darkred",
+                                       s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black',
+                                       linewidth=self.linewidth,
+                                       alpha=self.alpha)
+
+                        ax_all.scatter(not_fulls[:, 2], not_fulls[:, 1], not_fulls[:, 0], marker=',', color='r',
+                                       s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black',
+                                       linewidth=self.linewidth,
+                                       alpha=self.alpha)
 
                 #     if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
                 #         self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
@@ -504,7 +524,7 @@ ELAPSED TIME: {message}
                     #     ax_all.scatter(dec[grade_ind, 2], dec[grade_ind, 1], dec[grade_ind, 0], marker=',',
                     #                    color=self.cm[grade], s=self.cell_size * (72. / fig.dpi) ** 2)
 
-                    full_ind = np.where(counts == 1)[0]
+                    full_ind = np.where(counts == self.oxid_numb)[0]
 
                     fulls = dec[full_ind]
                     not_fulls = np.delete(dec, full_ind, axis=0)
@@ -837,13 +857,13 @@ ELAPSED TIME: {message}
 
             def animate(iteration):
                 ax_all.cla()
-                if self.param["inward_diffusion"]:
-                    self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
-                    items = np.array(self.c.fetchall())
-                    if np.any(items):
-                        ind = np.where(items[:, 0] == slice_pos)
-                        ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='b',
-                                       s=self.cell_size * (72. / fig.dpi) ** 2)
+                # if self.param["inward_diffusion"]:
+                #     self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
+                #     items = np.array(self.c.fetchall())
+                #     if np.any(items):
+                #         ind = np.where(items[:, 0] == slice_pos)
+                #         ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='b',
+                #                        s=self.cell_size * (72. / fig.dpi) ** 2)
                 #     if self.param["secondary_oxidant_exists"]:
                 #         self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
                 #         items = np.array(self.c.fetchall())
@@ -865,39 +885,39 @@ ELAPSED TIME: {message}
                 #             ind = np.where(items[:, 0] == slice_pos)
                 #             ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='darkorange',
                 #                            s=self.cell_size * (72. / fig.dpi) ** 2)
-                # if self.param["compute_precipitations"]:
-                #     self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
-                #     items = np.array(self.c.fetchall())
-                #     if np.any(items):
-                #         ind = np.where(items[:, 0] == slice_pos)
-                #         ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='r',
-                #                        s=self.cell_size * (72. / fig.dpi) ** 2)
-                #     if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
-                #         self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
-                #         items = np.array(self.c.fetchall())
-                #         if np.any(items):
-                #             ind = np.where(items[:, 0] == slice_pos)
-                #             ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='cyan',
-                #                            s=self.cell_size * (72. / fig.dpi) ** 2)
-                #         self.c.execute("SELECT * from ternary_product_iter_{}".format(iteration))
-                #         items = np.array(self.c.fetchall())
-                #         if np.any(items):
-                #             ind = np.where(items[:, 0] == slice_pos)
-                #             ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='darkgreen',
-                #                            s=self.cell_size * (72. / fig.dpi) ** 2)
-                #         self.c.execute("SELECT * from quaternary_product_iter_{}".format(iteration))
-                #         items = np.array(self.c.fetchall())
-                #         if np.any(items):
-                #             ind = np.where(items[:, 0] == slice_pos)
-                #             ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='steelblue',
-                #                            s=self.cell_size * (72. / fig.dpi) ** 2)
-                #     elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
-                #         self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
-                #         items = np.array(self.c.fetchall())
-                #         if np.any(items):
-                #             ind = np.where(items[:, 0] == slice_pos)
-                #             ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='cyan',
-                #                            s=self.cell_size * (72. / fig.dpi) ** 2)
+                if self.param["compute_precipitations"]:
+                    self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
+                    items = np.array(self.c.fetchall())
+                    if np.any(items):
+                        ind = np.where(items[:, 0] == slice_pos)
+                        ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='r',
+                                       s=self.cell_size * (72. / fig.dpi) ** 2)
+                    if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
+                        self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
+                        items = np.array(self.c.fetchall())
+                        if np.any(items):
+                            ind = np.where(items[:, 0] == slice_pos)
+                            ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='cyan',
+                                           s=self.cell_size * (72. / fig.dpi) ** 2)
+                        self.c.execute("SELECT * from ternary_product_iter_{}".format(iteration))
+                        items = np.array(self.c.fetchall())
+                        if np.any(items):
+                            ind = np.where(items[:, 0] == slice_pos)
+                            ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='darkgreen',
+                                           s=self.cell_size * (72. / fig.dpi) ** 2)
+                        self.c.execute("SELECT * from quaternary_product_iter_{}".format(iteration))
+                        items = np.array(self.c.fetchall())
+                        if np.any(items):
+                            ind = np.where(items[:, 0] == slice_pos)
+                            ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='steelblue',
+                                           s=self.cell_size * (72. / fig.dpi) ** 2)
+                    elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
+                        self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
+                        items = np.array(self.c.fetchall())
+                        if np.any(items):
+                            ind = np.where(items[:, 0] == slice_pos)
+                            ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='cyan',
+                                           s=self.cell_size * (72. / fig.dpi) ** 2)
                 ax_all.set_xlim(0, self.axlim)
                 ax_all.set_ylim(0, self.axlim)
 
@@ -1330,7 +1350,7 @@ ELAPSED TIME: {message}
 
         elif conc_type.lower() == "cells":
             conc_type_caption = "cells concentration [%]"
-            n_cells_page = self.axlim ** 2
+            n_cells_page = (self.axlim ** 2) * self.param["product"]["primary"]["oxidation_number"]
             inward = inward * 100 / n_cells_page
             sinward = sinward * 100 / n_cells_page
             outward = outward * 100 / n_cells_page

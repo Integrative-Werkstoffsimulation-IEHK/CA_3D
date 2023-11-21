@@ -203,6 +203,16 @@ class NucleationProbabilitiesADJ:
         self.const_d_pp = self.p1.values_pp - self.const_a_pp * np.e ** (self.const_b_pp * self.oxidation_number +
                                                                          self.const_c_pp)
 
+        self.static_probs = np.zeros(self.n_neigh_init+1, dtype=np.single)
+        self.static_probs[self.oxidation_number * 3:self.oxidation_number * 4] = 0.259
+        self.static_probs[self.oxidation_number * 4:self.oxidation_number * 5] = 0.298
+        self.static_probs[self.oxidation_number * 5:self.oxidation_number * 6] = 0.442
+        self.static_probs[self.oxidation_number * 6:] = 1
+
+        # 0.259
+        # 0.298
+        # 0.442
+
         self.adapt_probabilities = None
         if param["nucl_adapt_function"] == 0:
             self.adapt_probabilities = self.adapt_nucl_prob
@@ -213,6 +223,8 @@ class NucleationProbabilitiesADJ:
         elif param["nucl_adapt_function"] == 3:
             self.adapt_probabilities = self.dummy_function
 
+        self.get_probabilities = self.get_probabilities_exp
+
     def update_constants(self):
         self.const_c_pp = np.log((1 - self.p1.values_pp) / (self.const_a_pp *
                                                             (np.e ** (self.const_b_pp * self.n_neigh_init) -
@@ -220,9 +232,15 @@ class NucleationProbabilitiesADJ:
         self.const_d_pp = self.p1.values_pp - self.const_a_pp * np.e ** (self.const_b_pp * self.oxidation_number +
                                                                          self.const_c_pp)
 
-    def get_probabilities(self, numb_of_neighbours, page_ind):
+    def get_probabilities_exp(self, numb_of_neighbours, page_ind):
         return self.const_a_pp[page_ind] * np.e ** (self.const_b_pp[page_ind] * numb_of_neighbours +
                                                     self.const_c_pp[page_ind]) + self.const_d_pp[page_ind]
+
+    def get_probabilities_static(self, numb_of_neighbours, dummy):
+        return self.static_probs[numb_of_neighbours]
+
+    def get_probabilities_singe_neigh(self, numb_of_neighbours, dummy):
+        return self.static_probs[numb_of_neighbours]
 
     def adapt_nucl_prob(self, page_ind, gamma_primes):
         self.nucl_prob.update_values_at_pos(page_ind, gamma_primes)
@@ -231,7 +249,6 @@ class NucleationProbabilitiesADJ:
     def adapt_p1(self, page_ind, rel_phase_fraction):
         self.p1.update_values_at_pos(page_ind, rel_phase_fraction)
         self.const_b_pp[page_ind] = self.delt_b * rel_phase_fraction + self.b0
-
         self.update_constants()
 
     def adapt_p1_nucl_prob(self, page_ind, rel_phase_fraction, gamma_primes):
@@ -252,14 +269,14 @@ class DissolutionProbabilitiesADJ:
         # self.dissol_prob_b = np.log(param["final_dissol_prob"] / param["dissolution_p"])
 
         self.dissol_prob = ExpFunct(param["n_cells_per_axis"], param["dissolution_p"], param["final_dissol_prob"],
-                                    1, 600)
+                                    -1, 1)
 
         # self.min_dissol_prob_pp = np.full(param["n_cells_per_axis"], param["min_dissol_prob"])
         # self.min_dissol_prob_a = param["min_dissol_prob"]
         # self.min_dissol_prob_b = np.log(param["final_min_dissol_prob"] / param["min_dissol_prob"])
 
         self.min_dissol_prob = ExpFunct(param["n_cells_per_axis"], param["min_dissol_prob"],
-                                        param["final_min_dissol_prob"], 1, 600)
+                                        param["final_min_dissol_prob"], 1, 1)
 
         # self.hf_pp = np.full(param["n_cells_per_axis"], param["het_factor_dissolution"], dtype=float)
         # self.hf_init = param["het_factor_dissolution"]
@@ -289,7 +306,7 @@ class DissolutionProbabilitiesADJ:
 
         self.const_a_pp = np.full(param["n_cells_per_axis"], 1, dtype=float)
 
-        self.b0 = -0.4975
+        self.b0 = -0.52
         self.b1 = -0.2
         self.delt_b = self.b1 - self.b0
         self.const_b_pp = np.full(param["n_cells_per_axis"], self.b0, dtype=float)

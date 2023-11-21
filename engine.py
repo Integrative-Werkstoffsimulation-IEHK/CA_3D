@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 from utils.my_data_structs import *
 from utils.utilities import *
@@ -72,11 +74,10 @@ class CellularAutomata:
                                            self.cells_per_axis ** 3)
             self.to_dissol_pn_buffer = MyBufferCoords(self.param["product"]["primary"]["oxidation_number"] *
                                            self.cells_per_axis ** 3)
-            # self.cumul_product = np.full(self.shape, 0, dtype=np.ubyte)
-            # self.case = 0
 
             self.primary_product = elements.Product(self.param["product"]["primary"])
             self.cases.first.product = self.primary_product
+
             if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
                 self.secondary_product = elements.Product(self.param["product"]["secondary"])
                 self.objs[1]["product"] = self.secondary_product
@@ -250,16 +251,7 @@ class CellularAutomata:
 
             self.product_x_nzs = np.full(self.cells_per_axis, False, dtype=bool)
 
-            # self.prev_prod_fraction = np.full(self.cells_per_axis, 0, dtype=float)
-            # self.cumul_prod_fraction = np.full(self.cells_per_axis, 0, dtype=float)
-
-            # self.prod_increment_const = self.param["product_kinetic_const"]
-            # self.error_prod_conc = self.param["error_prod_conc"]
-
             self.cumul_prod = np.empty(self.n_iter, dtype=float)
-            # self.growth_rate = np.empty(self.n_iter, dtype=float)
-
-            # self.look_up_table = td_data.TDATA()
 
             self.mid_point_coord = int((self.param["n_cells_per_axis"] - 1) / 2)
 
@@ -279,8 +271,8 @@ class CellularAutomata:
             if self.param["outward_diffusion"]:
                 self.diffusion_outward()
 
-            # if self.save_flag:
-            #     self.save_results_only_prod()
+            if self.param["save_whole"]:
+                self.save_results_only_prod()
 
         end = time.time()
         self.elapsed_time = (end - self.begin)
@@ -471,7 +463,6 @@ class CellularAutomata:
         Implementation of adjusted Zhou and Wei approach. Only side neighbours are checked. No need for block scale
         factor. Works only for any oxidation nuber!
         """
-        # plane_indxs = np.array([50])
         nz_ind = np.array(np.nonzero(self.primary_product.c3d[:, :, self.product_indexes]))
         self.coord_buffer.copy_to_buffer(nz_ind)
         self.coord_buffer.update_buffer_at_axis(self.product_indexes[nz_ind[2]], axis=2)
@@ -833,20 +824,61 @@ class CellularAutomata:
 
         product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
                             in self.comb_indexes], dtype=np.uint32)
-        product_conc = product / self.cells_per_page
+        product_conc = product / (self.cells_per_page * self.primary_oxid_numb)
 
         middle_ind = np.where(self.comb_indexes == self.mid_point_coord)[0]
-        rel_phase_fraction_for_all = product_conc[middle_ind] / self.param["phase_fraction_lim"]
+        # rel_phase_fraction_for_all = product_conc[middle_ind] / self.param["phase_fraction_lim"]
 
         some = np.where(product_conc < self.param["phase_fraction_lim"])[0]
 
         self.comb_indexes = self.comb_indexes[some]
 
-        rel_product_fractions = product_conc[some] / self.param["phase_fraction_lim"]
-        rel_product_fractions[:] = rel_phase_fraction_for_all
+        # rel_product_fractions = product_conc[some] / self.param["phase_fraction_lim"]
+        # rel_product_fractions[:] = rel_phase_fraction_for_all
 
         if len(self.comb_indexes) > 0:
-            self.nucl_prob.adapt_probabilities(self.comb_indexes, rel_product_fractions)
+            # self.nucl_prob.adapt_probabilities(self.comb_indexes, rel_product_fractions)
+            self.cases.first.fix_init_precip_func_ref(self.cells_per_axis)
+            self.precip_step()
+
+        self.primary_oxidant.transform_to_descards()
+
+    def precipitation_growth_test_statistic_function(self):
+        # created to test how growth function ang probabilities works
+        self.primary_oxidant.transform_to_3d()
+
+        if self.iteration % self.param["stride"] == 0:
+            self.primary_active.transform_to_3d(self.cells_per_axis)
+
+        self.comb_indexes = np.where(self.product_x_nzs)[0]
+        prod_left_shift = self.comb_indexes - 1
+        prod_right_shift = self.comb_indexes + 1
+        self.comb_indexes = np.unique(np.concatenate((self.comb_indexes, prod_left_shift, prod_right_shift)))
+
+        # product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
+        #                       in self.comb_indexes], dtype=np.uint32)
+
+        product_x = np.array(np.sum(self.primary_product.c3d[:, :, self.mid_point_coord]), dtype=np.uint32)
+        product_y = np.array(np.sum(self.primary_product.c3d[:, self.mid_point_coord, :]), dtype=np.uint32)
+        product_z = np.array(np.sum(self.primary_product.c3d[self.mid_point_coord, :, :]), dtype=np.uint32)
+
+        product = np.mean([product_x, product_y, product_z])
+        product_conc = product / (self.cells_per_page * self.primary_oxid_numb)
+
+        # middle_ind = np.where(self.comb_indexes == self.mid_point_coord)[0]
+
+        if product_conc >= self.param["phase_fraction_lim"]:
+            print("switch")
+            self.nucl_prob.get_probabilities = self.nucl_prob.get_probabilities_static
+
+        # some = np.where(product_conc < self.param["phase_fraction_lim"])[0]
+
+        # self.comb_indexes = self.comb_indexes[some]
+
+        # rel_product_fractions = product_conc[some] / self.param["phase_fraction_lim"]
+        # rel_product_fractions[:] = rel_phase_fraction_for_all
+
+        if len(self.comb_indexes) > 0:
             self.cases.first.fix_init_precip_func_ref(self.cells_per_axis)
             self.precip_step()
 
@@ -987,6 +1019,23 @@ class CellularAutomata:
 
         self.cumul_prod[self.iteration] = np.sum(self.primary_product.c3d[:, :, 0])/self.cells_per_page
         # self.growth_rate[self.iteration] = self.prod_increment_const * (self.tau * (self.iteration + 1))**2
+
+    def dissolution_test(self):
+        self.product_indexes = np.where(self.product_x_nzs)[0]
+
+        product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
+                            in self.product_indexes], dtype=np.uint32)
+
+        where_no_prod = np.where(product == 0)[0]
+        self.product_x_nzs[self.product_indexes[where_no_prod]] = False
+
+        self.product_indexes = np.where(self.product_x_nzs)[0]
+
+        if len(self.product_indexes) > 0:
+            self.dissolution_zhou_wei_no_bsf()
+        else:
+            print("PRODUCT FULLY DISSOLVED AFTER ", self.iteration, " ITERATIONS")
+            sys.exit()
 
     def precipitation_1(self):
         # ONE oxidant and TWO active elements exist. TWO products can be created.
@@ -1917,9 +1966,15 @@ class CellularAutomata:
         self.cur_case.precip_3d_init[:, :, 0:u_bound + 2] = self.cur_case.product.c3d[:, :, 0:u_bound + 2]
 
     def go_around_single_oxid_n(self, around_coords):
-        # flat_neighbours = go_around_bool(self.precipitations3d_init, around_coords)
         flat_neighbours = go_around_bool(self.cur_case.precip_3d_init, around_coords)
         return np.array([np.sum(item) for item in flat_neighbours], dtype=int)
+
+    def go_around_single_oxid_n_single_neigh(self, around_coords):
+        """Does not distinguish between multiple flat neighbours. If at least one flat neighbour P=P1"""
+        flat_neighbours = go_around_bool(self.cur_case.precip_3d_init, around_coords)
+        temp = np.array([np.sum(item) for item in flat_neighbours], dtype=bool)
+
+        return np.array(temp, dtype=np.ubyte)
 
     def go_around_mult_oxid_n(self, around_coords):
         all_neigh = go_around_int(self.cur_case.precip_3d_init, around_coords)
@@ -1927,21 +1982,38 @@ class CellularAutomata:
 
         nonzero_neigh_in_prod = np.array(np.nonzero(neigh_in_prod)[0])
 
-        current_oxid_numb = self.cur_case.product.oxidation_number
-
-        where_full_side_neigh = np.unique(np.where(all_neigh[:, :6].view() == current_oxid_numb)[0])
+        where_full_side_neigh = np.unique(np.where(all_neigh[:, :6].view() == self.cur_case.product.oxidation_number)[0])
 
         only_inside_product = np.setdiff1d(nonzero_neigh_in_prod, where_full_side_neigh, assume_unique=True)
-        # if len(only_inside_product) > 0:
-        #     print()
 
         final_effective_flat_counts = np.zeros(len(all_neigh), dtype=np.ubyte)
         final_effective_flat_counts[where_full_side_neigh] = np.sum(all_neigh[where_full_side_neigh], axis=1)
 
-        # final_effective_flat_counts[only_inside_product] =  \
-        #     neigh_in_prod[only_inside_product] * (7 * self.primary_oxid_numb - 1) / (self.primary_oxid_numb - 1)
+        final_effective_flat_counts[only_inside_product] = 7 * self.cur_case.product.oxidation_number - 1
 
-        final_effective_flat_counts[only_inside_product] = 7 * current_oxid_numb
+        return final_effective_flat_counts
+
+    def go_around_mult_oxid_n_single_neigh(self, around_coords):
+        """Does not distinguish between multiple flat neighbours. If at least one flat neighbour P=P1"""
+
+        all_neigh = go_around_int(self.cur_case.precip_3d_init, around_coords)
+        neigh_in_prod = all_neigh[:, 6].view()
+
+        nonzero_neigh_in_prod = np.array(np.nonzero(neigh_in_prod)[0])
+
+        where_full_side_neigh = np.unique(np.where(all_neigh[:, :6].view() == self.cur_case.product.oxidation_number)[0])
+
+        # if len(where_full_side_neigh) > 0:
+        #     print()
+
+        only_inside_product = np.setdiff1d(nonzero_neigh_in_prod, where_full_side_neigh, assume_unique=True)
+
+        final_effective_flat_counts = np.zeros(len(all_neigh), dtype=np.ubyte)
+
+        # final_effective_flat_counts[where_full_side_neigh] = np.sum(all_neigh[where_full_side_neigh], axis=1)
+        final_effective_flat_counts[where_full_side_neigh] = self.cur_case.product.oxidation_number
+
+        final_effective_flat_counts[only_inside_product] = 7 * self.cur_case.product.oxidation_number - 1
 
         return final_effective_flat_counts
 

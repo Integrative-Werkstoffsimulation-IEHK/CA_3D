@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
                   "active_element": {"primary": {"elem": "Al",
                                                  "diffusion_condition": "Al in Ni Krupp",
-                                                 "mass_concentration": 0.025,
+                                                 "mass_concentration": 0.3,
                                                  "cells_concentration": 0.6},
                                      "secondary": {"elem": "None",
                                                    "diffusion_condition": "Al in Ni Krupp",
@@ -32,7 +32,7 @@ if __name__ == '__main__':
                   "diff_in_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
                   "diff_out_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
                   "temperature": 1100,  # °C
-                  "n_cells_per_axis": 105,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
+                  "n_cells_per_axis": 33,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
                   "n_iterations": 50000,  # must be >= n_cells_per_axis
                   "stride": 20,  # n_iterations / stride = n_iterations for outward diffusion
                   "sim_time": 72000,  # [sek]
@@ -45,7 +45,7 @@ if __name__ == '__main__':
                   "nucleation_probability": 0,
                   "het_factor": 10**0.5,  # not used anymore
 
-                  "dissolution_p": 1 * 10**-10,
+                  "dissolution_p": 1 * 10**-1,
                   "dissolution_n": 2,  # not used anymore
                   "exponent_power": 0,  # not used anymore
                   "block_scale_factor": 1,
@@ -55,22 +55,22 @@ if __name__ == '__main__':
                   "compute_precipitations": True,
                   "diffusion_in_precipitation": False,
 
-                  "save_whole": False,
+                  "save_whole": True,
                   "save_path": 'W:/SIMCA/test_runs_data/',
 
                   "neigh_range": 1,  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
                                      #          and           |  |  |  |  |   |   |   |   |   |
                                      # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
-                  "decompose_precip": False,
+                  "decompose_precip": True,
 
-                  "phase_fraction_lim": 0.002,
+                  "phase_fraction_lim": 1,
                   "hf_deg_lim": 10**10,
                   "lowest_neigh_numb": 16,
                   "final_nucl_prob": 1*10**-3,
 
-                  "min_dissol_prob": 1 * 10 ** -11.00001,
+                  "min_dissol_prob": 1 * 10 ** -10,
                   "het_factor_dissolution": 10 ** 1,  # not used anymore
-                  "final_dissol_prob": 1 * 10 ** 0,
+                  "final_dissol_prob": 1 * 10 ** -1,
                   "final_het_factor_dissol": 10 ** 0,  # not used anymore
                   "final_min_dissol_prob": 1 * 10 ** -4,
 
@@ -78,16 +78,16 @@ if __name__ == '__main__':
                   "product_kinetic_const": 0.0000003,  # not used anymore
                   "error_prod_conc": 1.01,  # not used anymore
 
-                  "init_P1": 1 * 10 ** -0.0000000001,
+                  "init_P1": 1 * 10 ** -1,
                   "final_P1": 1 * 10 ** -6,
                   "b_const_P1": -500,
 
                   "nucl_adapt_function": 3,
                   "dissol_adapt_function": 3,
 
-                  "init_P1_diss": 1 * 10 ** -11,
+                  "init_P1_diss": 1 * 10 ** -1,
                   "final_P1_diss": 1 * 10 ** 0,
-                  "b_const_P1_diss": 600,
+                  "b_const_P1_diss": 1,
 
                   "b_const_P0_nucl": -(10**2),
 
@@ -120,15 +120,24 @@ if __name__ == '__main__':
 
     #  set product
     mid_point_coord = int((user_input["n_cells_per_axis"] - 1)/2)
-    eng.primary_product.c3d[mid_point_coord, mid_point_coord, mid_point_coord] = eng.primary_oxid_numb
-    eng.primary_product.full_c3d[mid_point_coord, mid_point_coord, mid_point_coord] = True
-    eng.product_x_nzs[mid_point_coord] = True
+    eng.primary_product.c3d[mid_point_coord-1:mid_point_coord+2, mid_point_coord-1:mid_point_coord+2,
+    mid_point_coord-1:mid_point_coord+2] = eng.primary_oxid_numb
+    eng.primary_product.full_c3d[mid_point_coord-1:mid_point_coord+2, mid_point_coord-1:mid_point_coord+2,
+    mid_point_coord-1:mid_point_coord+2] = True
+    eng.product_x_nzs[mid_point_coord-1:mid_point_coord+2] = True
 
     eng.primary_oxidant.scale = eng.primary_product
     eng.primary_active.scale = eng.primary_product
 
     # set functions
-    eng.precip_func = eng.precipitation_growth_test_statistic_function
+    eng.precip_func = eng.precipitation_growth_test
+    eng.decomposition = eng.dissolution_test
+
+    if eng.primary_oxid_numb > 1:
+        eng.cases.first.go_around_func_ref = eng.go_around_mult_oxid_n_single_neigh
+    else:
+        eng.cases.first.go_around_func_ref = eng.go_around_single_oxid_n_single_neigh
+
     eng.cur_case = eng.cases.first
 
     try:
