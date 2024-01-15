@@ -32,7 +32,7 @@ if __name__ == '__main__':
                   "diff_in_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
                   "diff_out_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
                   "temperature": 1100,  # °C
-                  "n_cells_per_axis": 105,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
+                  "n_cells_per_axis": 33,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
                   "n_iterations": 50000,  # must be >= n_cells_per_axis
                   "stride": 100,  # n_iterations / stride = n_iterations for outward diffusion
                   "sim_time": 72000,  # [sek]
@@ -45,7 +45,7 @@ if __name__ == '__main__':
                   "nucleation_probability": 0,
                   "het_factor": 10**0.5,  # not used anymore
 
-                  "dissolution_p": 1 * 10**-10,
+                  "dissolution_p": 0.1,
                   "dissolution_n": 2,  # not used anymore
                   "exponent_power": 0,  # not used anymore
                   "block_scale_factor": 1,
@@ -55,7 +55,7 @@ if __name__ == '__main__':
                   "compute_precipitations": True,
                   "diffusion_in_precipitation": False,
 
-                  "save_whole": False,
+                  "save_whole": True,
                   "save_path": 'W:/SIMCA/test_runs_data/Test growth function/',
 
                   "neigh_range": 1,  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
@@ -63,18 +63,18 @@ if __name__ == '__main__':
                                      # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
                   "decompose_precip": False,
 
-                  "phase_fraction_lim": 0.6,
+                  "phase_fraction_lim": 1,
                   "hf_deg_lim": 10**10,
                   "lowest_neigh_numb": 16,
                   "final_nucl_prob": 1*10**-3,
 
-                  "min_dissol_prob": 1 * 10 ** -11.00001,
+                  "min_dissol_prob": 1 * 10 ** -4,
                   "het_factor_dissolution": 10 ** 1,  # not used anymore
                   "final_dissol_prob": 1 * 10 ** 0,
                   "final_het_factor_dissol": 10 ** 0,  # not used anymore
-                  "final_min_dissol_prob": 1 * 10 ** -4,
+                  "final_min_dissol_prob": 1 * 10 ** -2,
 
-                  "max_neigh_numb": 40,
+                  "max_neigh_numb": 0,
                   "product_kinetic_const": 0.0000003,  # not used anymore
                   "error_prod_conc": 1.01,  # not used anymore
 
@@ -82,8 +82,8 @@ if __name__ == '__main__':
                   "final_P1": 1 * 10 ** -6,
                   "b_const_P1": -500,
 
-                  "nucl_adapt_function": 1,
-                  "dissol_adapt_function": 3,
+                  "nucl_adapt_function": 3,
+                  "dissol_adapt_function": 5,
 
                   "init_P1_diss": 1 * 10 ** -11,
                   "final_P1_diss": 1 * 10 ** 0,

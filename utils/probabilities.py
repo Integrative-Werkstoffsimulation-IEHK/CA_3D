@@ -269,7 +269,7 @@ class DissolutionProbabilitiesADJ:
         # self.dissol_prob_b = np.log(param["final_dissol_prob"] / param["dissolution_p"])
 
         self.dissol_prob = ExpFunct(param["n_cells_per_axis"], param["dissolution_p"], param["final_dissol_prob"],
-                                    -1, 1)
+                                    1, 600)
 
         # self.min_dissol_prob_pp = np.full(param["n_cells_per_axis"], param["min_dissol_prob"])
         # self.min_dissol_prob_a = param["min_dissol_prob"]
@@ -328,6 +328,8 @@ class DissolutionProbabilitiesADJ:
             self.adapt_probabilities = self.adapt_dissol_prob_min_dissol_prob_p1
         elif param["dissol_adapt_function"] == 4:
             self.adapt_probabilities = self.adapt_dissol_prob_p1
+        elif param["dissol_adapt_function"] == 5:
+            self.adapt_probabilities = self.dummy_function
 
     def update_constants(self):
         # self.const_a_pp = (self.dissol_prob.values_pp ** self.case_a) / \
@@ -375,8 +377,10 @@ class DissolutionProbabilitiesADJ:
         self.dissol_prob.update_values_at_pos(page_ind, rel_phase_fraction)
         self.p1.update_values_at_pos(page_ind, rel_phase_fraction)
         self.const_b_pp[page_ind] = self.delt_b * rel_phase_fraction + self.b0
-
         self.update_constants()
+
+    def dummy_function(self, page_ind, rel_phase_fraction):
+        pass
 
 
 class ExpFunct:
