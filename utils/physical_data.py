@@ -18,7 +18,7 @@ def get_diff_coeff(temperature, cond):
                   "N in Ni Savva at 1020": 5 * 10 ** -11,
                   "Ti in Ni Savva at 1020": 5 * 10 ** -15,
                   "N in alfa-Fe Rozendaal": 6.6 * 10 ** -7 * exp(-77900 / (8.314 * (273 + temperature))),
-                  "Test": 1 * (10 ** -12),
+                  "Test": 1 * (10 ** -13),
                   "Test_slower": 1.4 * (10 ** -9),
                   "Ti in Ni Krupp boost": 2.13 * 10 ** -13,
                   "Test Diffusion in precipitation": 6.18 * 10 ** -20,

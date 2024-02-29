@@ -12,15 +12,16 @@ if __name__ == '__main__':
                                             "cells_concentration": 0.1}
                               },
 
-                  "active_element": {"primary": {"elem": "Al",
-                                                 "diffusion_condition": "Al in Ni Krupp",
-                                                 "mass_concentration": 0.025,
-                                                 "cells_concentration": 0.3},
+                  "active_element": {"primary": {"elem": "Cr",
+                                                 "diffusion_condition": "Cr in Ni Krupp",
+                                                 "mass_concentration": 0.25,
+                                                 "cells_concentration": 0.4},
                                      "secondary": {"elem": "None",
                                                    "diffusion_condition": "Al in Ni Krupp",
                                                    "mass_concentration": 0.025,
                                                    "cells_concentration": 0.077037037}
                                      },
+
                   "matrix_elem": {"elem": "Ni",
                                   "diffusion_condition": "not_used",
                                   "concentration": 0},
@@ -33,7 +34,7 @@ if __name__ == '__main__':
                   "n_iterations": 300000,  # must be >= n_cells_per_axis
                   "stride": 40,  # n_iterations / stride = n_iterations for outward diffusion
                   "sim_time": 72000,  # [sek]
-                  "size": 500 * (10**-6),  # [m]
+                  "size": 200 * (10**-6),  # [m]
 
                   "threshold_inward": 1,
                   "threshold_outward": 1,
@@ -53,7 +54,7 @@ if __name__ == '__main__':
                   "diffusion_in_precipitation": False,
 
                   "save_whole": False,
-                  "save_path": 'W:/SIMCA/test_runs_data/',
+                  "save_path": 'C:/test_runs_data/',
 
                   "neigh_range": 1,  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
                                      #          and           |  |  |  |  |   |   |   |   |   |
@@ -104,7 +105,7 @@ if __name__ == '__main__':
                 eng.save_results()
 
         except (Exception,):
-            backup_user_input["save_path"] = "C:/Users/aseregin/Safe_folder_if_server_crash/"
+            backup_user_input["save_path"] = "C:/test_runs_data/"
             eng.utils = Utils(backup_user_input)
             eng.utils.create_database()
             eng.utils.generate_param()
@@ -112,7 +113,7 @@ if __name__ == '__main__':
             print()
             print("____________________________________________________________")
             print("Saving To Standard Folder Crashed!!!")
-            print("Saved To ->> C:/Users/aseregin/Safe_folder_if_server_crash/!!!")
+            print("Saved To ->> C:/test_runs_data/!!!")
             print("____________________________________________________________")
             print()
 
@@ -132,11 +133,13 @@ if __name__ == '__main__':
         print()
         traceback.print_exc()
 
-    # conz_list = [0.25, 0.55, 0.6, 0.65, 0.75, 0.8, 0.85]
-    # for conc in conz_list:
+    # conz_list = [0.4]
+    # wt_conz_list = [0.1]
+    #
+    # for conc, wt_conz in zip(conz_list, wt_conz_list):
     #     backup_user_input = copy.deepcopy(user_input)
     #     backup_user_input["active_element"]["primary"]["cells_concentration"] = conc
-    #
+    #     backup_user_input["active_element"]["primary"]["mass_concentration"] = wt_conz
     #     eng = CellularAutomata(user_input=backup_user_input)
     #
     #     try:
@@ -147,7 +150,7 @@ if __name__ == '__main__':
     #                 eng.save_results()
     #
     #         except (Exception, ):
-    #             backup_user_input["save_path"] = "C:/Users/aseregin/Safe_folder_if_server_crash/"
+    #             backup_user_input["save_path"] = "C:/test_runs_data/"
     #             eng.utils = Utils(backup_user_input)
     #             eng.utils.create_database()
     #             eng.utils.generate_param()
@@ -155,7 +158,7 @@ if __name__ == '__main__':
     #             print()
     #             print("____________________________________________________________")
     #             print("Saving To Standard Folder Crashed!!!")
-    #             print("Saved To ->> C:/Users/aseregin/Safe_folder_if_server_crash/!!!")
+    #             print("Saved To ->> C:/test_runs_data/!!!")
     #             print("____________________________________________________________")
     #             print()
     #

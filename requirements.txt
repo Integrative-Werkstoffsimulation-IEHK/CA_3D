@@ -1,7 +1,6 @@
 matplotlib
 numpy
 progressbar
-progressbar2==4.0.0   
-pyvoro
+progressbar2==4.0.0
 scipy
 numba

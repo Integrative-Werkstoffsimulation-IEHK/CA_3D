@@ -1,7 +1,7 @@
 import time
 import numpy as np
 import random
-from microstructure import voronoi
+# from microstructure import voronoi
 from utils.numba_functions import *
 
 
@@ -116,12 +116,13 @@ class ActiveElem:
 
         ind = np.where(self.cells[2] == self.cells_per_axis)[0]
         # closed right bound (reflection)____________
-        self.cells[2, ind] = self.cells_per_axis - 2
-        self.dirs[2, ind] = -1
+        # self.cells[2, ind] = self.cells_per_axis - 2
+        # self.dirs[2, ind] = -1
         # ___________________________________________
         # open right bound___________________________
-        # self.cells = np.delete(self.cells, ind, 1)
-        # self.dirs = np.delete(self.dirs, ind, 1)
+        self.cells = np.delete(self.cells, ind, 1)
+        self.dirs = np.delete(self.dirs, ind, 1)
+        self.fill_first_page()
         # ___________________________________________
         # periodic____________________________________
         # self.cells[2, ind] = 0

@@ -47,9 +47,12 @@ class CellularAutomata:
             self.primary_oxidant = elements.OxidantElem(self.param["oxidant"]["primary"], self.utils)
             self.cases.first.oxidant = self.primary_oxidant
             self.cases.second.oxidant = self.primary_oxidant
-            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
-            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk  # CHANGE!!!!!!
-
+            #
+            # ---------------------------------------------------
+            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
+            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk  # CHANGE!!!!!!
+            # ---------------------------------------------------
+            #
             if self.param["secondary_oxidant_exists"]:
                 self.secondary_oxidant = elements.OxidantElem(self.param["oxidant"]["secondary"], self.utils)
                 self.cases.third.oxidant = self.secondary_oxidant
@@ -60,13 +63,22 @@ class CellularAutomata:
             self.primary_active = elements.ActiveElem(self.param["active_element"]["primary"])
             self.cases.first.active = self.primary_active
             self.cases.third.active = self.primary_active
-            self.primary_active.diffuse = self.primary_active.diffuse_with_scale
-            # self.primary_active.diffuse = self.primary_active.diffuse_bulk  # CHANGE!!!!!!
-
+            #
+            # ---------------------------------------------------
+            # self.primary_active.diffuse = self.primary_active.diffuse_with_scale
+            self.primary_active.diffuse = self.primary_active.diffuse_bulk  # CHANGE!!!!!!
+            # ---------------------------------------------------
+            #
             if self.param["secondary_active_element_exists"]:
                 self.secondary_active = elements.ActiveElem(self.param["active_element"]["secondary"])
                 self.cases.second.active = self.secondary_active
                 self.cases.fourth.active = self.secondary_active
+                #
+                # ---------------------------------------------------
+                # self.secondary_active.diffuse = self.secondary_active.diffuse_with_scale
+                self.secondary_active.diffuse = self.secondary_active.diffuse_bulk  # CHANGE!!!!!!
+                # ---------------------------------------------------
+                #
 
         # setting objects for precipitations
         if self.param["compute_precipitations"]:
@@ -99,8 +111,8 @@ class CellularAutomata:
                 self.cases.second.product = self.secondary_product
                 self.cases.first.to_check_with = self.secondary_product
                 self.cases.second.to_check_with = self.primary_product
-                self.precip_func = self.precipitation_1_cells
-                self.calc_precip_front = self.calc_precip_front_1
+                self.precip_func = self.precipitation_second_case_cells
+                # self.calc_precip_front = self.calc_precip_front_1
                 # self.decomposition = self.decomposition_0
 
                 self.primary_oxid_numb = self.param["product"]["primary"]["oxidation_number"]
@@ -113,32 +125,44 @@ class CellularAutomata:
                 if self.cases.first.product.oxidation_number == 1:
                     self.cases.first.go_around_func_ref = self.go_around_single_oxid_n
                     self.cases.first.fix_init_precip_func_ref = self.fix_init_precip_bool
-                    self.cases.first.precip_3d_init = np.full(
-                        (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
-                        False, dtype=bool)
+                    my_type = bool
+                    # self.cases.first.precip_3d_init = np.full(
+                    #     (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
+                    #     False, dtype=bool)
                 else:
                     self.cases.first.go_around_func_ref = self.go_around_mult_oxid_n
                     self.cases.first.fix_init_precip_func_ref = self.fix_init_precip_int
-                    self.cases.first.precip_3d_init = np.full(
-                        (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
-                        0, dtype=np.ubyte)
+                    my_type = np.ubyte
+                    # self.cases.first.precip_3d_init = np.full(
+                    #     (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
+                    #     0, dtype=np.ubyte)
+
+                self.cases.first.precip_3d_init = np.full(
+                    (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
+                    0, dtype=my_type)
 
                 if self.cases.second.product.oxidation_number == 1:
                     self.cases.second.go_around_func_ref = self.go_around_single_oxid_n
                     self.cases.second.fix_init_precip_func_ref = self.fix_init_precip_bool
-                    self.cases.second.precip_3d_init = np.full(
-                        (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
-                        False, dtype=bool)
+                    my_type = bool
+                    # self.cases.second.precip_3d_init = np.full(
+                    #     (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
+                    #     False, dtype=bool)
                 else:
                     self.cases.second.go_around_func_ref = self.go_around_mult_oxid_n
                     self.cases.second.fix_init_precip_func_ref = self.fix_init_precip_int
-                    self.cases.second.precip_3d_init = np.full(
-                        (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
-                        0, dtype=np.ubyte)
+                    my_type = np.ubyte
+                    # self.cases.second.precip_3d_init = np.full(
+                    #     (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
+                    #     0, dtype=np.ubyte)
+                self.cases.second.precip_3d_init = np.full(
+                    (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
+                    0, dtype=my_type)
 
             else:
                 # self.precip_func = self.precipitation_first_case_no_neigbouring_area  # CHANGE!!!!!!!!!!!!
-                self.precip_func = self.precipitation_first_case
+                # self.precip_func = self.precipitation_first_case
+                self.precip_func = self.precipitation_first_case_no_growth
                 # self.precip_func = self.precipitation_0
                 # self.calc_precip_front = self.calc_precip_front_0
                 self.decomposition = self.dissolution_0_cells
@@ -235,8 +259,11 @@ class CellularAutomata:
                                    [12, 3, 4, 5, 20, 23, 25],
                                    [13, 3, 4, 2, 21, 24, 25]]
 
-            self.nucl_prob = probabilities.NucleationProbabilitiesADJ(self.param)
-            self.dissol_prob = probabilities.DissolutionProbabilitiesADJ(self.param)
+
+            # UNCOMENT!!!!_______________________________________________________
+            # self.nucl_prob = probabilities.NucleationProbabilitiesADJ(self.param)
+            # self.dissol_prob = probabilities.DissolutionProbabilitiesADJ(self.param)
+            # ________________________________________________________________________
 
             self.furthest_index = 0
             self.comb_indexes = None
@@ -264,8 +291,8 @@ class CellularAutomata:
             if self.param["compute_precipitations"]:
                 self.precip_func()
                 # self.dissolution_0_cells()
-            if self.param["decompose_precip"]:
-                self.decomposition()
+            # if self.param["decompose_precip"]:
+            #     self.decomposition()
             if self.param["inward_diffusion"]:
                 self.diffusion_inward()
             if self.param["outward_diffusion"]:
@@ -273,6 +300,9 @@ class CellularAutomata:
 
             if self.param["save_whole"]:
                 self.save_results_only_prod()
+
+            if self.iteration % 100 == 0:
+                self.calc_precip_front_2_cells()
 
         end = time.time()
         self.elapsed_time = (end - self.begin)
@@ -677,6 +707,22 @@ class CellularAutomata:
 
         self.comb_indexes = np.unique(np.concatenate((self.comb_indexes, where_solub_prod)))
 
+    def get_combi_ind_two_products(self, current_active):
+        oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
+                            in range(self.furthest_index + 1)], dtype=np.uint32)
+        active = np.array([np.sum(current_active.c3d[:, :, plane_ind]) for plane_ind
+                           in range(self.furthest_index + 1)], dtype=np.uint32)
+
+        oxidant_indexes = np.where(oxidant > 0)[0]
+        active_indexes = np.where(active > 0)[0]
+
+        min_act = active_indexes.min(initial=self.cells_per_axis)
+        if min_act < self.cells_per_axis:
+            indexs = np.where(oxidant_indexes >= min_act - 1)[0]
+            self.comb_indexes = oxidant_indexes[indexs]
+        else:
+            self.comb_indexes = [self.furthest_index]
+
     def get_combi_ind_atomic_two_products(self):
         oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
                             in range(self.furthest_index + 1)], dtype=np.uint32)
@@ -804,7 +850,7 @@ class CellularAutomata:
             self.cur_case = self.cases.first
             # self.nucl_prob.adapt_probabilities(self.comb_indexes, self.rel_prod_fraction[self.comb_indexes],
             #                                    self.gamma_primes[self.comb_indexes])
-            self.nucl_prob.adapt_probabilities(self.comb_indexes, self.gamma_primes[self.comb_indexes])
+            # self.nucl_prob.adapt_probabilities(self.comb_indexes, self.gamma_primes[self.comb_indexes])
             self.cases.first.fix_init_precip_func_ref(self.furthest_index)
             self.precip_step()
 
@@ -1085,6 +1131,76 @@ class CellularAutomata:
         #     self.case = 1
         #     self.precip_step(plane_x_ind)
 
+    def precipitation_second_case_cells(self):
+        # ONE oxidant and TWO active elements exist. TWO products can be created.
+        self.furthest_index = self.primary_oxidant.calc_furthest_index()
+        self.primary_oxidant.transform_to_3d()
+
+        if self.iteration % self.param["stride"] == 0:
+            if self.furthest_index >= self.curr_max_furthest:
+                self.curr_max_furthest = self.furthest_index
+            self.primary_active.transform_to_3d(self.curr_max_furthest)
+            self.secondary_active.transform_to_3d(self.curr_max_furthest)
+
+        self.get_combi_ind_two_products(self.secondary_active)
+
+        # self.furthest_index = self.primary_oxidant.calc_furthest_index()
+        #
+        # oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
+        #                     in range(self.furthest_index + 1)], dtype=np.uint32)
+        # active = np.array([np.sum(self.primary_active.c3d[:, :, plane_ind]) for plane_ind
+        #                      in range(self.furthest_index + 1)], dtype=np.uint32)
+        # s_active = np.array([np.sum(self.secondary_active.c3d[:, :, plane_ind]) for plane_ind
+        #                    in range(self.furthest_index + 1)], dtype=np.uint32)
+        #
+        # oxidant_indexes = np.where(oxidant > 0)[0]
+        # active_indexes = np.where(active > 0)[0]
+        #
+        # min_act = active_indexes.min(initial=self.cells_per_axis)
+        # if min_act < self.cells_per_axis:
+        #     indexs = np.where(oxidant_indexes >= min_act - 1)[0]
+        #     self.comb_indexes = oxidant_indexes[indexs]
+        # else:
+        #     self.comb_indexes = [self.furthest_index]
+        #
+        #
+        # np.where(active < )
+        self.get_combi_ind_two_products(self.primary_active)
+
+        if len(self.comb_indexes) > 0:
+            self.cur_case = self.cases.first
+            self.precip_step_two_products()
+
+        if len(self.comb_indexes) > 0:
+            self.cur_case = self.cases.second
+            self.precip_step_two_products()
+
+        # min_act = primary_active_indexes.min(initial=self.cells_per_axis + 10)
+        # if min_act < self.cells_per_axis:
+        #     indexs = np.where(oxidant_indexes >= min_act)[0]
+        #     self.comb_indexes = oxidant_indexes[indexs]
+        # else:
+        #     self.comb_indexes = [furthest_index]
+        #
+        # if len(self.comb_indexes) > 0:
+        #     self.cur_case = self.cases.first
+        #     self.precip_step_two_products()
+        #
+        # if len(primary_active_indexes_neg) > 0:
+        #     secondary_active_indexes = np.array(np.intersect1d(secondary_active_indexes, primary_active_indexes_neg))
+        #     min_act = secondary_active_indexes.min(initial=self.cells_per_axis + 10)
+        #     if min_act < self.cells_per_axis:
+        #         indexs = np.where(oxidant_indexes >= min_act)[0]
+        #         self.comb_indexes = oxidant_indexes[indexs]
+        #     else:
+        #         self.comb_indexes = [furthest_index]
+        #
+        #     if len(self.comb_indexes) > 0:
+        #         self.cur_case = self.cases.second
+        #         self.precip_step_two_products()
+
+        self.primary_oxidant.transform_to_descards()
+
     def precipitation_1_cells(self):
         # ONE oxidant and TWO active elements exist. TWO products can be created.
         furthest_index = self.primary_oxidant.calc_furthest_index()
@@ -1126,10 +1242,11 @@ class CellularAutomata:
                                       self.param["active_element"]["secondary"]["n_ELEM"] * al_sec_act)
 
         oxidant_indexes = np.where(oxidant > 0)[0]
-        primary_active_indexes = np.where(primary_active > 1)[0]
+        primary_active_indexes = np.where(primary_active > 0)[0]
         primary_active_indexes_neg =\
             np.delete(range(furthest_index + 1), primary_active_indexes)
-        secondary_active_indexes = np.where(secondary_active > 1)[0]
+
+        secondary_active_indexes = np.where(secondary_active > 0)[0]
 
         self.get_combi_ind_atomic_two_products()
 
@@ -1288,7 +1405,7 @@ class CellularAutomata:
                         # temp_ind = np.where(in_gb)[0]
                         # oxidant_cells = oxidant_cells[temp_ind]
                         # ______________________________________________________________________________________
-                        self.ci_single_two_products(oxidant_cells)
+                        self.ci_single_two_products_no_growth(oxidant_cells)
 
     def precip_step_no_growth(self):
         """
@@ -1302,6 +1419,7 @@ class CellularAutomata:
                     oxidant_cells = np.vstack((oxidant_cells, np.full(len(oxidant_cells[0]), plane_index, dtype=np.short)))
                     oxidant_cells = oxidant_cells.transpose()
 
+                    # BACK UNCOMMENT!!!!
                     exists = check_at_coord(self.cur_case.product.full_c3d, oxidant_cells)  # precip on place of oxidant!
                     temp_ind = np.where(exists)[0]
                     oxidant_cells = np.delete(oxidant_cells, temp_ind, 0)
@@ -1681,6 +1799,53 @@ class CellularAutomata:
                 # dissolution function
                 self.cur_case.prod_indexes[seeds[2][0]] = True
 
+    def ci_single_two_products_no_growth(self, seeds):
+        all_arounds = self.utils.calc_sur_ind_formation(seeds, self.cur_case.active.c3d.shape[2] - 1)
+        neighbours = go_around_bool(self.cur_case.active.c3d, all_arounds)
+        arr_len_out = np.array([np.sum(item) for item in neighbours], dtype=np.ubyte)
+        temp_ind = np.where(arr_len_out >= self.threshold_outward)[0]
+
+        if len(temp_ind) > 0:
+            seeds = seeds[temp_ind]
+            neighbours = neighbours[temp_ind]
+            all_arounds = all_arounds[temp_ind]
+            out_to_del = np.array(np.nonzero(neighbours))
+            start_seed_index = np.unique(out_to_del[0], return_index=True)[1]
+            to_del = np.array([out_to_del[1, indx:indx + self.threshold_outward] for indx in start_seed_index],
+                              dtype=np.ubyte)
+            coord = np.array([all_arounds[seed_ind][point_ind] for seed_ind, point_ind in enumerate(to_del)],
+                             dtype=np.short)
+            coord = np.reshape(coord, (len(coord) * self.threshold_outward, 3))
+
+            # exists = check_at_coord(self.objs[self.case]["product"].full_c3d, coord)  # precip on place of active!
+            # exists = check_at_coord(self.objs[self.case]["product"].full_c3d, seeds)  # precip on place of oxidant!
+
+            # temp_ind = np.where(exists)[0]
+            # coord = np.delete(coord, temp_ind, 0)
+            # seeds = np.delete(seeds, temp_ind, 0)
+
+            # if self.objs[self.case]["to_check_with"] is not None:
+            #     # to_check_min_self = np.array(self.cumul_product - product.c3d, dtype=np.ubyte)
+            #     exists = np.array([self.objs[self.case]["to_check_with"].c3d[point[0], point[1], point[2]]
+            #                        for point in coord], dtype=np.ubyte)
+            #     # exists = np.array([to_check_min_self[point[0], point[1], point[2]] for point in coord],
+            #     #                   dtype=np.ubyte)
+            #     temp_ind = np.where(exists > 0)[0]
+            #     coord = np.delete(coord, temp_ind, 0)
+            #     seeds = np.delete(seeds, temp_ind, 0)
+
+            coord = coord.transpose()
+            seeds = seeds.transpose()
+
+            self.cur_case.active.c3d[coord[0], coord[1], coord[2]] -= 1
+            self.cur_case.oxidant.c3d[seeds[0], seeds[1], seeds[2]] -= 1
+
+            # self.objs[self.case]["product"].c3d[coord[0], coord[1], coord[2]] += 1  # precip on place of active!
+            self.cur_case.product.c3d[seeds[0], seeds[1], seeds[2]] += 1  # precip on place of oxidant!
+
+            # self.cur_case.product.fix_full_cells(coord)  # precip on place of active!
+            self.cur_case.product.fix_full_cells(seeds)  # precip on place of oxidant!
+
     def ci_single_no_neigbouring_area(self, seeds):
         temp_ind, counts_active = check_at_coord_new(self.cur_case.active.c3d, seeds)
         if len(temp_ind) > 0:
@@ -1884,6 +2049,40 @@ class CellularAutomata:
                 self.utils.db.insert_precipitation_front(sqr_time, position, "s")
                 break
 
+    def calc_precip_front_2_cells(self):
+        """
+        :param iteration: current iteration (serves as a current simulation time)
+        """
+        product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
+                            in range(self.cells_per_axis)], dtype=np.uint32)
+
+        secondary_product = np.array([np.sum(self.secondary_product.c3d[:, :, plane_ind]) for plane_ind
+                            in range(self.cells_per_axis)], dtype=np.uint32)
+
+        product = product / (self.param["n_cells_per_axis"] ** 2)
+        secondary_product = secondary_product / (self.param["n_cells_per_axis"] ** 2)
+
+        threshold = self.param["active_element"]["primary"]["cells_concentration"]
+        secondary_threshold = self.param["active_element"]["secondary"]["cells_concentration"]
+
+        for rev_index, precip_conc in enumerate(np.flip(product)):
+            if precip_conc > threshold / 2:
+                position = (len(product) - 1 - rev_index) * self.utils.param["size"] * 10 ** 6 \
+                           / self.cells_per_axis
+                sqr_time = ((self.iteration + 1) * self.utils.param["sim_time"] / (self.n_iter * 3600)) ** (1 / 2)
+                self.utils.db.insert_precipitation_front(sqr_time, position, "p")
+                self.utils.db.conn.commit()
+                break
+
+        for rev_index, precip_conc in enumerate(np.flip(secondary_product)):
+            if precip_conc > secondary_threshold / 2:
+                position = (len(secondary_product) - 1 - rev_index) * self.utils.param["size"] * 10 ** 6 \
+                           / self.cells_per_axis
+                sqr_time = ((self.iteration + 1) * self.utils.param["sim_time"] / (self.n_iter * 3600)) ** (1 / 2)
+                self.utils.db.insert_precipitation_front(sqr_time, position, "s")
+                self.utils.db.conn.commit()
+                break
+
     def calc_precipitation_front_only_cells(self):
         """
         Calculating a position of a precipitation front, considering only cells concentrations without any scaling!
@@ -1899,7 +2098,7 @@ class CellularAutomata:
         threshold = self.param["active_element"]["primary"]["cells_concentration"]
 
         for rev_index, precip_conc in enumerate(np.flip(product)):
-            if precip_conc > threshold / 100:
+            if precip_conc > threshold / 2:
                 position = (len(product) - 1 - rev_index) * self.utils.param["size"] * 10 ** 6 \
                            / self.cells_per_axis
                 sqr_time = ((self.iteration + 1) * self.utils.param["sim_time"] / (self.n_iter * 3600)) ** (1 / 2)
