@@ -8,7 +8,7 @@ if __name__ == '__main__':
 
     user_input = {"oxidant": {"primary": {"elem": "O",
                                           "diffusion_condition": "O in Ni Krupp",
-                                          "cells_concentration": 0.6},
+                                          "cells_concentration": 0.1},
                               "secondary": {"elem": "None",
                                             "diffusion_condition": "N in Ni Krupp",
                                             "cells_concentration": 0.1}
@@ -16,8 +16,8 @@ if __name__ == '__main__':
 
                   "active_element": {"primary": {"elem": "Al",
                                                  "diffusion_condition": "Al in Ni Krupp",
-                                                 "mass_concentration": 0.3,
-                                                 "cells_concentration": 0.6},
+                                                 "mass_concentration": 0.03,
+                                                 "cells_concentration": 0.1},
                                      "secondary": {"elem": "None",
                                                    "diffusion_condition": "Al in Ni Krupp",
                                                    "mass_concentration": 0.025,
@@ -32,7 +32,7 @@ if __name__ == '__main__':
                   "diff_in_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
                   "diff_out_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
                   "temperature": 1100,  # °C
-                  "n_cells_per_axis": 33,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
+                  "n_cells_per_axis": 501,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
                   "n_iterations": 50000,  # must be >= n_cells_per_axis
                   "stride": 20,  # n_iterations / stride = n_iterations for outward diffusion
                   "sim_time": 72000,  # [sek]
@@ -45,8 +45,8 @@ if __name__ == '__main__':
                   "nucleation_probability": 0,
                   "het_factor": 10**0.5,  # not used anymore
 
-                  "dissolution_p": 1 * 10**-1,
-                  "dissolution_n": 2,  # not used anymore
+                  "dissolution_p": 1 * 10**-0,
+                  "dissolution_n": 1400,
                   "exponent_power": 0,  # not used anymore
                   "block_scale_factor": 1,
 
@@ -55,8 +55,8 @@ if __name__ == '__main__':
                   "compute_precipitations": True,
                   "diffusion_in_precipitation": False,
 
-                  "save_whole": True,
-                  "save_path": 'W:/SIMCA/test_runs_data/',
+                  "save_whole": False,
+                  "save_path": 'C:/test_runs_data/',
 
                   "neigh_range": 1,  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
                                      #          and           |  |  |  |  |   |   |   |   |   |
@@ -68,11 +68,11 @@ if __name__ == '__main__':
                   "lowest_neigh_numb": 16,
                   "final_nucl_prob": 1*10**-3,
 
-                  "min_dissol_prob": 1 * 10 ** -10,
+                  "min_dissol_prob": 1 * 10 ** -8,
                   "het_factor_dissolution": 10 ** 1,  # not used anymore
-                  "final_dissol_prob": 1 * 10 ** -1,
+                  "final_dissol_prob": 1 * 10 ** -0,
                   "final_het_factor_dissol": 10 ** 0,  # not used anymore
-                  "final_min_dissol_prob": 1 * 10 ** -4,
+                  "final_min_dissol_prob": 1 * 10 ** -2,
 
                   "max_neigh_numb": 0,
                   "product_kinetic_const": 0.0000003,  # not used anymore
@@ -83,15 +83,15 @@ if __name__ == '__main__':
                   "b_const_P1": -500,
 
                   "nucl_adapt_function": 3,
-                  "dissol_adapt_function": 3,
+                  "dissol_adapt_function": 5,
 
-                  "init_P1_diss": 1 * 10 ** -1,
+                  "init_P1_diss": 9 * 10 ** -1,
                   "final_P1_diss": 1 * 10 ** 0,
                   "b_const_P1_diss": 1,
 
-                  "b_const_P0_nucl": -(10**2),
+                  "b_const_P0_nucl": 0.24,
 
-                  "bend_b_init": -0.00001,
+                  "bend_b_init": 0.6,
                   "bend_b_final": -0.00001,
 
                   }
@@ -130,14 +130,18 @@ if __name__ == '__main__':
     eng.primary_active.scale = eng.primary_product
 
     # set functions
-    eng.precip_func = eng.precipitation_growth_test
-    eng.decomposition = eng.dissolution_test
+    eng.precip_func = eng.precipitation_growth_test_with_p1
+    # eng.check_intersection = eng.ci_single_only_p1
+    eng.check_intersection = eng.ci_single
+
+    eng.decomposition = eng.dissolution_test # the function which was caled after is self.dissolution_zhou_wei_original()!!!!
 
     if eng.primary_oxid_numb > 1:
         eng.cases.first.go_around_func_ref = eng.go_around_mult_oxid_n_single_neigh
     else:
         eng.cases.first.go_around_func_ref = eng.go_around_single_oxid_n_single_neigh
 
+    # set case
     eng.cur_case = eng.cases.first
 
     try:
@@ -148,7 +152,7 @@ if __name__ == '__main__':
                 eng.save_results()
 
         except (Exception,):
-            backup_user_input["save_path"] = "C:/Users/aseregin/Safe_folder_if_server_crash/"
+            backup_user_input["save_path"] = "C:/test_runs_data/"
             eng.utils = Utils(backup_user_input)
             eng.utils.create_database()
             eng.utils.generate_param()
@@ -156,16 +160,16 @@ if __name__ == '__main__':
             print()
             print("____________________________________________________________")
             print("Saving To Standard Folder Crashed!!!")
-            print("Saved To ->> C:/Users/aseregin/Safe_folder_if_server_crash/!!!")
+            print("Saved To ->> C:/test_runs_data/!!!")
             print("____________________________________________________________")
             print()
 
-            # data = np.column_stack(
-            #     (np.arange(eng.iteration), eng.cumul_prod[:eng.iteration]))
-            # output_file_path = "W:/SIMCA/test_runs_data/" + eng.utils.param["db_id"] + ".txt"
-            # with open(output_file_path, "w") as f:
-            #     for row in data:
-            #         f.write(" ".join(map(str, row)) + "\n")
+        data = np.column_stack(
+            (np.arange(eng.iteration), eng.cumul_prod[:eng.iteration]/(eng.param["n_cells_per_axis"]**3)))
+        output_file_path = "C:/test_runs_data/" + eng.utils.param["db_id"] + ".txt"
+        with open(output_file_path, "w") as f:
+            for row in data:
+                f.write(" ".join(map(str, row)) + "\n")
 
         eng.insert_last_it()
         eng.utils.db.conn.commit()

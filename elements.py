@@ -212,6 +212,7 @@ class ActiveElem:
         # periodic____________________________________
         # self.cells[2, ind] = 0
         # ____________________________________________
+        self.fill_first_page()
 
     def fill_first_page(self):
         # generating new particles on the diffusion surface (X = self.n_cells_per_axis)
@@ -425,14 +426,17 @@ class OxidantElem:
         self.cells = np.add(self.cells, self.dirs, casting="unsafe")
         # adjusting a coordinates of side points for correct shifting
         ind = np.where(self.cells[2] < 0)[0]
-        # closed left bound (reflection)
+        # closed left bound (reflection)_______________________
         # self.cells[2, ind] = 0
         # self.dirs[2, ind] = 1
-        # _______________________
+        # _____________________________________________________
         # open left bound___________________________
         self.cells = np.delete(self.cells, ind, 1)
         self.dirs = np.delete(self.dirs, ind, 1)
         # __________________________________________
+        # periodic left bound____________________________________
+        # self.cells[2, ind] = self.cells_per_axis - 1
+        # _______________________________________________________
 
         self.cells[0, np.where(self.cells[0] <= -1)] = self.cells_per_axis - 1
         self.cells[0, np.where(self.cells[0] >= self.cells_per_axis)] = 0
@@ -441,19 +445,22 @@ class OxidantElem:
 
         ind = np.where(self.cells[2] >= self.cells_per_axis)
         # closed right bound (reflection)____________
-        self.cells[2, ind] = self.cells_per_axis - 2
-        self.dirs[2, ind] = -1
+        # self.cells[2, ind] = self.cells_per_axis - 2
+        # self.dirs[2, ind] = -1
         # ___________________________________________
         # open right bound___________________________
-        # self.cells = np.delete(self.cells, ind, 1)
-        # self.dirs = np.delete(self.dirs, ind, 1)
+        self.cells = np.delete(self.cells, ind, 1)
+        self.dirs = np.delete(self.dirs, ind, 1)
         # ___________________________________________
+        # periodic right bound____________________________________
+        # self.cells[2, ind] = 0
+        # ________________________________________________________
 
-        # for _ in range(self.diff_boost_steps):
-        #     self.diffuse_interface()
-
+        # UNCOMMENT!!!!
+        # ___________________________________
         self.current_count = len(np.where(self.cells[2] == 0)[0])
         self.fill_first_page()
+        # ___________________________________
 
     def diffuse_interface(self):
         """

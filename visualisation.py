@@ -21,7 +21,7 @@ class Visualisation:
         self.last_i = None
         self.oxid_numb = None
         self.generate_param_from_db()
-        self.cell_size = 5
+        self.cell_size = 50
         self.linewidth = 0.3
         self.alpha = 1
         self.cm = {1: np.array([255, 200, 200])/255.0,
@@ -99,6 +99,7 @@ ELAPSED TIME: {message}
 -----------------------------------------------------------------""")
 
     def animate_3d(self, animate_separate=False, const_cam_pos=False):
+        self.param["save_whole"] = True
         if self.param["save_whole"]:
             def animate_sep(iteration):
                 ax_inward.cla()
@@ -476,14 +477,14 @@ ELAPSED TIME: {message}
             #             ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='deeppink',
             #                            s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
             #                        alpha=self.alpha)
-            if self.param["outward_diffusion"]:
-                self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
-                items = np.array(self.c.fetchall())
-                if np.any(items):
-                    items = items * rescale_factor
-                    ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='g',
-                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
-                                   alpha=self.alpha)
+            # if self.param["outward_diffusion"]:
+            #     self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
+            #     items = np.array(self.c.fetchall())
+            #     if np.any(items):
+            #         items = items * rescale_factor
+            #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='g',
+            #                        s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
+            #                        alpha=self.alpha)
                 # if self.param["secondary_active_element_exists"]:
                 #     self.c.execute("SELECT * from secondary_active_iter_{}".format(iteration))
                 #     items = np.array(self.c.fetchall())
@@ -629,8 +630,8 @@ ELAPSED TIME: {message}
         ax_all.set_zlabel("Z [µm]", **csfont, fontsize=20*cm)
 
         fig.set_size_inches((9 * cm, 9 * cm))
-        # plt.show()
-        plt.savefig(f'C:/test_runs_data/{iteration}.jpeg', dpi=500)
+        plt.show()
+        # plt.savefig(f'C:/test_runs_data/{iteration}.jpeg', dpi=500)
 
     def plot_2d(self, plot_separate=False, iteration=None, slice_pos=None):
         if iteration is None:
@@ -831,6 +832,7 @@ ELAPSED TIME: {message}
         plt.show()
 
     def animate_2d(self, plot_separate=False, slice_pos=None):
+        self.param["save_whole"] = True
         if self.param["save_whole"]:
             def animate_sep(iteration):
                 if self.param["inward_diffusion"]:
@@ -1557,10 +1559,10 @@ ELAPSED TIME: {message}
         # plt.savefig(f'{self.db_name}_{iteration}.jpeg')
 
         # plt.savefig(f'W:/SIMCA/test_runs_data/{iteration}.jpeg', dpi=500)
-
-        for x_pos, inw, outw, prod, sout, sprod in zip(x, inward, outward, primary_product, soutward, secondary_product):
-
-            print(x_pos, " ", inw, " ", outw,  " ", prod, " ", sout, " ", sprod)
+        #
+        # for x_pos, inw, outw, prod, sout, sprod in zip(x, inward, outward, primary_product, soutward, secondary_product):
+        #
+        #     print(x_pos, " ", inw, " ", outw,  " ", prod, " ", sout, " ", sprod)
 
         plt.show()
 

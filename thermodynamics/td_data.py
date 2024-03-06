@@ -1,6 +1,20 @@
 import numpy as np
 
 
+class Component:
+    def __init__(self, constitution, amount):
+        self.constitution = constitution
+        self.amount = amount
+
+
+class CompPool:
+    def __init__(self):
+        self.primary = None
+        self.secondary = None
+        self.ternary = None
+        self.quaternary = None
+
+
 class TDATA:
     def __init__(self):
         self.lookup_table = {}
@@ -32,14 +46,22 @@ class TDATA:
             for al in al_range:
                 for o in o_range:
                     sum_conc = cr + al + o
-                    if cr == 0 or al == 0 or o == 0:
+                    if cr == 0 and al == 0 and o == 0:
                         continue
                     elif sum_conc > 100:
                         continue
-                    else:
+                    elif al >= cr and o != 0:
                         # Assign the corresponding probability for the composition values
-                        self.lookup_table[cr, al, o, sum_conc] = 1.0
+                        new_comp_pool = CompPool()
+                        new_comp_pool.primary = Component("Al2O3", 1)
+                        new_comp_pool.secondary = Component("Cr2O3", 0)
+                        self.lookup_table[cr, al, o, sum_conc] = new_comp_pool
                         # print(f"{cr} {al} {o:.5f}")
+                    elif cr > al and o != 0:
+                        new_comp_pool = CompPool()
+                        new_comp_pool.primary = Component("Al2O3", 0)
+                        new_comp_pool.secondary = Component("Cr2O3", 1)
+                        self.lookup_table[cr, al, o, sum_conc] = new_comp_pool
 
 
 if __name__ == '__main__':
@@ -54,5 +76,10 @@ if __name__ == '__main__':
         # Iterate through the dictionary items and write them to the file
         for key, value in test_data.lookup_table.items():
             column1, column2, column3, sum_conc = key
-            file.write(f"{column1} {column2} {column3} {sum_conc} {value}\n")
+            p_val = value.primary.constitution
+            p_val_a = value.primary.amount
 
+            s_val = value.secondary.constitution
+            s_val_a = value.secondary.amount
+
+            file.write(f"{column1} {column2} {column3} {sum_conc} {p_val}:{p_val_a} {s_val}:{s_val_a}\n")
