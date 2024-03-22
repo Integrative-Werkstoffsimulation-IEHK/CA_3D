@@ -16,8 +16,8 @@ class ActiveElem:
         self.p4_range = 4 * self.p1_range
         self.p_r_range = self.p4_range + settings["probabilities"][1]
         self.n_per_page = settings["n_per_page"]
-        # self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
-        self.precip_transform_depth = int(41)  # min self.neigh_range !!!
+        self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
+        # self.precip_transform_depth = int(41)  # min self.neigh_range !!!
 
         self.extended_axis = self.cells_per_axis + self.neigh_range
         self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
@@ -184,11 +184,11 @@ class ActiveElem:
         # adjusting a coordinates of side points for correct shifting
         ind = np.where(self.cells[2] < 0)[0]
         # closed left bound (reflection)
-        self.cells[2, ind] = 1
-        self.dirs[2, ind] = 1
+        # self.cells[2, ind] = 1
+        # self.dirs[2, ind] = 1
         # _______________________
         # periodic____________________________________
-        # self.cells[2, ind] = self.cells_per_axis - 1
+        self.cells[2, ind] = self.cells_per_axis - 1
         # ____________________________________________
         # open left bound___________________________
         # self.cells = np.delete(self.cells, ind, 1)
@@ -202,17 +202,17 @@ class ActiveElem:
 
         ind = np.where(self.cells[2] == self.cells_per_axis)[0]
         # closed right bound (reflection)____________
-        self.cells[2, ind] = self.cells_per_axis - 2
-        self.dirs[2, ind] = -1
+        # self.cells[2, ind] = self.cells_per_axis - 2
+        # self.dirs[2, ind] = -1
         # ___________________________________________
         # open right bound___________________________
         # self.cells = np.delete(self.cells, ind, 1)
         # self.dirs = np.delete(self.dirs, ind, 1)
         # ___________________________________________
         # periodic____________________________________
-        # self.cells[2, ind] = 0
+        self.cells[2, ind] = 0
         # ____________________________________________
-        self.fill_first_page()
+        # self.fill_first_page()
 
     def fill_first_page(self):
         # generating new particles on the diffusion surface (X = self.n_cells_per_axis)
@@ -431,11 +431,11 @@ class OxidantElem:
         # self.dirs[2, ind] = 1
         # _____________________________________________________
         # open left bound___________________________
-        self.cells = np.delete(self.cells, ind, 1)
-        self.dirs = np.delete(self.dirs, ind, 1)
+        # self.cells = np.delete(self.cells, ind, 1)
+        # self.dirs = np.delete(self.dirs, ind, 1)
         # __________________________________________
         # periodic left bound____________________________________
-        # self.cells[2, ind] = self.cells_per_axis - 1
+        self.cells[2, ind] = self.cells_per_axis - 1
         # _______________________________________________________
 
         self.cells[0, np.where(self.cells[0] <= -1)] = self.cells_per_axis - 1
@@ -449,17 +449,17 @@ class OxidantElem:
         # self.dirs[2, ind] = -1
         # ___________________________________________
         # open right bound___________________________
-        self.cells = np.delete(self.cells, ind, 1)
-        self.dirs = np.delete(self.dirs, ind, 1)
+        # self.cells = np.delete(self.cells, ind, 1)
+        # self.dirs = np.delete(self.dirs, ind, 1)
         # ___________________________________________
         # periodic right bound____________________________________
-        # self.cells[2, ind] = 0
+        self.cells[2, ind] = 0
         # ________________________________________________________
 
         # UNCOMMENT!!!!
         # ___________________________________
-        self.current_count = len(np.where(self.cells[2] == 0)[0])
-        self.fill_first_page()
+        # self.current_count = len(np.where(self.cells[2] == 0)[0])
+        # self.fill_first_page()
         # ___________________________________
 
     def diffuse_interface(self):

@@ -8,25 +8,26 @@ database_name = filedialog.askopenfilename()
 iter = 7816
 visualise = Visualisation(database_name)
 
-visualise.animate_3d(animate_separate=False, const_cam_pos=False)
+# visualise.animate_3d(animate_separate=False, const_cam_pos=True)
 #
 # visualise.plot_3d(plot_separate=False, const_cam_pos=True)
-visualise.plot_3d(plot_separate=False, const_cam_pos=False, iteration=iter)
+# visualise.plot_3d(plot_separate=False, const_cam_pos=False, iteration=iter)
 
-visualise.animate_2d(plot_separate=False)
+# visualise.animate_2d(plot_separate=False)
 
-visualise.plot_2d(plot_separate=False, iteration=iter)
+# visualise.plot_2d(plot_separate=False)
 # visualise.plot_2d(plot_separate=False, iteration=2080)
 
-# visualise.animate_concentration(conc_type="cells", analytic_sol=False)
+visualise.animate_concentration(conc_type="cells", analytic_sol=False)
 
-visualise.plot_concentration(plot_separate=False, conc_type="cells", analytic_sol=False)
+# visualise.plot_concentration(plot_separate=False, conc_type="cells", analytic_sol=False)
 # visualise.plot_concentration(plot_separate=False, conc_type="cells", analytic_sol=False,
 # iteration=29)
 
 # visualise.plot_h()
 
-# for plane_ind in range(3700):
+# for plane_ind in range(779, 5096):
 #     visualise.plot_3d(plot_separate=False, iteration=plane_ind, const_cam_pos=True)
+
 
 # visualise.calculate_phase_size()

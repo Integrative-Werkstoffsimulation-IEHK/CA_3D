@@ -295,13 +295,19 @@ class CellularAutomata:
     def simulation(self):
 
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
-
+            # if (self.iteration) % self.param["stride"] == 0:
             self.precip_func()
             self.decomposition()
+
             self.diffusion_inward()
             self.diffusion_outward()
 
-            self.cumul_prod[self.iteration] = np.sum(self.primary_product.c3d)
+            print()
+            print("left: ", np.sum(self.primary_product.full_c3d[:, :, :44]))
+            print("right: ", np.sum(self.primary_product.full_c3d[:, :, 44:]))
+            print()
+
+            # self.cumul_prod[self.iteration] = np.sum(self.primary_product.c3d)
 
             self.save_results_only_prod()
 
@@ -2359,7 +2365,7 @@ class CellularAutomata:
         if u_bound == self.cells_per_axis - 1:
             u_bound = self.cells_per_axis - 2
         if l_bound - 1 < 0:
-            l_bound = 0
+            l_bound = 1
 
         self.cur_case.precip_3d_init[:, :, l_bound-1:u_bound + 2] = False
         self.cur_case.precip_3d_init[:, :, l_bound-1:u_bound + 2] = self.cur_case.product.c3d[:, :, l_bound-1:u_bound + 2]

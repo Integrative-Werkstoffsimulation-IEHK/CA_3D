@@ -322,7 +322,7 @@ ELAPSED TIME: {message}
                 ax_all = fig.add_subplot(111, projection='3d')
                 animation = FuncAnimation(fig, animate)
             plt.show()
-            # plt.savefig(f'W:/SIMCA/test_runs_data/{"_"}.jpeg')
+            plt.savefig(f'W:/SIMCA/test_runs_data/{"_"}.jpeg')
         else:
             return print("No Data To Animate!")
 
@@ -599,8 +599,8 @@ ELAPSED TIME: {message}
 
         cm = 1 / 2.54  # centimeters in inches
 
-        fig.set_size_inches((7.8*cm, 7.8*cm))
-        # plt.savefig(f'C:/test_runs_data/{iteration}.jpeg', dpi=300)
+        # fig.set_size_inches((12*cm, 12*cm))
+        # plt.savefig(f'C:/test_runs_data/{iteration}.jpeg')
         # plt.savefig(f"//juno/homes/user/aseregin/Desktop/simuls/{iteration}.jpeg")
 
         csfont = {'fontname': 'Times New Roman'}
@@ -629,9 +629,10 @@ ELAPSED TIME: {message}
         ax_all.set_ylabel("Y [µm]", **csfont, fontsize=20*cm)
         ax_all.set_zlabel("Z [µm]", **csfont, fontsize=20*cm)
 
-        fig.set_size_inches((9 * cm, 9 * cm))
+        fig.set_size_inches((60 * cm, 60 * cm))
         plt.show()
-        # plt.savefig(f'C:/test_runs_data/{iteration}.jpeg', dpi=500)
+        # plt.savefig(f'C:/test_runs_data/OWR_anim/{iteration}.jpeg')
+        # plt.close()
 
     def plot_2d(self, plot_separate=False, iteration=None, slice_pos=None):
         if iteration is None:
@@ -1117,6 +1118,10 @@ ELAPSED TIME: {message}
                             "eq_matrix_moles_per_cell"]
 
             self.conn.commit()
+            primary_product_left = np.sum(primary_product[:44])
+            primary_product_right = np.sum(primary_product[44:])
+
+            print("left: ", primary_product_left, " right: ", primary_product_right)
 
             # n_matrix_page = (self.axlim ** 2) * self.param["product"]["primary"]["oxidation_number"]
             n_matrix_page = (self.axlim ** 2)
@@ -1250,7 +1255,7 @@ ELAPSED TIME: {message}
         ax2 = fig.add_subplot(122)
         animation = FuncAnimation(fig, animate)
         plt.show()
-        self.conn.commit()
+        # self.conn.commit()
 
     def plot_concentration(self, plot_separate=True, iteration=None, conc_type="atomic", analytic_sol=False):
         if iteration is None:
