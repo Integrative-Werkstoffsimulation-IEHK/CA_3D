@@ -1,7 +1,7 @@
 import time
 import numpy as np
 import random
-# from microstructure import voronoi
+from microstructure import voronoi
 from utils.numba_functions import *
 
 
@@ -289,11 +289,11 @@ class OxidantElem:
         self.current_count = 0
         self.fill_first_page()
 
-        # self.microstructure = voronoi.VoronoiMicrostructure()
-        # self.microstructure.generate_voronoi_3d(self.cells_per_axis, 5, seeds='standard')
-        # self.microstructure.show_microstructure(self.cells_per_axis)
-        # self.cross_shifts = np.array([[1, 0, 0], [0, 1, 0],
-        #                               [-1, 0, 0], [0, -1, 0]], dtype=np.byte)
+        self.microstructure = voronoi.VoronoiMicrostructure()
+        self.microstructure.generate_voronoi_3d(self.cells_per_axis, 20)
+        self.microstructure.show_microstructure(self.cells_per_axis)
+        self.cross_shifts = np.array([[1, 0, 0], [0, 1, 0],
+                                      [-1, 0, 0], [0, -1, 0]], dtype=np.byte)
 
     def diffuse_bulk(self):
         """
@@ -302,30 +302,30 @@ class OxidantElem:
         # Diffusion along grain boundaries
         # ______________________________________________________________________________________________________________
         # exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
-        # # # print(exists)
+        # # print(exists)
         # temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
-        # # print(temp_ind)
+        # print(temp_ind)
 
-        # exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
-        # # # print(exists)
-        # temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
-        # # print(temp_ind)
-        # #
-        # in_gb = np.array(self.cells[:, temp_ind], dtype=np.short)
-        # # print(in_gb)
-        # #
-        # shift_vector = np.array(self.microstructure.jump_directions[in_gb[0], in_gb[1], in_gb[2]],
-        #                         dtype=np.short).transpose()
-        # # print(shift_vector)
+        exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
+        # # print(exists)
+        temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
+        # print(temp_ind)
         #
-        # # print(self.cells)
+        in_gb = np.array(self.cells[:, temp_ind], dtype=np.short)
+        # print(in_gb)
+        #
+        shift_vector = np.array(self.microstructure.jump_directions[in_gb[0], in_gb[1], in_gb[2]],
+                                dtype=np.short).transpose()
+        # print(shift_vector)
+
+        # print(self.cells)
         # cross_shifts = np.array(np.random.choice([0, 1, 2, 3], len(shift_vector[0])), dtype=np.ubyte)
         # cross_shifts = np.array(self.cross_shifts[cross_shifts], dtype=np.byte).transpose()
-        #
+
         # shift_vector += cross_shifts
-        #
-        # self.cells[:, temp_ind] += shift_vector
-        # # print(self.cells)
+
+        self.cells[:, temp_ind] += shift_vector
+        # print(self.cells)
         # ______________________________________________________________________________________________________________
         randomise = np.array(np.random.random_sample(len(self.cells[0])), dtype=np.single)
         temp_ind = np.array(np.where(randomise <= self.p1_range)[0], dtype=np.uint32)

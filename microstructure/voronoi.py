@@ -1,6 +1,6 @@
 import pyvoro
 import matplotlib.pyplot as plt
-# from . import bresenham
+from . import bresenham
 import numpy as np
 import time
 
@@ -585,11 +585,12 @@ class VoronoiMicrostructure:
 
 # # Some tests
 if __name__ == "__main__":
+    size = 100
     import bresenham
     # _______Plot 3D______
     begin = time.time()
     micro = VoronoiMicrostructure()
-    cells_faces, cells_edges = micro.generate_voronoi_3d(100, 8, seeds="standard")
+    cells_faces, cells_edges = micro.generate_voronoi_3d(size, 50)
     x_edge = cells_edges[2]
     y_edge = cells_edges[1]
     z_edge = cells_edges[0]
@@ -601,9 +602,9 @@ if __name__ == "__main__":
     ax.scatter(x_face, y_face, z_face, color='darkgoldenrod', marker=',', s=1)
     ax.scatter(x_edge, y_edge, z_edge, color='b', marker=',', s=5)
 
-    ax.set_xlim3d(0, 100)
-    ax.set_ylim3d(0, 100)
-    ax.set_zlim3d(0, 100)
+    ax.set_xlim3d(0, size)
+    ax.set_ylim3d(0, size)
+    ax.set_zlim3d(0, size)
 
     # ax.scatter(0, 50, 50, color='r', marker=',', s=50)
 

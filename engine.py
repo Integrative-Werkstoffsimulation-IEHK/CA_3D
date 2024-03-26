@@ -48,8 +48,8 @@ class CellularAutomata:
             self.cases.second.oxidant = self.primary_oxidant
             #
             # ---------------------------------------------------
-            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
-            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk  # CHANGE!!!!!!
+            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
+            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk  # CHANGE!!!!!!
             # ---------------------------------------------------
             #
             if self.param["secondary_oxidant_exists"]:
@@ -263,8 +263,8 @@ class CellularAutomata:
 
 
             # UNCOMENT!!!!_______________________________________________________
-            self.nucl_prob = probabilities.NucleationProbabilitiesADJ(self.param)
-            self.dissol_prob = probabilities.DissolutionProbabilitiesADJ(self.param)
+            # self.nucl_prob = probabilities.NucleationProbabilitiesADJ(self.param)
+            # self.dissol_prob = probabilities.DissolutionProbabilitiesADJ(self.param)
             # ________________________________________________________________________
 
             self.furthest_index = 0
@@ -296,20 +296,21 @@ class CellularAutomata:
 
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
             # if (self.iteration) % self.param["stride"] == 0:
-            self.precip_func()
-            self.decomposition()
+            # self.precip_func()
+            # self.decomposition()
 
             self.diffusion_inward()
-            self.diffusion_outward()
+            # self.diffusion_outward()
 
-            print()
-            print("left: ", np.sum(self.primary_product.full_c3d[:, :, :44]))
-            print("right: ", np.sum(self.primary_product.full_c3d[:, :, 44:]))
-            print()
+            # print()
+            # print("left: ", np.sum(self.primary_product.full_c3d[:, :, :44]))
+            # print("right: ", np.sum(self.primary_product.full_c3d[:, :, 44:]))
+            # print()
 
             # self.cumul_prod[self.iteration] = np.sum(self.primary_product.c3d)
 
-            self.save_results_only_prod()
+            self.save_results()
+            # self.utils.db.conn.commit()
 
             # if self.param["compute_precipitations"]:
             #     self.precip_func()
