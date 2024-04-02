@@ -16,7 +16,7 @@ class VoronoiMicrostructure:
         self.n_cells_per_axis = None
         self.divisor = 150
         self.diff_jump = 0.1
-        self.jump_size = 3
+        self.jump_size = 1
         self.jump_directions = None
         self.ca_edges = None
         self.ca_faces = None

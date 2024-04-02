@@ -1395,7 +1395,8 @@ ELAPSED TIME: {message}
         # matrix_moles = matrix * self.param["active_element"]["primary"]["eq_matrix_moles_per_cell"]
         # matrix_mass = matrix * self.param["active_element"]["primary"]["eq_matrix_mass_per_cell"]
 
-        x = np.linspace(0, self.param["size"] * 1000000, self.axlim)
+        # x = np.linspace(0, self.param["size"] * 1000000, self.axlim)
+        x = np.linspace(0, self.param["size"], self.axlim)
 
         if conc_type.lower() == "atomic":
             conc_type_caption = "Concentration [at%]"
@@ -1494,8 +1495,8 @@ ELAPSED TIME: {message}
                 ax2.plot(x, analytical_concentration_out, color='r', linewidth=1.5)
                 ax1.plot(x, analytical_concentration, color='r', linewidth=1.5)
 
-                for inw in analytical_concentration:
-                    print(inw)
+                # for inw in analytical_concentration:
+                #     print(inw)
         else:
 
             csfont = {'fontname':'Times New Roman'}

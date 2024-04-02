@@ -268,6 +268,8 @@ class OxidantElem:
         self.p3_range = 3 * self.p1_range
         self.p4_range = 4 * self.p1_range
         self.p_r_range = self.p4_range + settings["probabilities"][1]
+        self.p0_2d = settings["p0_2d"]
+        print("P0_2D = ", self.p0_2d)
         self.n_per_page = settings["n_per_page"]
         self.neigh_range = settings["neigh_range"]
         self.current_count = 0
@@ -290,7 +292,7 @@ class OxidantElem:
         self.fill_first_page()
 
         self.microstructure = voronoi.VoronoiMicrostructure()
-        self.microstructure.generate_voronoi_3d(self.cells_per_axis, 20)
+        self.microstructure.generate_voronoi_3d(self.cells_per_axis, 20, seeds='plane')
         self.microstructure.show_microstructure(self.cells_per_axis)
         self.cross_shifts = np.array([[1, 0, 0], [0, 1, 0],
                                       [-1, 0, 0], [0, -1, 0]], dtype=np.byte)
@@ -299,16 +301,97 @@ class OxidantElem:
         """
         Inward diffusion through bulk.
         """
+        # # Diffusion along grain boundaries
+        # # ______________________________________________________________________________________________________________
+        # # exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
+        # # # print(exists)
+        # # temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
+        # # print(temp_ind)
+        #
+        # exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
+        # # # print(exists)
+        # temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
+        #
+        # randomise = np.array(np.random.random_sample(len(temp_ind)), dtype=np.single)
+        # d_temp_ind = np.array(np.where(randomise <= self.p0_2d)[0], dtype=np.uint32)
+        # temp_ind = temp_ind[d_temp_ind]
+        #
+        # # print(temp_ind)
+        # #
+        # in_gb = np.array(self.cells[:, temp_ind], dtype=np.short)
+        # # print(in_gb)
+        # #
+        # shift_vector = np.array(self.microstructure.jump_directions[in_gb[0], in_gb[1], in_gb[2]],
+        #                         dtype=np.short).transpose()
+        # # print(shift_vector)
+        #
+        # # print(self.cells)
+        # # cross_shifts = np.array(np.random.choice([0, 1, 2, 3], len(shift_vector[0])), dtype=np.ubyte)
+        # # cross_shifts = np.array(self.cross_shifts[cross_shifts], dtype=np.byte).transpose()
+        #
+        # # shift_vector += cross_shifts
+        #
+        # self.cells[:, temp_ind] += shift_vector
+        # # print(self.cells)
+        # ______________________________________________________________________________________________________________
+        randomise = np.array(np.random.random_sample(len(self.cells[0])), dtype=np.single)
+        temp_ind = np.array(np.where(randomise <= self.p1_range)[0], dtype=np.uint32)
+        self.dirs[:, temp_ind] = np.roll(self.dirs[:, temp_ind], 1, axis=0)
+        temp_ind = np.array(np.where((randomise > self.p1_range) & (randomise <= self.p2_range))[0], dtype=np.uint32)
+        self.dirs[:, temp_ind] = np.roll(self.dirs[:, temp_ind], 1, axis=0)
+        self.dirs[:, temp_ind] *= -1
+        temp_ind = np.array(np.where((randomise > self.p2_range) & (randomise <= self.p3_range))[0], dtype=np.uint32)
+        self.dirs[:, temp_ind] = np.roll(self.dirs[:, temp_ind], 2, axis=0)
+        temp_ind = np.array(np.where((randomise > self.p3_range) & (randomise <= self.p4_range))[0], dtype=np.uint32)
+        self.dirs[:, temp_ind] = np.roll(self.dirs[:, temp_ind], 2, axis=0)
+        self.dirs[:, temp_ind] *= -1
+        temp_ind = np.array(np.where((randomise > self.p4_range) & (randomise <= self.p_r_range))[0], dtype=np.uint32)
+        self.dirs[:, temp_ind] *= -1
+
+        self.cells = np.add(self.cells, self.dirs, casting="unsafe")
+        # adjusting a coordinates of side points for correct shifting
+        ind = np.where(self.cells[2] < 0)[0]
+        # closed left bound (reflection)
+        # self.cells[2, ind] = 0
+        # self.dirs[2, ind] = 1
+        # _______________________
+        # open left bound___________________________
+        self.cells = np.delete(self.cells, ind, 1)
+        self.dirs = np.delete(self.dirs, ind, 1)
+        # __________________________________________
+
+        self.cells[0, np.where(self.cells[0] <= -1)] = self.cells_per_axis - 1
+        self.cells[0, np.where(self.cells[0] >= self.cells_per_axis)] = 0
+        self.cells[1, np.where(self.cells[1] <= -1)] = self.cells_per_axis - 1
+        self.cells[1, np.where(self.cells[1] >= self.cells_per_axis)] = 0
+
+        ind = np.where(self.cells[2] >= self.cells_per_axis)
+        # closed right bound (reflection)____________
+        # self.cells[2, ind] = self.cells_per_axis - 2
+        # self.dirs[2, ind] = -1
+        # ___________________________________________
+        # open right bound___________________________
+        self.cells = np.delete(self.cells, ind, 1)
+        self.dirs = np.delete(self.dirs, ind, 1)
+        # ___________________________________________
+
+        self.current_count = len(np.where(self.cells[2] == 0)[0])
+        self.fill_first_page()
+
+    def diffuse_gb(self):
+        """
+        Inward diffusion through bulk.
+        """
         # Diffusion along grain boundaries
         # ______________________________________________________________________________________________________________
-        # exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
-        # # print(exists)
-        # temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
-        # print(temp_ind)
-
         exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
-        # # print(exists)
-        temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
+        # temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
+        temp_ind, t_out = separate_in_gb(exists)
+
+        randomise = np.array(np.random.random_sample(len(temp_ind)), dtype=np.single)
+        d_temp_ind = np.array(np.where(randomise <= self.p0_2d)[0], dtype=np.uint32)
+        temp_ind = temp_ind[d_temp_ind]
+
         # print(temp_ind)
         #
         in_gb = np.array(self.cells[:, temp_ind], dtype=np.short)
@@ -327,19 +410,19 @@ class OxidantElem:
         self.cells[:, temp_ind] += shift_vector
         # print(self.cells)
         # ______________________________________________________________________________________________________________
-        randomise = np.array(np.random.random_sample(len(self.cells[0])), dtype=np.single)
+        randomise = np.array(np.random.random_sample(len(t_out)), dtype=np.single)
         temp_ind = np.array(np.where(randomise <= self.p1_range)[0], dtype=np.uint32)
-        self.dirs[:, temp_ind] = np.roll(self.dirs[:, temp_ind], 1, axis=0)
+        self.dirs[:, t_out[temp_ind]] = np.roll(self.dirs[:, t_out[temp_ind]], 1, axis=0)
         temp_ind = np.array(np.where((randomise > self.p1_range) & (randomise <= self.p2_range))[0], dtype=np.uint32)
-        self.dirs[:, temp_ind] = np.roll(self.dirs[:, temp_ind], 1, axis=0)
-        self.dirs[:, temp_ind] *= -1
+        self.dirs[:, t_out[temp_ind]] = np.roll(self.dirs[:, t_out[temp_ind]], 1, axis=0)
+        self.dirs[:, t_out[temp_ind]] *= -1
         temp_ind = np.array(np.where((randomise > self.p2_range) & (randomise <= self.p3_range))[0], dtype=np.uint32)
-        self.dirs[:, temp_ind] = np.roll(self.dirs[:, temp_ind], 2, axis=0)
+        self.dirs[:, t_out[temp_ind]] = np.roll(self.dirs[:, t_out[temp_ind]], 2, axis=0)
         temp_ind = np.array(np.where((randomise > self.p3_range) & (randomise <= self.p4_range))[0], dtype=np.uint32)
-        self.dirs[:, temp_ind] = np.roll(self.dirs[:, temp_ind], 2, axis=0)
-        self.dirs[:, temp_ind] *= -1
+        self.dirs[:, t_out[temp_ind]] = np.roll(self.dirs[:, t_out[temp_ind]], 2, axis=0)
+        self.dirs[:, t_out[temp_ind]] *= -1
         temp_ind = np.array(np.where((randomise > self.p4_range) & (randomise <= self.p_r_range))[0], dtype=np.uint32)
-        self.dirs[:, temp_ind] *= -1
+        self.dirs[:, t_out[temp_ind]] *= -1
 
         self.cells = np.add(self.cells, self.dirs, casting="unsafe")
         # adjusting a coordinates of side points for correct shifting

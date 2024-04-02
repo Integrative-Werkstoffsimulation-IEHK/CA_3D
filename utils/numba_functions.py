@@ -113,6 +113,19 @@ def check_in_scale(scale, cells, dirs):
 
 
 @numba.njit(nopython=True)
+def separate_in_gb(bool_arr):
+    # trick to initialize an empty list with known type
+    out_gb = [np.uint32(x) for x in range(0)]
+    in_gb = [np.uint32(x) for x in range(0)]
+    for index, bool_item in enumerate(bool_arr):
+        if bool_item:
+            in_gb.append(np.uint32(index))
+        else:
+            out_gb.append(np.uint32(index))
+    return np.array(in_gb, dtype=np.uint32), np.array(out_gb, dtype=np.uint32)
+
+
+@numba.njit(nopython=True)
 def diff_single(directions, probs, random_numbs):
     for index, direction in enumerate(directions.transpose()):
         rand_numb = random_numbs.random()

@@ -176,10 +176,13 @@ class Utils:
         diff_coeff = self.param["oxidant"]["primary"]["diffusion_coefficient"]
         probabilities = self.calc_prob(diff_coeff)
         self.param["oxidant"]["primary"]["probabilities"] = probabilities
+        self.param["oxidant"]["primary"]["p0_2d"] = self.calc_p0_2d(diff_coeff)
 
         diff_coeff = self.param["oxidant"]["secondary"]["diffusion_coefficient"]
         probabilities = self.calc_prob(diff_coeff)
         self.param["oxidant"]["secondary"]["probabilities"] = probabilities
+        self.param["oxidant"]["secondary"]["p0_2d"] = self.calc_p0_2d(diff_coeff)
+
 
         self.param["oxidant"]["primary"]["n_per_page"] = round(self.param["oxidant"]["primary"]["cells_concentration"] *
                                                              self.param["n_cells_per_axis"] ** 2)
@@ -419,6 +422,43 @@ class Utils:
         p3 = (1 / (coeff + 1)) - 2 * p
         p0 = 1 - 4 * p - p3
         return [p, p3, p0]
+
+    def calc_p0_2d(self, diff_coeff):
+        coeff = 4 * (self.param["tau"] * diff_coeff) / (self.param["l_ambda"] ** 2)
+        coeff_p = coeff / (1 + coeff)
+
+        # f = 1 - (1 / (2 * coeff_p))
+        # g = 1 / coeff_p
+        # h = 2 - (1 / coeff_p)
+        #
+        # print(1, " > t > ", f)
+        # print(g, " > t > ", 0)
+        # print(2, " > t > ", h)
+
+        if coeff_p < 1:
+            r_bound = 1
+        else:
+            r_bound = 1 / coeff_p
+
+        l_bound = 0
+        if 1 - (1/(2*coeff_p)) < 2 - (1/coeff_p):
+            if 2 - (1/coeff_p) > 0:
+                l_bound = 2 - (1/coeff_p)
+
+        elif 1 - (1/(2*coeff_p)) > 2 - (1/coeff_p):
+            if 1 - (1/(2*coeff_p)) > 0:
+                l_bound = 1 - (1/(2*coeff_p))
+
+        t = l_bound + (r_bound - l_bound) / 2
+
+        p = coeff_p * (1 - t)
+        p0 = t * coeff_p
+        p3 = 1 + coeff_p * (t - 2)
+
+        # d = (self.param["l_ambda"] ** 2) / (self.param["tau"]) * ((p + p0)/(4*(1-p-p0)))
+        # one = 2*p + p0 + p3
+
+        return p0
 
     def calc_prob_manually(self, p, diff_coeff):
         coeff = 6 * (self.param["tau"] * diff_coeff) / (self.param["l_ambda"] ** 2)

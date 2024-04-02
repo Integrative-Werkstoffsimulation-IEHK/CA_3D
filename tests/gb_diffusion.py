@@ -6,7 +6,7 @@ if __name__ == '__main__':
 
     user_input = {"oxidant": {"primary": {"elem": "O",
                                           "diffusion_condition": "O in Ni Krupp",
-                                          "cells_concentration": 0.0001},
+                                          "cells_concentration": 0.1},
                               "secondary": {"elem": "None",
                                             "diffusion_condition": "N in Ni Krupp",
                                             "cells_concentration": 0.1}
@@ -30,11 +30,11 @@ if __name__ == '__main__':
                   "diff_in_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
                   "diff_out_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
                   "temperature": 1100,  # °C
-                  "n_cells_per_axis": 501,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
+                  "n_cells_per_axis": 102,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
                   "n_iterations": 300000,  # must be >= n_cells_per_axis
                   "stride": 1,  # n_iterations / stride = n_iterations for outward diffusion
-                  "sim_time": 72000,  # [sek]
-                  "size": 1500 * (10**-6),  # [m]
+                  "sim_time": 3600,  # [sek]
+                  "size": 700 * (10**-6),  # [m]
 
                   "threshold_inward": 1,
                   "threshold_outward": 1,
@@ -53,7 +53,7 @@ if __name__ == '__main__':
                   "compute_precipitations": False,
                   "diffusion_in_precipitation": False,
 
-                  "save_whole": True,
+                  "save_whole": False,
                   "save_path": 'C:/test_runs_data/',
 
                   "neigh_range": 1,  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10

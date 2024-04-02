@@ -49,7 +49,8 @@ class CellularAutomata:
             #
             # ---------------------------------------------------
             # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
-            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk  # CHANGE!!!!!!
+            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk  # CHANGE!!!!!!
+            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_gb
             # ---------------------------------------------------
             #
             if self.param["secondary_oxidant_exists"]:
@@ -309,7 +310,7 @@ class CellularAutomata:
 
             # self.cumul_prod[self.iteration] = np.sum(self.primary_product.c3d)
 
-            self.save_results()
+            # self.save_results()
             # self.utils.db.conn.commit()
 
             # if self.param["compute_precipitations"]:
