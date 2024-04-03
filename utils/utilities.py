@@ -176,7 +176,7 @@ class Utils:
         diff_coeff = self.param["oxidant"]["primary"]["diffusion_coefficient"]
         probabilities = self.calc_prob(diff_coeff)
         self.param["oxidant"]["primary"]["probabilities"] = probabilities
-        self.param["oxidant"]["primary"]["p0_2d"] = self.calc_p0_2d(diff_coeff)
+        self.param["oxidant"]["primary"]["p0_2d"] = self.calc_p0_2d(diff_coeff * 10**2)
 
         diff_coeff = self.param["oxidant"]["secondary"]["diffusion_coefficient"]
         probabilities = self.calc_prob(diff_coeff)
@@ -631,6 +631,7 @@ Primary Oxidant: {self.param["oxidant"]["primary"]["elem"]}                     
     * Probabilities: p: {self.param["oxidant"]["primary"]["probabilities"][0]}                                             * Diffusion Condition: {self.param["active_element"]["primary"]["diffusion_condition"]} => Coefficient:{self.param["active_element"]["primary"]["diffusion_coefficient"]} [m^2/sek]
                      p3: {self.param["oxidant"]["primary"]["probabilities"][1]}                                            * Probabilities: p: {self.param["active_element"]["primary"]["probabilities"][0]}
                      p0: {self.param["oxidant"]["primary"]["probabilities"][2]}                                                      p3: {self.param["active_element"]["primary"]["probabilities"][1]}
+                     p0_2D: {self.param["oxidant"]["primary"]["p0_2d"]}
     * Moles per cell: {self.param["oxidant"]["primary"]["moles_per_cell"]} [mole]                                                   p0: {self.param["active_element"]["primary"]["probabilities"][2]}
     * Mass per cell: {self.param["oxidant"]["primary"]["mass_per_cell"]} [kg]                                           * Moles per cell: {self.param["active_element"]["primary"]["moles_per_cell"]} [mole]
     * Cells concentration: {self.param["oxidant"]["primary"]["cells_concentration"]}                                                         * Mass per cell: {self.param["active_element"]["primary"]["mass_per_cell"]} [kg]

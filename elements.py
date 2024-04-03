@@ -1,6 +1,6 @@
-import time
-import numpy as np
-import random
+# import time
+# import numpy as np
+# import random
 from microstructure import voronoi
 from utils.numba_functions import *
 
@@ -269,7 +269,6 @@ class OxidantElem:
         self.p4_range = 4 * self.p1_range
         self.p_r_range = self.p4_range + settings["probabilities"][1]
         self.p0_2d = settings["p0_2d"]
-        print("P0_2D = ", self.p0_2d)
         self.n_per_page = settings["n_per_page"]
         self.neigh_range = settings["neigh_range"]
         self.current_count = 0
@@ -282,7 +281,6 @@ class OxidantElem:
         self.c3d = np.full(self.extended_shape, 0, dtype=np.ubyte)
         self.scale = None
         self.diffuse = None
-        self.diff_boost_steps = 10
         self.utils = utils
 
         self.cells = np.array([[], [], []], dtype=np.short)
@@ -292,10 +290,11 @@ class OxidantElem:
         self.fill_first_page()
 
         self.microstructure = voronoi.VoronoiMicrostructure()
-        self.microstructure.generate_voronoi_3d(self.cells_per_axis, 20, seeds='plane')
+        self.microstructure.generate_voronoi_3d(self.cells_per_axis, 50)
         self.microstructure.show_microstructure(self.cells_per_axis)
         self.cross_shifts = np.array([[1, 0, 0], [0, 1, 0],
-                                      [-1, 0, 0], [0, -1, 0]], dtype=np.byte)
+                                      [-1, 0, 0], [0, -1, 0],
+                                      [0, 0, -1]], dtype=np.byte)
 
     def diffuse_bulk(self):
         """
@@ -380,49 +379,50 @@ class OxidantElem:
 
     def diffuse_gb(self):
         """
-        Inward diffusion through bulk.
+        Inward diffusion through bulk and along grain boundaries.
         """
         # Diffusion along grain boundaries
         # ______________________________________________________________________________________________________________
         exists = self.microstructure.grain_boundaries[self.cells[0], self.cells[1], self.cells[2]]
-        # temp_ind = np.array(np.where(exists)[0], dtype=np.uint32)
-        temp_ind, t_out = separate_in_gb(exists)
+        t_ind_in_gb, ind_out_gb = separate_in_gb(exists)
 
-        randomise = np.array(np.random.random_sample(len(temp_ind)), dtype=np.single)
-        d_temp_ind = np.array(np.where(randomise <= self.p0_2d)[0], dtype=np.uint32)
-        temp_ind = temp_ind[d_temp_ind]
+        randomise = np.array(np.random.random_sample(len(t_ind_in_gb)), dtype=np.single)
+        temp_ind = np.array(np.where(randomise <= self.p0_2d)[0], dtype=np.uint32)
+
+        ind_in_gb = t_ind_in_gb[temp_ind]
+        temp_ = np.delete(t_ind_in_gb, temp_ind)
+
+        ind_out_gb = np.concatenate((ind_out_gb, temp_))
 
         # print(temp_ind)
         #
-        in_gb = np.array(self.cells[:, temp_ind], dtype=np.short)
+        in_gb = np.array(self.cells[:, ind_in_gb], dtype=np.short)
         # print(in_gb)
         #
-        shift_vector = np.array(self.microstructure.jump_directions[in_gb[0], in_gb[1], in_gb[2]],
+        boost_vector = np.array(self.microstructure.jump_directions[in_gb[0], in_gb[1], in_gb[2]],
                                 dtype=np.short).transpose()
-        # print(shift_vector)
-
-        # print(self.cells)
-        # cross_shifts = np.array(np.random.choice([0, 1, 2, 3], len(shift_vector[0])), dtype=np.ubyte)
+        # cross_shifts = np.array(np.random.choice([0, 1, 2, 3], len(ind_in_gb)), dtype=np.ubyte)
         # cross_shifts = np.array(self.cross_shifts[cross_shifts], dtype=np.byte).transpose()
 
-        # shift_vector += cross_shifts
+        # boost_vector += cross_shifts
+        # self.cells[:, temp_] += cross_shifts
+        self.cells[:, ind_in_gb] += boost_vector
 
-        self.cells[:, temp_ind] += shift_vector
-        # print(self.cells)
+        # Diffusion in bulk
         # ______________________________________________________________________________________________________________
-        randomise = np.array(np.random.random_sample(len(t_out)), dtype=np.single)
+        randomise = np.array(np.random.random_sample(len(ind_out_gb)), dtype=np.single)
         temp_ind = np.array(np.where(randomise <= self.p1_range)[0], dtype=np.uint32)
-        self.dirs[:, t_out[temp_ind]] = np.roll(self.dirs[:, t_out[temp_ind]], 1, axis=0)
+        self.dirs[:, ind_out_gb[temp_ind]] = np.roll(self.dirs[:, ind_out_gb[temp_ind]], 1, axis=0)
         temp_ind = np.array(np.where((randomise > self.p1_range) & (randomise <= self.p2_range))[0], dtype=np.uint32)
-        self.dirs[:, t_out[temp_ind]] = np.roll(self.dirs[:, t_out[temp_ind]], 1, axis=0)
-        self.dirs[:, t_out[temp_ind]] *= -1
+        self.dirs[:, ind_out_gb[temp_ind]] = np.roll(self.dirs[:, ind_out_gb[temp_ind]], 1, axis=0)
+        self.dirs[:, ind_out_gb[temp_ind]] *= -1
         temp_ind = np.array(np.where((randomise > self.p2_range) & (randomise <= self.p3_range))[0], dtype=np.uint32)
-        self.dirs[:, t_out[temp_ind]] = np.roll(self.dirs[:, t_out[temp_ind]], 2, axis=0)
+        self.dirs[:, ind_out_gb[temp_ind]] = np.roll(self.dirs[:, ind_out_gb[temp_ind]], 2, axis=0)
         temp_ind = np.array(np.where((randomise > self.p3_range) & (randomise <= self.p4_range))[0], dtype=np.uint32)
-        self.dirs[:, t_out[temp_ind]] = np.roll(self.dirs[:, t_out[temp_ind]], 2, axis=0)
-        self.dirs[:, t_out[temp_ind]] *= -1
+        self.dirs[:, ind_out_gb[temp_ind]] = np.roll(self.dirs[:, ind_out_gb[temp_ind]], 2, axis=0)
+        self.dirs[:, ind_out_gb[temp_ind]] *= -1
         temp_ind = np.array(np.where((randomise > self.p4_range) & (randomise <= self.p_r_range))[0], dtype=np.uint32)
-        self.dirs[:, t_out[temp_ind]] *= -1
+        self.dirs[:, ind_out_gb[temp_ind]] *= -1
 
         self.cells = np.add(self.cells, self.dirs, casting="unsafe")
         # adjusting a coordinates of side points for correct shifting
