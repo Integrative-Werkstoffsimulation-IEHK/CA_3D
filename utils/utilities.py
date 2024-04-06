@@ -176,13 +176,12 @@ class Utils:
         diff_coeff = self.param["oxidant"]["primary"]["diffusion_coefficient"]
         probabilities = self.calc_prob(diff_coeff)
         self.param["oxidant"]["primary"]["probabilities"] = probabilities
-        self.param["oxidant"]["primary"]["p0_2d"] = self.calc_p0_2d(diff_coeff * 10**2)
+        self.param["oxidant"]["primary"]["p0_2d"] = self.calc_p0_2d(diff_coeff * 10**1)
 
         diff_coeff = self.param["oxidant"]["secondary"]["diffusion_coefficient"]
         probabilities = self.calc_prob(diff_coeff)
         self.param["oxidant"]["secondary"]["probabilities"] = probabilities
         self.param["oxidant"]["secondary"]["p0_2d"] = self.calc_p0_2d(diff_coeff)
-
 
         self.param["oxidant"]["primary"]["n_per_page"] = round(self.param["oxidant"]["primary"]["cells_concentration"] *
                                                              self.param["n_cells_per_axis"] ** 2)

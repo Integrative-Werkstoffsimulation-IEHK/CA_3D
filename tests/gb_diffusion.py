@@ -34,7 +34,7 @@ if __name__ == '__main__':
                   "n_iterations": 300000,  # must be >= n_cells_per_axis
                   "stride": 1,  # n_iterations / stride = n_iterations for outward diffusion
                   "sim_time": 3600,  # [sek]
-                  "size": 2000 * (10**-6),  # [m]
+                  "size": 5000 * (10**-6),  # [m]
 
                   "threshold_inward": 1,
                   "threshold_outward": 1,
