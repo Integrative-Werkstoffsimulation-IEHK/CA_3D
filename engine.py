@@ -49,8 +49,8 @@ class CellularAutomata:
             #
             # ---------------------------------------------------
             # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
-            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk  # CHANGE!!!!!!
-            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_gb
+            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk  # CHANGE!!!!!!
+            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_gb
             # ---------------------------------------------------
             #
             if self.param["secondary_oxidant_exists"]:
@@ -65,8 +65,8 @@ class CellularAutomata:
             self.cases.third.active = self.primary_active
             #
             # ---------------------------------------------------
-            self.primary_active.diffuse = self.primary_active.diffuse_with_scale
-            # self.primary_active.diffuse = self.primary_active.diffuse_bulk  # CHANGE!!!!!!
+            # self.primary_active.diffuse = self.primary_active.diffuse_with_scale
+            self.primary_active.diffuse = self.primary_active.diffuse_bulk  # CHANGE!!!!!!
             # ---------------------------------------------------
             #
             if self.param["secondary_active_element_exists"]:
@@ -302,6 +302,7 @@ class CellularAutomata:
 
             self.diffusion_inward()
             # self.diffusion_outward()
+            # self.calc_precipitation_front_only_cells()
 
             # print()
             # print("left: ", np.sum(self.primary_product.full_c3d[:, :, :44]))

@@ -1,6 +1,6 @@
 # import time
 # import numpy as np
-# import random
+import random
 from microstructure import voronoi
 from utils.numba_functions import *
 
@@ -289,8 +289,8 @@ class OxidantElem:
         self.current_count = 0
         self.fill_first_page()
 
-        self.microstructure = voronoi.VoronoiMicrostructure()
-        self.microstructure.generate_voronoi_3d(self.cells_per_axis, 10)
+        self.microstructure = voronoi.VoronoiMicrostructure(self.cells_per_axis)
+        self.microstructure.generate_voronoi_3d(50, seeds='own')
         self.microstructure.show_microstructure(self.cells_per_axis)
         self.cross_shifts = np.array([[1, 0, 0], [0, 1, 0],
                                       [-1, 0, 0], [0, -1, 0],

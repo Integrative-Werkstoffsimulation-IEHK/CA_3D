@@ -30,7 +30,7 @@ if __name__ == '__main__':
                   "diff_in_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
                   "diff_out_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
                   "temperature": 1100,  # °C
-                  "n_cells_per_axis": 102,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
+                  "n_cells_per_axis": 300,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
                   "n_iterations": 300000,  # must be >= n_cells_per_axis
                   "stride": 1,  # n_iterations / stride = n_iterations for outward diffusion
                   "sim_time": 3600,  # [sek]

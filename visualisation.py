@@ -21,7 +21,7 @@ class Visualisation:
         self.last_i = None
         self.oxid_numb = None
         self.generate_param_from_db()
-        self.cell_size = 10
+        self.cell_size = 2
         self.linewidth = 0.3
         self.alpha = 1
         self.cm = {1: np.array([255, 200, 200])/255.0,
@@ -330,7 +330,7 @@ ELAPSED TIME: {message}
         if iteration is None:
             iteration = self.last_i
         fig = plt.figure()
-        new_axlim = 500
+        new_axlim = 5
         rescale_factor = new_axlim / self.axlim
         if plot_separate:
             ax_inward = fig.add_subplot(341, projection='3d')
@@ -607,15 +607,16 @@ ELAPSED TIME: {message}
 
 
         # # Rescale the axis values
-        ticks = np.arange(0, new_axlim + 1, 100)
+        ticks = np.arange(0, new_axlim + 1, 1)
         ax_all.set_xticks(ticks)
         ax_all.set_yticks(ticks)
         ax_all.set_zticks(ticks)
 
         # Set font properties for the ticks
-        ax_all.tick_params(axis='x', labelsize=20 * cm, labelcolor='black')
-        ax_all.tick_params(axis='y', labelsize=20 * cm, labelcolor='black')
-        ax_all.tick_params(axis='z', labelsize=20 * cm, labelcolor='black')
+        f_size = 50
+        ax_all.tick_params(axis='x', labelsize=f_size * cm, labelcolor='black')
+        ax_all.tick_params(axis='y', labelsize=f_size * cm, labelcolor='black')
+        ax_all.tick_params(axis='z', labelsize=f_size * cm, labelcolor='black')
 
         # Get the tick labels and set font properties
         for tick in ax_all.get_xticklabels():
@@ -625,9 +626,9 @@ ELAPSED TIME: {message}
         for tick in ax_all.get_zticklabels():
             tick.set_fontname('Times New Roman')
 
-        ax_all.set_xlabel("X [µm]", **csfont, fontsize=20*cm)
-        ax_all.set_ylabel("Y [µm]", **csfont, fontsize=20*cm)
-        ax_all.set_zlabel("Z [µm]", **csfont, fontsize=20*cm)
+        ax_all.set_xlabel("X [mm]", **csfont, fontsize=f_size*cm)
+        ax_all.set_ylabel("Y [mm]", **csfont, fontsize=f_size*cm)
+        ax_all.set_zlabel("Z [mm]", **csfont, fontsize=f_size*cm)
 
         fig.set_size_inches((10 * cm, 10 * cm))
         plt.show()
@@ -1516,14 +1517,14 @@ ELAPSED TIME: {message}
 
             ax.plot(x, inward, color='b', linewidth=lokal_linewidth)
             # ax.plot(x, sinward, color='deeppink')
-            ax.plot(x, outward, color='g', linewidth=lokal_linewidth)
-            ax.plot(x, soutward, color='darkorange')
+            # ax.plot(x, outward, color='g', linewidth=lokal_linewidth)
+            # ax.plot(x, soutward, color='darkorange')
 
 
 
 
-            ax.plot(x, primary_product, color='r', linewidth=lokal_linewidth)
-            ax.plot(x, secondary_product, color='cyan')
+            # ax.plot(x, primary_product, color='r', linewidth=lokal_linewidth)
+            # ax.plot(x, secondary_product, color='cyan')
             # ax.plot(x, ternary_product, color='darkgreen')
             # ax.plot(x, quaternary_product, color='steelblue')
 
@@ -1566,9 +1567,11 @@ ELAPSED TIME: {message}
 
         # plt.savefig(f'W:/SIMCA/test_runs_data/{iteration}.jpeg', dpi=500)
         #
-        # for x_pos, inw, outw, prod, sout, sprod in zip(x, inward, outward, primary_product, soutward, secondary_product):
-        #
-        #     print(x_pos, " ", inw, " ", outw,  " ", prod, " ", sout, " ", sprod)
+        # for x_pos, inw, outw, prod in zip(x, inward, outward, primary_product):
+        #     print(x_pos * 1000000, " ", inw, " ", outw,  " ", prod)
+
+        for inw in inward:
+            print(inw)
 
         plt.show()
 
@@ -1678,8 +1681,9 @@ ELAPSED TIME: {message}
             return print("No Data to plot primary precipitation front!")
 
 
-        # for time, pos in zip(sqr_time, position):
-        #     print(time, " ", pos)
+        for time, pos, step in zip(sqr_time, position, range(500000)):
+            if step % 100 == 0:
+                print(time, " ", pos)
 
         # data = np.column_stack((sqr_time, position))
         # output_file_path = "C:/test_runs_data/" + "some" + ".txt"
