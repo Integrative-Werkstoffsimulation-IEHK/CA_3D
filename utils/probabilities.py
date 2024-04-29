@@ -209,10 +209,6 @@ class NucleationProbabilitiesADJ:
         self.static_probs[self.oxidation_number * 5:self.oxidation_number * 6] = 0.442
         self.static_probs[self.oxidation_number * 6:] = 1
 
-        # 0.259
-        # 0.298
-        # 0.442
-
         self.adapt_probabilities = None
         if param["nucl_adapt_function"] == 0:
             self.adapt_probabilities = self.adapt_nucl_prob

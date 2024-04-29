@@ -2,20 +2,18 @@ import sys
 import numpy as np
 from utils.my_data_structs import *
 from utils.utilities import *
+from utils.new_utils import *
 from utils.numba_functions import *
 import progressbar
 import elements
 import time
 from thermodynamics import td_data
+from config import Config, print_static_params
 
 
 class CellularAutomata:
     def __init__(self, user_input=None):
         """
-    TODO:
-        1. For the second case of the product formation the diffusion functions must be adapted to assure
-        reflection of the oxidant and active element from both forming scales!!
-
         """
         # pre settings
         if user_input is None:
@@ -23,9 +21,18 @@ class CellularAutomata:
             user_input = templates.DEFAULT_PARAM
 
         self.utils = Utils(user_input)
+
+        n_utils = NUtils()
+        n_utils.generate_param()
+
+
+
         self.utils.create_database()
         self.utils.generate_param()
         self.utils.print_init_var()
+
+
+
         self.param = self.utils.param
         self.elapsed_time = 0
 
@@ -37,7 +44,6 @@ class CellularAutomata:
         self.n_iter = self.param["n_iterations"]
         self.iteration = None
         self.curr_max_furthest = 0
-        # self.objs = templates.DEFAULT_OBJ_REF
         self.cases = templates.CaseRef()
         self.cur_case = None
 
@@ -48,8 +54,8 @@ class CellularAutomata:
             self.cases.second.oxidant = self.primary_oxidant
             #
             # ---------------------------------------------------
-            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
-            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk  # CHANGE!!!!!!
+            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
+            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk  # CHANGE!!!!!!
             # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_gb
             # ---------------------------------------------------
             #
@@ -65,8 +71,8 @@ class CellularAutomata:
             self.cases.third.active = self.primary_active
             #
             # ---------------------------------------------------
-            # self.primary_active.diffuse = self.primary_active.diffuse_with_scale
-            self.primary_active.diffuse = self.primary_active.diffuse_bulk  # CHANGE!!!!!!
+            self.primary_active.diffuse = self.primary_active.diffuse_with_scale
+            # self.primary_active.diffuse = self.primary_active.diffuse_bulk  # CHANGE!!!!!!
             # ---------------------------------------------------
             #
             if self.param["secondary_active_element_exists"]:
@@ -126,9 +132,6 @@ class CellularAutomata:
                     self.cases.first.go_around_func_ref = self.go_around_single_oxid_n
                     self.cases.first.fix_init_precip_func_ref = self.fix_init_precip_bool
                     my_type = bool
-                    # self.cases.first.precip_3d_init = np.full(
-                    #     (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
-                    #     False, dtype=bool)
                 else:
                     self.cases.first.go_around_func_ref = self.go_around_mult_oxid_n
                     self.cases.first.fix_init_precip_func_ref = self.fix_init_precip_int
@@ -145,16 +148,10 @@ class CellularAutomata:
                     self.cases.second.go_around_func_ref = self.go_around_single_oxid_n
                     self.cases.second.fix_init_precip_func_ref = self.fix_init_precip_bool
                     my_type = bool
-                    # self.cases.second.precip_3d_init = np.full(
-                    #     (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
-                    #     False, dtype=bool)
                 else:
                     self.cases.second.go_around_func_ref = self.go_around_mult_oxid_n
                     self.cases.second.fix_init_precip_func_ref = self.fix_init_precip_int
                     my_type = np.ubyte
-                    # self.cases.second.precip_3d_init = np.full(
-                    #     (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
-                    #     0, dtype=np.ubyte)
                 self.cases.second.precip_3d_init = np.full(
                     (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
                     0, dtype=my_type)
@@ -264,8 +261,8 @@ class CellularAutomata:
 
 
             # UNCOMENT!!!!_______________________________________________________
-            # self.nucl_prob = probabilities.NucleationProbabilitiesADJ(self.param)
-            # self.dissol_prob = probabilities.DissolutionProbabilitiesADJ(self.param)
+            self.nucl_prob = probabilities.NucleationProbabilitiesADJ(self.param)
+            self.dissol_prob = probabilities.DissolutionProbabilitiesADJ(self.param)
             # ________________________________________________________________________
 
             self.furthest_index = 0
@@ -275,6 +272,9 @@ class CellularAutomata:
             self.product_indexes = None
 
             self.save_flag = False
+
+            # must be defined elsewhere
+            self.get_combi_ind = None
 
             self.max_inside_neigh_number = 6 * self.primary_oxid_numb
             self.max_block_neigh_number = 7 * self.primary_oxid_numb
@@ -297,11 +297,11 @@ class CellularAutomata:
 
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
             # if (self.iteration) % self.param["stride"] == 0:
-            # self.precip_func()
+            self.precip_func()
             # self.decomposition()
 
             self.diffusion_inward()
-            # self.diffusion_outward()
+            self.diffusion_outward()
             # self.calc_precipitation_front_only_cells()
 
             # print()
@@ -323,10 +323,10 @@ class CellularAutomata:
             #     self.diffusion_inward()
             # if self.param["outward_diffusion"]:
             #     self.diffusion_outward()
-
+            #
             # if self.param["save_whole"]:
             #     self.save_results_only_prod()
-
+            #
             # if self.iteration % 100 == 0:
             #     self.calc_precip_front_2_cells()
 
@@ -738,7 +738,7 @@ class CellularAutomata:
             self.precip_step()
         self.primary_oxidant.transform_to_descards()
 
-    def get_combi_ind(self):
+    def get_combi_ind_standard(self):
         oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
                             in range(self.furthest_index + 1)], dtype=np.uint32)
 
@@ -755,7 +755,39 @@ class CellularAutomata:
         else:
             self.comb_indexes = [self.furthest_index]
 
-    def get_combi_ind_atomic(self):
+    def get_combi_ind_cells_around_product(self):
+        oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
+                            in range(self.furthest_index + 1)], dtype=np.uint32)
+
+        active = np.array([np.sum(self.primary_active.c3d[:, :, plane_ind]) for plane_ind
+                           in range(self.furthest_index + 1)], dtype=np.uint32)
+
+        product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
+                            in range(self.furthest_index + 1)], dtype=np.uint32)
+
+        # self.product_indexes = np.where((product_c < self.param["phase_fraction_lim"]) & (product_c > 0))[0]
+        self.product_indexes = np.where(product > 0)[0]
+        prod_left_shift = self.product_indexes - 1
+        prod_right_shift = self.product_indexes + 1
+        self.product_indexes = np.unique(np.concatenate((self.product_indexes, prod_left_shift, prod_right_shift)))
+        temp_ind = np.where((self.product_indexes >= 0) & (self.product_indexes <= self.furthest_index))
+        self.product_indexes = self.product_indexes[temp_ind]
+
+        # some = np.where((product_c[self.product_indexes] < self.param["phase_fraction_lim"]) & (product_c[self.product_indexes] > 0))[0]
+        # some = np.where(product_c[self.product_indexes] < self.param["phase_fraction_lim"])[0]
+        # self.product_indexes = self.product_indexes[some]
+
+        oxidant_indexes = np.where(oxidant > 0)[0]
+        active_indexes = np.where(active > 0)[0]
+        min_act = active_indexes.min(initial=self.cells_per_axis)
+        if min_act < self.cells_per_axis:
+            indexs = np.where(oxidant_indexes >= min_act - 1)[0]
+            comb_indexes = oxidant_indexes[indexs]
+            self.comb_indexes = np.intersect1d(comb_indexes, self.product_indexes)
+        else:
+            self.comb_indexes = [self.furthest_index]
+
+    def get_combi_ind_atomic_gamma_prime(self):
         oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
                             in range(self.furthest_index + 1)], dtype=np.uint32)
         oxidant_moles = oxidant * self.param["oxidant"]["primary"]["moles_per_cell"]
@@ -777,13 +809,6 @@ class CellularAutomata:
         oxidant_c = oxidant_moles / whole_moles
         active_c = active_moles / whole_moles
         product_c = product_moles / whole_moles
-
-        # if self.furthest_index + 1 > 5:
-        #     product_c = np.zeros(self.furthest_index + 1)
-        #     product_c[0] = 0.1
-        #     product_c[1] = 0
-        #     product_c[4] = 0
-        #     product_c[5] = 0.001
 
         self.gamma_primes = ((((oxidant_c ** 3) * (active_c ** 2)) / self.param["sol_prod"]) - 1) /\
                             self.param["initial_conc_and_moles"]["max_gamma_min_one"]
@@ -815,6 +840,53 @@ class CellularAutomata:
             self.comb_indexes = [self.furthest_index]
 
         self.comb_indexes = np.unique(np.concatenate((self.comb_indexes, where_solub_prod)))
+
+    def get_combi_ind_atomic(self):
+        oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
+                            in range(self.furthest_index + 1)], dtype=np.uint32)
+        oxidant_moles = oxidant * self.param["oxidant"]["primary"]["moles_per_cell"]
+
+        active = np.array([np.sum(self.primary_active.c3d[:, :, plane_ind]) for plane_ind
+                           in range(self.furthest_index + 1)], dtype=np.uint32)
+        active_moles = active * self.param["active_element"]["primary"]["moles_per_cell"]
+        outward_eq_mat_moles = active * self.param["active_element"]["primary"]["eq_matrix_moles_per_cell"]
+
+        product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
+                            in range(self.furthest_index + 1)], dtype=np.uint32)
+        product_moles = product * self.param["product"]["primary"]["moles_per_cell"]
+        product_eq_mat_moles = product * self.param["active_element"]["primary"]["eq_matrix_moles_per_cell"]
+
+        matrix_moles = self.matrix_moles_per_page - outward_eq_mat_moles - product_eq_mat_moles
+
+        whole_moles = matrix_moles + oxidant_moles + active_moles + product_moles
+
+        # oxidant_c = oxidant_moles / whole_moles
+        # active_c = active_moles / whole_moles
+        product_c = product_moles / whole_moles
+
+        # self.rel_prod_fraction = product_c / self.param["phase_fraction_lim"]
+
+        # self.product_indexes = np.where((product_c < self.param["phase_fraction_lim"]) & (product_c > 0))[0]
+        self.product_indexes = np.where(product_c > 0)[0]
+        prod_left_shift = self.product_indexes - 1
+        prod_right_shift = self.product_indexes + 1
+        self.product_indexes = np.unique(np.concatenate((self.product_indexes, prod_left_shift, prod_right_shift)))
+        temp_ind = np.where((self.product_indexes >= 0) & (self.product_indexes <= self.furthest_index))
+        self.product_indexes = self.product_indexes[temp_ind]
+
+        # some = np.where((product_c[self.product_indexes] < self.param["phase_fraction_lim"]) & (product_c[self.product_indexes] > 0))[0]
+        # some = np.where(product_c[self.product_indexes] < self.param["phase_fraction_lim"])[0]
+        # self.product_indexes = self.product_indexes[some]
+
+        oxidant_indexes = np.where(oxidant > 0)[0]
+        active_indexes = np.where(active > 0)[0]
+        min_act = active_indexes.min(initial=self.cells_per_axis)
+        if min_act < self.cells_per_axis:
+            indexs = np.where(oxidant_indexes >= min_act - 1)[0]
+            comb_indexes = oxidant_indexes[indexs]
+            self.comb_indexes = np.intersect1d(comb_indexes, self.product_indexes)
+        else:
+            self.comb_indexes = [self.furthest_index]
 
     def get_combi_ind_two_products(self, current_active):
         oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind

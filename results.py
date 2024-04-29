@@ -15,12 +15,12 @@ visualise.plot_3d(plot_separate=False, const_cam_pos=False)
 
 # visualise.animate_2d(plot_separate=False)
 
-# visualise.plot_2d(plot_separate=False)
+visualise.plot_2d(plot_separate=False)
 # visualise.plot_2d(plot_separate=False, iteration=2080)
 
 # visualise.animate_concentration(conc_type="cells", analytic_sol=False)
 
-visualise.plot_concentration(plot_separate=True, conc_type="cells", analytic_sol=True)
+visualise.plot_concentration(plot_separate=False, conc_type="cells", analytic_sol=False)
 # visualise.plot_concentration(plot_separate=False, conc_type="cells", analytic_sol=False,
 # iteration=29)
 
@@ -28,6 +28,4 @@ visualise.plot_concentration(plot_separate=True, conc_type="cells", analytic_sol
 
 # for plane_ind in range(0, 6700, 10):
 #     visualise.plot_3d(plot_separate=False, iteration=plane_ind, const_cam_pos=True)
-
-
 # visualise.calculate_phase_size()

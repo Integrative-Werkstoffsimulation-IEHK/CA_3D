@@ -1,7 +1,4 @@
-# Create an empty multi-dimensional dictionary for the lookup table
-import time
 import numpy as np
-# from utils.numba_functions import *
 import numba
 import gc
 import math
@@ -11,7 +8,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 user_input = {"start_real_radius": 0.5,
-              "delta_radius": 1,
+              "delta_radius": 0.5,
               "n_cells_per_axis": 501  # must be odd!!
               }
 
@@ -52,8 +49,8 @@ class Sphere:
                                                     4: 0,
                                                     5: 0}}
 
-        self.fig = plt.figure()
-        self.ax = self.fig.add_subplot(111, projection='3d')
+        # self.fig = plt.figure()
+        # self.ax = self.fig.add_subplot(111, projection='3d')
         self.cell_size = 0.5
         # self.inside = np.empty((self.n_cells_per_axis**3, 3), dtype=np.short)
         # self.last_inside_ind = 0
@@ -72,12 +69,10 @@ class Sphere:
         self.stats[self.real_radius] = {"mean": 0, 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
 
     def update_stats(self, mean, freq, neig_n):
-        # self.stats[self.real_radius]["mean"] = mean
-
+        self.stats[self.real_radius]["mean"] = mean
         self.stats[self.real_radius]["n_cells"] = int(np.sum(self.c3d[:, :, self.s_coord]))
-
-        # for freq_i, number in zip(freq, neig_n):
-        #     self.stats[self.real_radius][number] = freq_i
+        for freq_i, number in zip(freq, neig_n):
+            self.stats[self.real_radius][number] = freq_i
 
     def calc_mean_neigh(self):
         self.expand_radius()
@@ -92,16 +87,22 @@ class Sphere:
         flat_arr_len = np.array([np.sum(item) for item in neighbours], dtype=np.ubyte)
 
         on_surface_ind = np.array(np.where(flat_arr_len < 6)[0])
+        flat_arr_len = flat_arr_len[on_surface_ind]
 
         self.last_on_surface_ind = len(on_surface_ind)
         self.on_surface[:self.last_on_surface_ind] = self.on_surface[on_surface_ind]
 
-        mean = np.mean(flat_arr_len[on_surface_ind])
-        unique_numbs = np.array(np.unique(flat_arr_len[on_surface_ind], return_counts=True))
+        all_arounds = self.calc_all_sur_coord(self.on_surface[:self.last_on_surface_ind])
+        all_neighbours = go_around_bool(self.c3d, all_arounds)
+        all_arr_len = np.array([np.sum(item) for item in all_neighbours], dtype=np.ubyte)
+        all_mean = np.mean(all_arr_len)
+
+        mean = np.mean(flat_arr_len)
+        unique_numbs = np.array(np.unique(flat_arr_len, return_counts=True))
         freq = np.array(unique_numbs[1] / np.sum(unique_numbs[1]))
 
-        self.update_stats(mean, freq, unique_numbs[0])
-        print(self.real_radius, " ", mean)
+        # self.update_stats(mean, freq, unique_numbs[0])
+        print(self.real_radius, mean, all_mean, sep=" ")
         # return np.mean(on_surface), unique_numbs[0], freq
         # return np.mean(on_surface)
 
@@ -197,14 +198,15 @@ def calc_mean_neigh(real_radius):
     return np.mean(on_surface)
 
 
-sphere = Sphere(user_input)
+if __name__ == "__main__":
+    sphere = Sphere(user_input)
 
-for _ in range(100):
-    sphere.calc_mean_neigh()
+    for _ in range(399):
+        sphere.calc_mean_neigh()
 
-for key in sphere.stats:
-    # print(f"""{key:.3f} {sphere.stats[key]["mean"]:.3f} {sphere.stats[key][0]:.3f} {sphere.stats[key][1]:.3f} {sphere.stats[key][2]:.3f} {sphere.stats[key][3]:.3f} {sphere.stats[key][4]:.3f} {sphere.stats[key][5]:.3f}""")
-    print(f"""{key:.3f} {sphere.stats[key]["n_cells"]}""")
+    # for key in sphere.stats:
+    #     # print(f"""{key:.3f} {sphere.stats[key]["mean"]:.3f} {sphere.stats[key][0]:.3f} {sphere.stats[key][1]:.3f} {sphere.stats[key][2]:.3f} {sphere.stats[key][3]:.3f} {sphere.stats[key][4]:.3f} {sphere.stats[key][5]:.3f}""")
+    #     print(f"""{key:.3f} {sphere.stats[key]["n_cells"]}""")
 
 
 

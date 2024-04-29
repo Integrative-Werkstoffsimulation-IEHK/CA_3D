@@ -29,5 +29,6 @@ def get_diff_coeff(temperature, cond):
                   # scales_______________________________________________
                   "O in Cr2O3 from [O in Cr2O3]": 15.9 * 10 ** -4 * exp((-100800 * 4.184) / (8.314 * (273 + temperature))),
                   "Cr in Cr2O3 from [Cr in Cr2O3]": 0.137 * 10 ** -4 * exp((-61100 * 4.184) / (8.314 * (273 + temperature))),
+                  "None": 1 * (10 ** -13)
                   }
     return diff_coeff[cond]
