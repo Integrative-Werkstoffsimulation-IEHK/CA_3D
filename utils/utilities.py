@@ -4,8 +4,7 @@ from . import templates
 import sys
 import numpy as np
 from math import *
-from . import probabilities
-from config import Config
+from configuration import Config
 
 
 class Utils:

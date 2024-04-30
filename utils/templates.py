@@ -131,8 +131,6 @@ DEFAULT_OBJ_REF = {
 
                    }
 
-TD_LOOKUP = {}
-
 
 class CaseSetUp:
     def __init__(self):

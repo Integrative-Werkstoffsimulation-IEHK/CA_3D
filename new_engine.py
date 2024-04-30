@@ -1,91 +1,86 @@
 from utils.my_data_structs import *
-from utils.utilities import *
+from utils.new_utils import *
 from utils.numba_functions import *
-from utils.probabilities import *
 import progressbar
 import elements
 import time
-# from thermodynamics import td_data
+from configuration import Config
+from utils.templates import *
+from utils.probabilities import *
 
 
 class CellularAutomata:
-    def __init__(self, user_input=None):
-        """
-        """
-        # pre settings
-        if user_input is None:
-            # setting default parameters if no user input is given
-            user_input = templates.DEFAULT_PARAM
-
-        self.utils = Utils(user_input)
-        self.utils.create_database()
+    def __init__(self):
+        self.utils = Utils()
         self.utils.generate_param()
-        self.utils.print_init_var()
-
-        self.param = self.utils.param
+        self.utils.create_database()
         self.elapsed_time = 0
 
         # simulated space parameters
-        self.cells_per_axis = self.param["n_cells_per_axis"]
+        self.cells_per_axis = Config.N_CELLS_PER_AXIS
         self.cells_per_page = self.cells_per_axis ** 2
-        self.matrix_moles_per_page = self.cells_per_page * self.param["matrix_elem"]["moles_per_cell"]
+        self.matrix_moles_per_page = self.cells_per_page * Config.MATRIX.MOLES_PER_CELL
 
-        self.n_iter = self.param["n_iterations"]
+        self.n_iter = Config.N_ITERATIONS
         self.iteration = None
         self.curr_max_furthest = 0
-        self.cases = templates.CaseRef()
+
+        self.cases = CaseRef()
         self.cur_case = None
 
         # setting objects for inward diffusion
-        if self.param["inward_diffusion"]:
-            self.primary_oxidant = elements.OxidantElem(self.param["oxidant"]["primary"], self.utils)
+        if Config.INWARD_DIFFUSION:
+            self.primary_oxidant = elements.OxidantElem(Config.OXIDANTS.PRIMARY, self.utils)
             self.cases.first.oxidant = self.primary_oxidant
             self.cases.second.oxidant = self.primary_oxidant
-            #
             # ---------------------------------------------------
-            self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
-            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk  # CHANGE!!!!!!
+            # self.primary_oxidant.diffuse = None  # must be defined elsewhere
+            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_with_scale
+            # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_bulk
             # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_gb
             # ---------------------------------------------------
-            #
-            if self.param["secondary_oxidant_exists"]:
-                self.secondary_oxidant = elements.OxidantElem(self.param["oxidant"]["secondary"], self.utils)
+            if Config.OXIDANTS.SECONDARY_EXISTENCE:
+                self.secondary_oxidant = elements.OxidantElem(Config.OXIDANTS.SECONDARY, self.utils)
                 self.cases.third.oxidant = self.secondary_oxidant
                 self.cases.fourth.oxidant = self.secondary_oxidant
-
         # setting objects for outward diffusion
-        if self.param["outward_diffusion"]:
-            self.primary_active = elements.ActiveElem(self.param["active_element"]["primary"])
+        if Config.OUTWARD_DIFFUSION:
+            self.primary_active = elements.ActiveElem(Config.ACTIVES.PRIMARY)
             self.cases.first.active = self.primary_active
             self.cases.third.active = self.primary_active
-            #
             # ---------------------------------------------------
-            self.primary_active.diffuse = self.primary_active.diffuse_with_scale
-            # self.primary_active.diffuse = self.primary_active.diffuse_bulk  # CHANGE!!!!!!
+            # self.primary_active.diffuse = None  # must be defined elsewhere
+            # self.primary_active.diffuse = self.primary_active.diffuse_with_scale  # must be defined elsewhere
+            # self.primary_active.diffuse = self.primary_active.diffuse_bulk
             # ---------------------------------------------------
-            #
-            if self.param["secondary_active_element_exists"]:
-                self.secondary_active = elements.ActiveElem(self.param["active_element"]["secondary"])
+            if Config.ACTIVES.SECONDARY_EXISTENCE:
+                self.secondary_active = elements.ActiveElem(Config.ACTIVES.SECONDARY)
                 self.cases.second.active = self.secondary_active
                 self.cases.fourth.active = self.secondary_active
-                #
                 # ---------------------------------------------------
                 # self.secondary_active.diffuse = self.secondary_active.diffuse_with_scale
-                self.secondary_active.diffuse = self.secondary_active.diffuse_bulk  # CHANGE!!!!!!
+                # self.secondary_active.diffuse = self.secondary_active.diffuse_bulk
                 # ---------------------------------------------------
-                #
-
         # setting objects for precipitations
-        if self.param["compute_precipitations"]:
-            self.coord_buffer = MyBufferCoords(self.param["product"]["primary"]["oxidation_number"] *
-                                           self.cells_per_axis ** 3)
-            self.to_dissol_pn_buffer = MyBufferCoords(self.param["product"]["primary"]["oxidation_number"] *
-                                           self.cells_per_axis ** 3)
+        if Config.COMPUTE_PRECIPITATION:
+            self.precip_func = None  # must be defined elsewhere
+            self.get_combi_ind = None  # must be defined elsewhere
+            self.decomposition = None  # must be defined elsewhere
 
-            self.primary_product = elements.Product(self.param["product"]["primary"])
+            self.coord_buffer = MyBufferCoords(Config.PRODUCTS.PRIMARY.OXIDATION_NUMBER * self.cells_per_axis ** 3)
+            self.to_dissol_pn_buffer = MyBufferCoords(Config.PRODUCTS.PRIMARY.OXIDATION_NUMBER * self.cells_per_axis ** 3)
+
+            self.primary_product = elements.Product(Config.PRODUCTS.PRIMARY)
             self.cases.first.product = self.primary_product
 
-            if self.param["secondary_active_element_exists"] and self.param["secondary_oxidant_exists"]:
+            self.primary_oxid_numb = Config.PRODUCTS.PRIMARY.OXIDATION_NUMBER
+            self.max_inside_neigh_number = 6 * self.primary_oxid_numb
+            self.max_block_neigh_number = 7 * self.primary_oxid_numb
+
+            self.disol_block_p = Config.PROBABILITIES.PRIMARY.p0_d ** Config.PROBABILITIES.PRIMARY.n
+            self.disol_p = Config.PROBABILITIES.PRIMARY.p0_d
+
+            if Config.ACTIVES.SECONDARY_EXISTENCE and Config.OXIDANTS.SECONDARY_EXISTENCE:
                 self.secondary_product = elements.Product(self.param["product"]["secondary"])
                 self.objs[1]["product"] = self.secondary_product
                 self.ternary_product = elements.Product(self.param["product"]["ternary"])
@@ -97,22 +92,15 @@ class CellularAutomata:
                 self.objs[2]["to_check_with"] = self.cumul_product
                 self.objs[3]["to_check_with"] = self.cumul_product
 
-                self.precip_func = self.precipitation_2_cells
-                self.calc_precip_front = self.calc_precip_front_2
-                # self.decomposition = self.decomposition_0
-
-            elif self.param["secondary_active_element_exists"] and not self.param["secondary_oxidant_exists"]:
-                self.secondary_product = elements.Product(self.param["product"]["secondary"])
+            elif Config.ACTIVES.SECONDARY_EXISTENCE and not Config.OXIDANTS.SECONDARY_EXISTENCE:
+                self.secondary_product = elements.Product(Config.PRODUCTS.SECONDARY)
                 self.cases.second.product = self.secondary_product
                 self.cases.first.to_check_with = self.secondary_product
                 self.cases.second.to_check_with = self.primary_product
-                self.precip_func = self.precipitation_second_case_cells
+                
+                # self.precip_func = self.precipitation_second_case_cells
                 # self.calc_precip_front = self.calc_precip_front_1
                 # self.decomposition = self.decomposition_0
-
-                self.primary_oxid_numb = self.param["product"]["primary"]["oxidation_number"]
-                self.max_inside_neigh_number = 6 * self.primary_oxid_numb
-                self.max_block_neigh_number = 7 * self.primary_oxid_numb
 
                 self.cases.first.prod_indexes = np.full(self.cells_per_axis, False, dtype=bool)
                 self.cases.second.prod_indexes = np.full(self.cells_per_axis, False, dtype=bool)
@@ -125,10 +113,6 @@ class CellularAutomata:
                     self.cases.first.go_around_func_ref = self.go_around_mult_oxid_n
                     self.cases.first.fix_init_precip_func_ref = self.fix_init_precip_int
                     my_type = np.ubyte
-                    # self.cases.first.precip_3d_init = np.full(
-                    #     (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
-                    #     0, dtype=np.ubyte)
-
                 self.cases.first.precip_3d_init = np.full(
                     (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
                     0, dtype=my_type)
@@ -144,21 +128,15 @@ class CellularAutomata:
                 self.cases.second.precip_3d_init = np.full(
                     (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1),
                     0, dtype=my_type)
-
-                self.nucl_prob_secondary = None
-                self.dissol_prob_secondary = None
-
             else:
                 # self.precip_func = self.precipitation_first_case_no_neigbouring_area  # CHANGE!!!!!!!!!!!!
                 # self.precip_func = self.precipitation_first_case
-                self.precip_func = self.precipitation_first_case_no_growth
+                # self.precip_func = self.precipitation_first_case_no_growth
                 # self.precip_func = self.precipitation_0
                 # self.calc_precip_front = self.calc_precip_front_0
-                self.decomposition = self.dissolution_0_cells
+                # self.decomposition = self.dissolution_0_cells
                 self.primary_oxidant.scale = self.primary_product
                 self.primary_active.scale = self.primary_product
-
-                self.primary_oxid_numb = self.param["product"]["primary"]["oxidation_number"]
 
                 if self.cases.first.product.oxidation_number == 1:
                     self.cases.first.go_around_func_ref = self.go_around_single_oxid_n
@@ -170,7 +148,6 @@ class CellularAutomata:
                     self.cases.first.fix_init_precip_func_ref = self.fix_init_precip_int
                     self.cases.first.precip_3d_init = np.full(
                         (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1), 0, dtype=np.ubyte)
-
             # self.precipitations3d = np.full(self.shape, False)
             # self.half_thickness = 20
             # middle = int(self.cells_per_axis / 2)
@@ -228,13 +205,12 @@ class CellularAutomata:
             # self.precipitations = np.array(np.nonzero(self.precipitations), dtype=int)
             # self.precipitations3d = np.full(self.single_page_shape, False)
             # self.precipitations3d_sec = np.full(self.single_page_shape, False)
-
-            self.threshold_inward = self.param["threshold_inward"]
+            self.threshold_inward = Config.THRESHOLD_INWARD
             if self.threshold_inward < 2:
                 self.check_intersection = self.ci_single
             else:
                 self.check_intersection = self.ci_multi
-            self.threshold_outward = self.param["threshold_outward"]
+            self.threshold_outward = Config.THRESHOLD_OUTWARD
 
             self.fetch_ind = None
             self.generate_fetch_ind()
@@ -248,7 +224,6 @@ class CellularAutomata:
                                    [12, 3, 4, 5, 20, 23, 25],
                                    [13, 3, 4, 2, 21, 24, 25]]
 
-
             # UNCOMENT!!!!_______________________________________________________
             self.nucl_prob = NucleationProbabilitiesADJ(self.param)
             self.dissol_prob = DissolutionProbabilitiesADJ(self.param)
@@ -261,22 +236,9 @@ class CellularAutomata:
             self.product_indexes = None
 
             self.save_flag = False
-
-            # must be defined elsewhere
-            self.get_combi_ind = None
-
-            self.max_inside_neigh_number = 6 * self.primary_oxid_numb
-            self.max_block_neigh_number = 7 * self.primary_oxid_numb
-
             self.product_x_nzs = np.full(self.cells_per_axis, False, dtype=bool)
-
-            self.cumul_prod = np.empty(self.n_iter, dtype=int)
-
-            self.mid_point_coord = int((self.param["n_cells_per_axis"] - 1) / 2)
-
-            self.disol_block_p = self.param["dissolution_p"] ** self.param["dissolution_n"]
-            self.disol_p = self.param["dissolution_p"]
-
+            # self.cumul_prod = np.empty(self.n_iter, dtype=int)
+            # self.mid_point_coord = int((Config.N_CELLS_PER_AXIS - 1) / 2)
             # self.look_up = td_data.TDATA()
             # self.look_up.gen_table_dict()
 
