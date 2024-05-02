@@ -283,14 +283,11 @@ class CellularAutomata:
         self.begin = time.time()
 
     def simulation(self):
-
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
-            # if (self.iteration) % self.param["stride"] == 0:
             self.precip_func()
-            # self.decomposition()
-
             self.diffusion_inward()
             self.diffusion_outward()
+            # self.decomposition()
             # self.calc_precipitation_front_only_cells()
 
             # print()

@@ -1,5 +1,5 @@
-from visualisation import *
-# from new_visualisation import *
+# from visualisation import *
+from new_visualisation import *
 import tkinter as tk
 from tkinter import filedialog
 

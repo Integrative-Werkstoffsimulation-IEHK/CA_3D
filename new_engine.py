@@ -1,10 +1,8 @@
 from utils.my_data_structs import *
 from utils.new_utils import *
-from utils.numba_functions import *
 import progressbar
-import elements
+from new_elements import *
 import time
-from configuration import Config
 from utils.templates import *
 from utils.new_probabilities import *
 
@@ -30,7 +28,7 @@ class CellularAutomata:
 
         # setting objects for inward diffusion
         if Config.INWARD_DIFFUSION:
-            self.primary_oxidant = elements.OxidantElem(Config.OXIDANTS.PRIMARY, self.utils)
+            self.primary_oxidant = OxidantElem(Config.OXIDANTS.PRIMARY, self.utils)
             self.cases.first.oxidant = self.primary_oxidant
             self.cases.second.oxidant = self.primary_oxidant
             # ---------------------------------------------------
@@ -40,12 +38,12 @@ class CellularAutomata:
             # self.primary_oxidant.diffuse = self.primary_oxidant.diffuse_gb
             # ---------------------------------------------------
             if Config.OXIDANTS.SECONDARY_EXISTENCE:
-                self.secondary_oxidant = elements.OxidantElem(Config.OXIDANTS.SECONDARY, self.utils)
+                self.secondary_oxidant = OxidantElem(Config.OXIDANTS.SECONDARY, self.utils)
                 self.cases.third.oxidant = self.secondary_oxidant
                 self.cases.fourth.oxidant = self.secondary_oxidant
         # setting objects for outward diffusion
         if Config.OUTWARD_DIFFUSION:
-            self.primary_active = elements.ActiveElem(Config.ACTIVES.PRIMARY)
+            self.primary_active = ActiveElem(Config.ACTIVES.PRIMARY)
             self.cases.first.active = self.primary_active
             self.cases.third.active = self.primary_active
             # ---------------------------------------------------
@@ -54,7 +52,7 @@ class CellularAutomata:
             # self.primary_active.diffuse = self.primary_active.diffuse_bulk
             # ---------------------------------------------------
             if Config.ACTIVES.SECONDARY_EXISTENCE:
-                self.secondary_active = elements.ActiveElem(Config.ACTIVES.SECONDARY)
+                self.secondary_active = ActiveElem(Config.ACTIVES.SECONDARY)
                 self.cases.second.active = self.secondary_active
                 self.cases.fourth.active = self.secondary_active
                 # ---------------------------------------------------
@@ -65,12 +63,14 @@ class CellularAutomata:
         if Config.COMPUTE_PRECIPITATION:
             self.precip_func = None  # must be defined elsewhere
             self.get_combi_ind = None  # must be defined elsewhere
+            self.precip_step = None
+            self.check_intersection = None  # must be defined elsewhere
             self.decomposition = None  # must be defined elsewhere
 
             self.coord_buffer = MyBufferCoords(Config.PRODUCTS.PRIMARY.OXIDATION_NUMBER * self.cells_per_axis ** 3)
             self.to_dissol_pn_buffer = MyBufferCoords(Config.PRODUCTS.PRIMARY.OXIDATION_NUMBER * self.cells_per_axis ** 3)
 
-            self.primary_product = elements.Product(Config.PRODUCTS.PRIMARY)
+            self.primary_product = Product(Config.PRODUCTS.PRIMARY)
             self.cases.first.product = self.primary_product
 
             self.primary_oxid_numb = Config.PRODUCTS.PRIMARY.OXIDATION_NUMBER
@@ -81,11 +81,11 @@ class CellularAutomata:
             self.disol_p = Config.PROBABILITIES.PRIMARY.p0_d
 
             if Config.ACTIVES.SECONDARY_EXISTENCE and Config.OXIDANTS.SECONDARY_EXISTENCE:
-                self.secondary_product = elements.Product(self.param["product"]["secondary"])
+                self.secondary_product = Product(self.param["product"]["secondary"])
                 self.objs[1]["product"] = self.secondary_product
-                self.ternary_product = elements.Product(self.param["product"]["ternary"])
+                self.ternary_product = Product(self.param["product"]["ternary"])
                 self.objs[2]["product"] = self.ternary_product
-                self.quaternary_product = elements.Product(self.param["product"]["quaternary"])
+                self.quaternary_product = Product(self.param["product"]["quaternary"])
                 self.objs[3]["product"] = self.quaternary_product
                 self.objs[0]["to_check_with"] = self.cumul_product
                 self.objs[1]["to_check_with"] = self.cumul_product
@@ -93,7 +93,7 @@ class CellularAutomata:
                 self.objs[3]["to_check_with"] = self.cumul_product
 
             elif Config.ACTIVES.SECONDARY_EXISTENCE and not Config.OXIDANTS.SECONDARY_EXISTENCE:
-                self.secondary_product = elements.Product(Config.PRODUCTS.SECONDARY)
+                self.secondary_product = Product(Config.PRODUCTS.SECONDARY)
                 self.cases.second.product = self.secondary_product
                 self.cases.first.to_check_with = self.secondary_product
                 self.cases.second.to_check_with = self.primary_product
@@ -206,10 +206,6 @@ class CellularAutomata:
             # self.precipitations3d = np.full(self.single_page_shape, False)
             # self.precipitations3d_sec = np.full(self.single_page_shape, False)
             self.threshold_inward = Config.THRESHOLD_INWARD
-            if self.threshold_inward < 2:
-                self.check_intersection = self.ci_single
-            else:
-                self.check_intersection = self.ci_multi
             self.threshold_outward = Config.THRESHOLD_OUTWARD
 
             self.fetch_ind = None
@@ -245,14 +241,11 @@ class CellularAutomata:
         self.begin = time.time()
 
     def simulation(self):
-
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
-            # if (self.iteration) % self.param["stride"] == 0:
             self.precip_func()
-            # self.decomposition()
-
             self.diffusion_inward()
             self.diffusion_outward()
+            # self.decomposition()
             # self.calc_precipitation_front_only_cells()
 
             # print()
@@ -1065,7 +1058,7 @@ class CellularAutomata:
 
         if len(self.comb_indexes) > 0:
             self.cur_case = self.cases.first
-            self.precip_step_no_growth()
+            self.precip_step()
         self.primary_oxidant.transform_to_descards()
 
     def precipitation_0_cells_no_growth_solub_prod_test(self):
@@ -1355,13 +1348,12 @@ class CellularAutomata:
                     oxidant_cells = np.vstack((oxidant_cells, np.full(len(oxidant_cells[0]), plane_index, dtype=np.short)))
                     oxidant_cells = oxidant_cells.transpose()
 
-                    # BACK UNCOMMENT!!!!
                     exists = check_at_coord(self.cur_case.product.full_c3d, oxidant_cells)  # precip on place of oxidant!
                     temp_ind = np.where(exists)[0]
                     oxidant_cells = np.delete(oxidant_cells, temp_ind, 0)
 
                     if len(oxidant_cells) > 0:
-                        self.ci_single_no_growth(oxidant_cells)
+                        self.check_intersection(oxidant_cells)
 
     def precip_step_no_growth_solub_prod_test(self):
         """

@@ -39,12 +39,12 @@ class Config:
 
     TEMPERATURE = 1100  # °C
     N_CELLS_PER_AXIS = 102  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
-    N_ITERATIONS = 300000  # must be >= n_cells_per_axis
+    N_ITERATIONS = 30000  # must be >= n_cells_per_axis
     STRIDE = 40  # n_iterations / stride = n_iterations for outward diffusion
     SIM_TIME = 72000  # [sek]
-    SIZE = 500 * (10 ** -6)  # [m]
+    SIZE = 350 * (10 ** -6)  # [m]
     SOL_PROD = 6.25 * 10 ** -31  # 5.621 * 10 ** -10
-    PHASE_FRACTION_LIMIT = 0.045
+    PHASE_FRACTION_LIMIT = 0.0000333
     THRESHOLD_INWARD = 1
     THRESHOLD_OUTWARD = 1
     NEIGH_RANGE = 1  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
@@ -57,7 +57,7 @@ class Config:
     DECOMPOSE_PRECIPITATIONS = False
     FULL_CELLS = False
     SAVE_PATH = 'C:/test_runs_data/'
-    SAVE_POST_PROCESSED_INPUT = False
+    SAVE_POST_PROCESSED_INPUT = True
     # PROBABILITIES_______________________________________________________________
     PROBABILITIES = ElementGroups()
     PROBABILITIES.PRIMARY = ConfigProbabilities()
@@ -99,4 +99,4 @@ class Config:
     PROBABILITIES.PRIMARY.dissol_adapt_function = 3
     # ________________________
     GENERATED_VALUES = GeneratedValues()
-    COMMENT = "NO COMMENTS"
+    COMMENT = """NO COMMENTS"""

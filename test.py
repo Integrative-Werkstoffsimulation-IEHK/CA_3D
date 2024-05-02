@@ -1,5 +1,4 @@
-from configuration import Config
-from utils import new_utils
+
 import sqlite3
 import pickle
 import tkinter as tk

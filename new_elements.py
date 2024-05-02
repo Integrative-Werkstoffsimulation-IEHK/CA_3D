@@ -8,11 +8,11 @@ class ActiveElem:
         self.cells_per_axis = Config.N_CELLS_PER_AXIS
         self.neigh_range = Config.NEIGH_RANGE
         self.shape = (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis)
-        self.p1_range = settings.PROBABILIIES[0]
+        self.p1_range = settings.PROBABILITIES[0]
         self.p2_range = 2 * self.p1_range
         self.p3_range = 3 * self.p1_range
         self.p4_range = 4 * self.p1_range
-        self.p_r_range = self.p4_range + settings.PROBABILIIES[1]
+        self.p_r_range = self.p4_range + settings.PROBABILITIES[1]
         self.n_per_page = settings.N_PER_PAGE
 
         # self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
@@ -262,11 +262,11 @@ class ActiveElem:
 class OxidantElem:
     def __init__(self, settings, utils):
         self.cells_per_axis = Config.N_CELLS_PER_AXIS
-        self.p1_range = settings.PROBABILIIES[0]
+        self.p1_range = settings.PROBABILITIES[0]
         self.p2_range = 2 * self.p1_range
         self.p3_range = 3 * self.p1_range
         self.p4_range = 4 * self.p1_range
-        self.p_r_range = self.p4_range + settings.PROBABILIIES[1]
+        self.p_r_range = self.p4_range + settings.PROBABILITIES[1]
         self.p0_2d = settings.PROBABILITIES_2D
         self.n_per_page = settings.N_PER_PAGE
         self.neigh_range = Config.NEIGH_RANGE

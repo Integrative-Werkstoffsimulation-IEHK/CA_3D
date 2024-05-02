@@ -42,12 +42,29 @@ class Visualisation:
         if result is None:
             self.generate_config_from_old_db()
         else:
+            self.utils.generate_param()
             self.c.execute("SELECT pickled_data FROM PickledConfig")
             result = self.c.fetchone()
             # Unpickle the data
             pickled_instance = result[0]
             self.Config = pickle.loads(pickled_instance)
-            self.utils.print_static_params(self.Config)
+
+        self.utils.print_static_params(self.Config)
+
+        self.c.execute("SELECT last_i from time_parameters")
+        self.last_i = self.c.fetchone()[0]
+        self.compute_elapsed_time()
+
+        self.axlim = self.Config.N_CELLS_PER_AXIS
+        self.shape = (self.axlim, self.axlim, self.axlim)
+        self.oxid_numb = self.Config.PRODUCTS.PRIMARY.OXIDATION_NUMBER
+
+        if not self.Config.INWARD_DIFFUSION:
+            print("No INWARD data!")
+        if not self.Config.COMPUTE_PRECIPITATION:
+            print("No PRECIPITATION data!")
+        if not self.Config.OUTWARD_DIFFUSION:
+            print("No OUTWARD data!")
 
     def generate_config_from_old_db(self):
         user_input = templates.DEFAULT_PARAM
@@ -187,23 +204,22 @@ class Visualisation:
 
         self.utils.generate_param()
         self.Config = Config()
-        self.utils.print_static_params(Config)
 
-
-        self.c.execute("SELECT last_i from time_parameters")
-        self.last_i = self.c.fetchone()[0]
-        self.compute_elapsed_time()
-
-        self.axlim = self.Config.N_CELLS_PER_AXIS
-        self.shape = (self.axlim, self.axlim, self.axlim)
-        self.oxid_numb = self.Config.PRODUCTS.PRIMARY.OXIDATION_NUMBER
-
-        if not self.Config.INWARD_DIFFUSION:
-            print("No INWARD data!")
-        if not self.Config.COMPUTE_PRECIPITATION:
-            print("No PRECIPITATION data!")
-        if not self.Config.OUTWARD_DIFFUSION:
-            print("No OUTWARD data!")
+        # self.utils.print_static_params(Config)
+        # self.c.execute("SELECT last_i from time_parameters")
+        # self.last_i = self.c.fetchone()[0]
+        # self.compute_elapsed_time()
+        #
+        # self.axlim = self.Config.N_CELLS_PER_AXIS
+        # self.shape = (self.axlim, self.axlim, self.axlim)
+        # self.oxid_numb = self.Config.PRODUCTS.PRIMARY.OXIDATION_NUMBER
+        #
+        # if not self.Config.INWARD_DIFFUSION:
+        #     print("No INWARD data!")
+        # if not self.Config.COMPUTE_PRECIPITATION:
+        #     print("No PRECIPITATION data!")
+        # if not self.Config.OUTWARD_DIFFUSION:
+        #     print("No OUTWARD data!")
 
     def compute_elapsed_time(self):
         self.c.execute("SELECT elapsed_time from time_parameters")
