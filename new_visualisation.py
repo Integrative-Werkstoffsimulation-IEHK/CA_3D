@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from scipy import special
 from math import *
 import numpy as np
-from utils import utilities, physical_data, templates, new_utils
+from utils import templates, new_utils
 from scipy import ndimage
 import pickle
 from configuration import Config
@@ -18,7 +18,6 @@ class Visualisation:
         self.db_name = db_name
         self.conn = sql.connect(self.db_name)
         self.c = self.conn.cursor()
-        # self.param = None
         self.Config = None
         self.axlim = None
         self.shape = None
