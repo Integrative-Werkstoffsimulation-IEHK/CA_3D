@@ -135,7 +135,7 @@ def load_data_from_file(input_file):
 
 if __name__ == "__main__":
     # Example usage:
-    directory = "C:/Users/adam-wrmjvo101twvweh/Desktop/test_csv/"
+    directory = "C:/Users/alexe/Desktop/Simulations_Klaus_first_ALL/"
     output_file = "consolidated_data.pkl"
 
     # Read data from CSV files
