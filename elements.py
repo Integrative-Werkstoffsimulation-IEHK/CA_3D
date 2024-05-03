@@ -18,7 +18,7 @@ class ActiveElem:
         self.n_per_page = settings["n_per_page"]
 
         # self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
-        self.precip_transform_depth = int(41)  # min self.neigh_range !!!
+        self.precip_transform_depth = int(20)  # min self.neigh_range !!!
 
         self.extended_axis = self.cells_per_axis + self.neigh_range
         self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)

@@ -1,2 +1,2 @@
 from .config import Config
-from .config_utils_classes import ElemInput, ProdGroups, ProdInput
+from .config_utils_classes import *

@@ -182,10 +182,9 @@ class NucleationProbabilitiesADJ:
 
         if param["max_neigh_numb"] == 0:
             if param["product"]["primary"]["oxidation_number"] > 1:
-                self.n_neigh_init = param["product"]["primary"]["lind_flat_arr"] *\
-                                    param["product"]["primary"]["oxidation_number"] - 1
+                self.n_neigh_init = 7 * param["product"]["primary"]["oxidation_number"] - 1
             else:
-                self.n_neigh_init = param["product"]["primary"]["lind_flat_arr"]
+                self.n_neigh_init = 6
         else:
             self.n_neigh_init = param["max_neigh_numb"]
 
@@ -302,7 +301,7 @@ class DissolutionProbabilitiesADJ:
 
         self.const_a_pp = np.full(param["n_cells_per_axis"], 1, dtype=float)
 
-        self.b0 = -1.4
+        self.b0 = -0.34
         self.b1 = -0.2
         self.delt_b = self.b1 - self.b0
         self.const_b_pp = np.full(param["n_cells_per_axis"], self.b0, dtype=float)

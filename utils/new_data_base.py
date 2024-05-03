@@ -2,6 +2,7 @@ import sqlite3 as sql
 import time
 import pickle
 from configuration import Config
+from configuration import get_static_vars_dict
 
 
 class Database:
@@ -15,8 +16,14 @@ class Database:
         self.save_pickled_config_to_db()
 
     def save_pickled_config_to_db(self):
-        config_instance = Config()
-        pickled_instance = pickle.dumps(config_instance)
+        # config_instance = Config()
+        # pickled_instance = pickle.dumps(config_instance)
+        # self.c.execute('''CREATE TABLE IF NOT EXISTS PickledConfig (pickled_data BLOB)''')
+        # self.c.execute("INSERT INTO PickledConfig (pickled_data) VALUES (?)", (pickled_instance,))
+        # self.conn.commit()
+
+        dict_config_to_pickle = get_static_vars_dict(Config)
+        pickled_instance = pickle.dumps(dict_config_to_pickle)
         self.c.execute('''CREATE TABLE IF NOT EXISTS PickledConfig (pickled_data BLOB)''')
         self.c.execute("INSERT INTO PickledConfig (pickled_data) VALUES (?)", (pickled_instance,))
         self.conn.commit()

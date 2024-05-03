@@ -215,30 +215,30 @@ ELAPSED TIME: {message}
             def animate(iteration):
                 ax_all.cla()
                 ax_all.dist = 4
-                if self.param["inward_diffusion"]:
-                    self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
-                    items = np.array(self.c.fetchall())
-                    if np.any(items):
-                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b',
-                                       s=self.cell_size * (72. / fig.dpi) ** 2)
-                    # if self.param["secondary_oxidant_exists"]:
-                    #     self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
-                    #     items = np.array(self.c.fetchall())
-                    #     if np.any(items):
-                    #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='deeppink',
-                    #                        s=self.cell_size * (72. / fig.dpi) ** 2)
-                if self.param["outward_diffusion"]:
-                    self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
-                    items = np.array(self.c.fetchall())
-                    if np.any(items):
-                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='g',
-                                       s=self.cell_size * (72. / fig.dpi) ** 2)
-                    if self.param["secondary_active_element_exists"]:
-                        self.c.execute("SELECT * from secondary_active_iter_{}".format(iteration))
-                        items = np.array(self.c.fetchall())
-                        if np.any(items):
-                            ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='darkorange',
-                                           s=self.cell_size * (72. / fig.dpi) ** 2)
+                # if self.param["inward_diffusion"]:
+                #     self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
+                #     items = np.array(self.c.fetchall())
+                #     if np.any(items):
+                #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b',
+                #                        s=self.cell_size * (72. / fig.dpi) ** 2)
+                #     # if self.param["secondary_oxidant_exists"]:
+                #     #     self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
+                #     #     items = np.array(self.c.fetchall())
+                #     #     if np.any(items):
+                #     #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='deeppink',
+                #     #                        s=self.cell_size * (72. / fig.dpi) ** 2)
+                # if self.param["outward_diffusion"]:
+                #     self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
+                #     items = np.array(self.c.fetchall())
+                #     if np.any(items):
+                #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='g',
+                #                        s=self.cell_size * (72. / fig.dpi) ** 2)
+                #     if self.param["secondary_active_element_exists"]:
+                #         self.c.execute("SELECT * from secondary_active_iter_{}".format(iteration))
+                #         items = np.array(self.c.fetchall())
+                #         if np.any(items):
+                #             ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='darkorange',
+                #                            s=self.cell_size * (72. / fig.dpi) ** 2)
                 if self.param["compute_precipitations"]:
                     self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
                     items = np.array(self.c.fetchall())
@@ -462,14 +462,14 @@ ELAPSED TIME: {message}
                 ax_qtprecip.dist = dist
         else:
             ax_all = fig.add_subplot(111, projection='3d')
-            # if self.param["inward_diffusion"]:
-            #     self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
-            #     items = np.array(self.c.fetchall())
-            #     if np.any(items):
-            #         items = items * rescale_factor
-            #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b',
-            #                        s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
-            #                        alpha=self.alpha)
+            if self.param["inward_diffusion"]:
+                self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
+                items = np.array(self.c.fetchall())
+                if np.any(items):
+                    items = items * rescale_factor
+                    ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b',
+                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
+                                   alpha=self.alpha)
             #     if self.param["secondary_oxidant_exists"]:
             #         self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
             #         items = np.array(self.c.fetchall())

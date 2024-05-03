@@ -1,4 +1,5 @@
-from .config_utils_classes import *
+from configuration.config_utils_classes import (ElemInput, ElementGroups, ProdInput,
+                                                ProdGroups, ConfigProbabilities, GeneratedValues)
 
 
 class Config:

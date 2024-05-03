@@ -74,3 +74,26 @@ class ProdInput:
 
 class GeneratedValues:
     pass
+
+
+def get_static_vars_dict(cls):
+    # Initialize an empty dictionary
+    static_vars_dict = {}
+    # Iterate over class attributes
+    for attr_name, attr_value in cls.__dict__.items():
+        # Exclude special methods and variables starting with '__'
+        if not attr_name.startswith('__') and not isinstance(attr_value, classmethod):
+            # If the attribute is an instance of another class, recursively convert it to a dictionary
+            if isinstance(attr_value, type):
+                static_vars_dict[attr_name] = get_static_vars_dict(attr_value)
+            else:
+                static_vars_dict[attr_name] = attr_value
+    return static_vars_dict
+
+
+def update_class_from_dict(cls, data):
+    for key, value in data.items():
+        if isinstance(value, dict):
+            setattr(cls, key, type(key, (), value))
+        else:
+            setattr(cls, key, value)
