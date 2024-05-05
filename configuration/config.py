@@ -20,15 +20,15 @@ class Config:
     # primary oxidants
     OXIDANTS.PRIMARY.ELEMENT = "O"
     OXIDANTS.PRIMARY.DIFFUSION_CONDITION = "O in Ni Krupp"
-    OXIDANTS.PRIMARY.CELLS_CONCENTRATION = 0.01
+    OXIDANTS.PRIMARY.CELLS_CONCENTRATION = 0.0012
     # secondary oxidants
     # OXIDANTS.SECONDARY.ELEMENT = "N"
     # OXIDANTS.SECONDARY.DIFFUSION_CONDITION = "N in Ni Krupp"
     # OXIDANTS.SECONDARY.CELLS_CONCENTRATION = 0.01
     # primary actives
-    ACTIVES.PRIMARY.ELEMENT = "Cr"
-    ACTIVES.PRIMARY.DIFFUSION_CONDITION = "Cr in Ni Krupp"
-    ACTIVES.PRIMARY.MASS_CONCENTRATION = 0.11
+    ACTIVES.PRIMARY.ELEMENT = "Al"
+    ACTIVES.PRIMARY.DIFFUSION_CONDITION = "Al in Ni Krupp"
+    ACTIVES.PRIMARY.MASS_CONCENTRATION = 0.025
     ACTIVES.PRIMARY.CELLS_CONCENTRATION = 0.2
     # secondary actives
     # ACTIVES.SECONDARY.ELEMENT = "None"
@@ -40,12 +40,13 @@ class Config:
 
     TEMPERATURE = 1100  # °C
     N_CELLS_PER_AXIS = 102  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
-    N_ITERATIONS = 30000  # must be >= n_cells_per_axis
-    STRIDE = 40  # n_iterations / stride = n_iterations for outward diffusion
-    SIM_TIME = 72000  # [sek]
-    SIZE = 350 * (10 ** -6)  # [m]
+    N_ITERATIONS = 5000000  # must be >= n_cells_per_axis
+    STRIDE = 500  # n_iterations / stride = n_iterations for outward diffusion
+    SIM_TIME = 1080000  # [sek]
+    SIZE = 1000 * (10 ** -6)  # [m]
+
     SOL_PROD = 6.25 * 10 ** -31  # 5.621 * 10 ** -10
-    PHASE_FRACTION_LIMIT = 0.0000333
+    PHASE_FRACTION_LIMIT = 0.07
     THRESHOLD_INWARD = 1
     THRESHOLD_OUTWARD = 1
     NEIGH_RANGE = 1  # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
@@ -55,7 +56,7 @@ class Config:
     OUTWARD_DIFFUSION = True
     COMPUTE_PRECIPITATION = True
     SAVE_WHOLE = False
-    DECOMPOSE_PRECIPITATIONS = False
+    DECOMPOSE_PRECIPITATIONS = True
     FULL_CELLS = False
     SAVE_PATH = 'C:/test_runs_data/'
     SAVE_POST_PROCESSED_INPUT = True
@@ -70,21 +71,21 @@ class Config:
     PROBABILITIES.PRIMARY.p0_f = 1
     PROBABILITIES.PRIMARY.p0_A_const = 1
     PROBABILITIES.PRIMARY.p0_B_const = 1
-    PROBABILITIES.PRIMARY.p1 = 0.5
+    PROBABILITIES.PRIMARY.p1 = 0.999999
     PROBABILITIES.PRIMARY.p1_f = 1
     PROBABILITIES.PRIMARY.p1_A_const = 1
     PROBABILITIES.PRIMARY.p1_B_const = 1
     PROBABILITIES.PRIMARY.global_A = 1
-    PROBABILITIES.PRIMARY.global_B = 0.07
+    PROBABILITIES.PRIMARY.global_B = 0.001
     PROBABILITIES.PRIMARY.global_B_f = -20
     PROBABILITIES.PRIMARY.max_neigh_numb = None
     PROBABILITIES.PRIMARY.nucl_adapt_function = 3
     # dissolution primary_________________________
-    PROBABILITIES.PRIMARY.p0_d = 0.01
+    PROBABILITIES.PRIMARY.p0_d = 0.001
     PROBABILITIES.PRIMARY.p0_d_f = 1
     PROBABILITIES.PRIMARY.p0_d_A_const = 1
     PROBABILITIES.PRIMARY.p0_d_B_const = 1
-    PROBABILITIES.PRIMARY.p1_d = 0.001
+    PROBABILITIES.PRIMARY.p1_d = 0.0001
     PROBABILITIES.PRIMARY.p1_d_f = 1
     PROBABILITIES.PRIMARY.p1_d_A_const = 1
     PROBABILITIES.PRIMARY.p1_d_B_const = 1
@@ -93,7 +94,7 @@ class Config:
     PROBABILITIES.PRIMARY.p6_d_A_const = 1
     PROBABILITIES.PRIMARY.p6_d_B_const = 1
     PROBABILITIES.PRIMARY.global_d_A = 1
-    PROBABILITIES.PRIMARY.global_d_B = -2
+    PROBABILITIES.PRIMARY.global_d_B = -1.15
     PROBABILITIES.PRIMARY.global_d_B_f = -0.001
     PROBABILITIES.PRIMARY.n = 2
     PROBABILITIES.PRIMARY.bsf = 1

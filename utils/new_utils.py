@@ -70,9 +70,10 @@ class Utils:
         Config.GENERATED_VALUES.DB_ID = str(time_stamp)
         Config.GENERATED_VALUES.DB_PATH = Config.SAVE_PATH + Config.GENERATED_VALUES.DB_ID + '.db'
         Config.GENERATED_VALUES.DATE_OF_CREATION = str(datetime.datetime.fromtimestamp(time_stamp))
+        print("DB_PATH: ", Config.GENERATED_VALUES.DB_PATH)
 
         if Config.SAVE_POST_PROCESSED_INPUT:
-            path = Config.SAVE_PATH + str(int(time.time())) + 'output.txt'
+            path = Config.SAVE_PATH + str(int(time.time())) + '_config.txt'
             with open(path, 'w') as file:
                 self.print_static_params_to_file(Config, file)
 

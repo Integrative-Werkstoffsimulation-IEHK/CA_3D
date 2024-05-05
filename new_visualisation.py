@@ -161,15 +161,15 @@ class Visualisation:
         # _________________________
         Config.PROBABILITIES.PRIMARY.p0 = user_input["nucleation_probability"]
         Config.PROBABILITIES.PRIMARY.p0_f = user_input["final_nucl_prob"]
-        Config.PROBABILITIES.PRIMARY.p0_A_const = 1
+        Config.PROBABILITIES.PRIMARY.p0_A_const = "LOST"
         Config.PROBABILITIES.PRIMARY.p0_B_const = user_input["b_const_P0_nucl"]
 
         Config.PROBABILITIES.PRIMARY.p1 = user_input["init_P1"]
         Config.PROBABILITIES.PRIMARY.p1_f = user_input["final_P1"]
-        Config.PROBABILITIES.PRIMARY.p1_A_const = 1
+        Config.PROBABILITIES.PRIMARY.p1_A_const = "LOST"
         Config.PROBABILITIES.PRIMARY.p1_B_const = user_input["b_const_P1"]
 
-        Config.PROBABILITIES.PRIMARY.global_A = 1
+        Config.PROBABILITIES.PRIMARY.global_A = "LOST"
         Config.PROBABILITIES.PRIMARY.global_B = user_input["bend_b_init"]
         Config.PROBABILITIES.PRIMARY.global_B_f = user_input["bend_b_final"]
 
@@ -180,25 +180,25 @@ class Visualisation:
         # _________________________
         Config.PROBABILITIES.PRIMARY.p0_d = user_input["dissolution_p"]
         Config.PROBABILITIES.PRIMARY.p0_d_f = user_input["final_dissol_prob"]
-        Config.PROBABILITIES.PRIMARY.p0_d_A_const = 1
-        Config.PROBABILITIES.PRIMARY.p0_d_B_const = 1
+        Config.PROBABILITIES.PRIMARY.p0_d_A_const = "LOST"
+        Config.PROBABILITIES.PRIMARY.p0_d_B_const = "LOST"
 
         Config.PROBABILITIES.PRIMARY.p1_d = user_input["init_P1_diss"]
         Config.PROBABILITIES.PRIMARY.p1_d_f = user_input["final_P1_diss"]
-        Config.PROBABILITIES.PRIMARY.p1_d_A_const = 1
+        Config.PROBABILITIES.PRIMARY.p1_d_A_const = "LOST"
         Config.PROBABILITIES.PRIMARY.p1_d_B_const = user_input["b_const_P1_diss"]
 
         Config.PROBABILITIES.PRIMARY.p6_d = user_input["min_dissol_prob"]
         Config.PROBABILITIES.PRIMARY.p6_d_f = user_input["final_min_dissol_prob"]
-        Config.PROBABILITIES.PRIMARY.p6_d_A_const = 1
-        Config.PROBABILITIES.PRIMARY.p6_d_B_const = 1
+        Config.PROBABILITIES.PRIMARY.p6_d_A_const = "LOST"
+        Config.PROBABILITIES.PRIMARY.p6_d_B_const = "LOST"
 
-        Config.PROBABILITIES.PRIMARY.global_d_A = 1
-        Config.PROBABILITIES.PRIMARY.global_d_B = -2
-        Config.PROBABILITIES.PRIMARY.global_d_B_f = -0.001
+        Config.PROBABILITIES.PRIMARY.global_d_A = "LOST"
+        Config.PROBABILITIES.PRIMARY.global_d_B = "LOST"
+        Config.PROBABILITIES.PRIMARY.global_d_B_f = "LOST"
 
-        Config.PROBABILITIES.PRIMARY.bsf = 1
-        Config.PROBABILITIES.PRIMARY.dissol_adapt_function = 3
+        Config.PROBABILITIES.PRIMARY.bsf = "LOST"
+        Config.PROBABILITIES.PRIMARY.dissol_adapt_function = "LOST"
         # ________________________
 
         self.utils.generate_param()
@@ -583,37 +583,37 @@ ELAPSED TIME: {message}
                 ax_qtprecip.dist = dist
         else:
             ax_all = fig.add_subplot(111, projection='3d')
-            if self.Config.INWARD_DIFFUSION:
-                self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
-                items = np.array(self.c.fetchall())
-                if np.any(items):
-                    items = items * rescale_factor
-                    ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b',
-                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
-                                   alpha=self.alpha)
-                if self.Config.OXIDANTS.SECONDARY_EXISTENCE:
-                    self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
-                    items = np.array(self.c.fetchall())
-                    if np.any(items):
-                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='deeppink',
-                                       s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
-                                   alpha=self.alpha)
-            if self.Config.OUTWARD_DIFFUSION:
-                self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
-                items = np.array(self.c.fetchall())
-                if np.any(items):
-                    items = items * rescale_factor
-                    ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='g',
-                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
-                                   alpha=self.alpha)
-                if self.Config.ACTIVES.SECONDARY_EXISTENCE:
-                    self.c.execute("SELECT * from secondary_active_iter_{}".format(iteration))
-                    items = np.array(self.c.fetchall())
-                    if np.any(items):
-                        items = items * rescale_factor
-                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='gold',
-                                       s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
-                                   alpha=self.alpha)
+            # if self.Config.INWARD_DIFFUSION:
+            #     self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
+            #     items = np.array(self.c.fetchall())
+            #     if np.any(items):
+            #         items = items * rescale_factor
+            #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b',
+            #                        s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
+            #                        alpha=self.alpha)
+            #     if self.Config.OXIDANTS.SECONDARY_EXISTENCE:
+            #         self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
+            #         items = np.array(self.c.fetchall())
+            #         if np.any(items):
+            #             ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='deeppink',
+            #                            s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
+            #                        alpha=self.alpha)
+            # if self.Config.OUTWARD_DIFFUSION:
+            #     self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
+            #     items = np.array(self.c.fetchall())
+            #     if np.any(items):
+            #         items = items * rescale_factor
+            #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='g',
+            #                        s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
+            #                        alpha=self.alpha)
+            #     if self.Config.ACTIVES.SECONDARY_EXISTENCE:
+            #         self.c.execute("SELECT * from secondary_active_iter_{}".format(iteration))
+            #         items = np.array(self.c.fetchall())
+            #         if np.any(items):
+            #             items = items * rescale_factor
+            #             ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='gold',
+            #                            s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
+            #                        alpha=self.alpha)
             if self.Config.COMPUTE_PRECIPITATION:
                 self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
                 items = np.array(self.c.fetchall())
@@ -1488,7 +1488,7 @@ ELAPSED TIME: {message}
         n_matrix_page = (self.axlim ** 2)
         matrix = np.full(self.axlim, n_matrix_page)
 
-        matrix_moles = matrix * matrix * self.Config.MATRIX.MOLES_PER_CELL - outward_eq_mat_moles\
+        matrix_moles = matrix * self.Config.MATRIX.MOLES_PER_CELL - outward_eq_mat_moles\
                        - soutward_eq_mat_moles - primary_product_eq_mat_moles - secondary_product_eq_mat_moles\
                        - ternary_product_eq_mat_moles - quaternary_product_eq_mat_moles
 

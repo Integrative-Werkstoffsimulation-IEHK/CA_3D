@@ -99,6 +99,7 @@ if __name__ == '__main__':
 
     eng.precip_func = eng.precipitation_first_case
     eng.get_combi_ind = eng.get_combi_ind_atomic_opt_for_growth
+
     eng.decomposition = eng.dissolution_test
 
     eng.cur_case = eng.cases.first
