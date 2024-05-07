@@ -1,4 +1,6 @@
 import numpy as np
+import pickle
+from scipy.spatial import KDTree
 
 
 class Component:
@@ -11,14 +13,17 @@ class CompPool:
     def __init__(self):
         self.primary = None
         self.secondary = None
-        self.ternary = None
-        self.quaternary = None
 
 
-class TDATA:
+class TdDATA:
     def __init__(self):
-        self.lookup_table = {}
-        # self.gen_table()
+        self.TD_file = "TD_look_up.pkl"
+
+        self.TD_lookup = None
+        self.keys = None
+        self.tree = None
+
+        self.fetch_look_up_from_file()
 
     def gen_table_nesed_dict(self):
         # Define the composition ranges for Cr, Al, and O
@@ -63,23 +68,17 @@ class TDATA:
                         new_comp_pool.secondary = Component("Cr2O3", 1)
                         self.lookup_table[cr, al, o, sum_conc] = new_comp_pool
 
+    def fetch_look_up_from_file(self):
+        with open(self.TD_file, "rb") as file:
+            self.TD_lookup = pickle.load(file)
+        self.keys = list(self.TD_lookup.keys())
+        self.tree = KDTree(self.keys)
+
+    def get_look_up_data(self, target):
+        dist, idx = self.tree.query(target)
+        return self.TD_lookup[self.keys[idx]]
+
 
 if __name__ == '__main__':
-    test_data = TDATA()
-    test_data.gen_table_dict()
-
-    # Open a text file for writing
-    with open("TD_table_output.txt", "w") as file:
-        # Write a header line if needed
-        file.write("Cr Al O Sum_Conc Value\n")
-
-        # Iterate through the dictionary items and write them to the file
-        for key, value in test_data.lookup_table.items():
-            column1, column2, column3, sum_conc = key
-            p_val = value.primary.constitution
-            p_val_a = value.primary.amount
-
-            s_val = value.secondary.constitution
-            s_val_a = value.secondary.amount
-
-            file.write(f"{column1} {column2} {column3} {sum_conc} {p_val}:{p_val_a} {s_val}:{s_val_a}\n")
+    test_data = TdDATA()
+    test_data.fetch_look_up_from_file()

@@ -5,6 +5,7 @@ from new_elements import *
 import time
 from utils.templates import *
 from utils.new_probabilities import *
+from thermodynamics import TdDATA
 
 
 class CellularAutomata:
@@ -221,8 +222,18 @@ class CellularAutomata:
                                    [13, 3, 4, 2, 21, 24, 25]]
 
             # UNCOMENT!!!!_______________________________________________________
-            self.nucl_prob = NucleationProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
-            self.dissol_prob = DissolutionProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
+            # self.nucl_prob = NucleationProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
+            # self.dissol_prob = DissolutionProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
+
+            self.cases.first.nucleation_probabilities = NucleationProbabilities(Config.PROBABILITIES.PRIMARY,
+                                                                                Config.PRODUCTS.PRIMARY)
+            self.cases.first.dissolution_probabilities = DissolutionProbabilities(Config.PROBABILITIES.PRIMARY,
+                                                                                  Config.PRODUCTS.PRIMARY)
+
+            self.cases.second.nucleation_probabilities = NucleationProbabilities(Config.PROBABILITIES.SECONDARY,
+                                                                                 Config.PRODUCTS.SECONDARY)
+            self.cases.second.dissolution_probabilities = DissolutionProbabilities(Config.PROBABILITIES.SECONDARY,
+                                                                                   Config.PRODUCTS.SECONDARY)
             # ________________________________________________________________________
 
             self.furthest_index = 0
@@ -235,10 +246,9 @@ class CellularAutomata:
             self.save_flag = False
             self.product_x_nzs = np.full(self.cells_per_axis, False, dtype=bool)
             self.product_x_not_stab = np.full(self.cells_per_axis, True, dtype=bool)
-            # self.cumul_prod = np.empty(self.n_iter, dtype=int)
-            # self.mid_point_coord = int((Config.N_CELLS_PER_AXIS - 1) / 2)
-            # self.look_up = td_data.TDATA()
-            # self.look_up.gen_table_dict()
+            self.TdDATA = TdDATA()
+            self.TdDATA.gen_table_dict()
+            self.curr_look_up = None
 
         self.begin = time.time()
 
@@ -1010,6 +1020,120 @@ class CellularAutomata:
         # else:
         #     self.comb_indexes = [self.furthest_index]
 
+    def calc_stable_products(self):
+        oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
+                            in range(self.curr_max_furthest + 1)], dtype=np.uint32)
+        oxidant_moles = oxidant * Config.OXIDANTS.PRIMARY.MOLES_PER_CELL
+
+        active = np.array([np.sum(self.primary_active.c3d[:, :, plane_ind]) for plane_ind
+                           in range(self.curr_max_furthest + 1)], dtype=np.uint32)
+        active_moles = active * Config.ACTIVES.PRIMARY.MOLES_PER_CELL
+        outward_eq_mat_moles = active * Config.ACTIVES.PRIMARY.EQ_MATRIX_MOLES_PER_CELL
+
+        secondary_active = np.array([np.sum(self.secondary_active.c3d[:, :, plane_ind]) for plane_ind
+                                     in range(self.curr_max_furthest + 1)], dtype=np.uint32)
+        secondary_active_moles = secondary_active * Config.ACTIVES.SECONDARY.MOLES_PER_CELL
+        secondary_outward_eq_mat_moles = secondary_active * Config.ACTIVES.SECONDARY.EQ_MATRIX_MOLES_PER_CELL
+
+        product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
+                            in range(self.curr_max_furthest + 1)], dtype=np.uint32)
+        product_moles = product * Config.PRODUCTS.PRIMARY.MOLES_PER_CELL
+        product_eq_mat_moles = product * Config.ACTIVES.PRIMARY.EQ_MATRIX_MOLES_PER_CELL
+
+        secondary_product = np.array([np.sum(self.secondary_product.c3d[:, :, plane_ind]) for plane_ind
+                                      in range(self.curr_max_furthest + 1)], dtype=np.uint32)
+        secondary_product_moles = secondary_product * Config.PRODUCTS.SECONDARY.MOLES_PER_CELL
+        secondary_product_eq_mat_moles = secondary_product * Config.ACTIVES.SECONDARY.EQ_MATRIX_MOLES_PER_CELL
+
+        matrix_moles = self.matrix_moles_per_page - outward_eq_mat_moles - product_eq_mat_moles - secondary_outward_eq_mat_moles - secondary_product_eq_mat_moles
+        neg_ind = np.where(matrix_moles < 0)[0]
+        matrix_moles[neg_ind] = 0
+        whole_moles = matrix_moles + oxidant_moles + active_moles + product_moles + secondary_active_moles + secondary_product_moles
+
+        product_c = product_moles / whole_moles
+        secondary_product_c = secondary_product_moles / whole_moles
+
+        # oxidant_pure = oxidant + product + secondary_product
+        # oxidant_pure_moles = oxidant_pure * Config.OXIDANTS.PRIMARY.MOLES_PER_CELL
+        #
+        # active_pure = active + product
+        # active_pure_moles = active_pure * self.param["active_element"]["primary"]["moles_per_cell"]
+        # active_pure_eq_mat_moles = active_pure * self.param["active_element"]["primary"]["eq_matrix_moles_per_cell"]
+        #
+        # secondary_active_pure = secondary_active + secondary_product
+        # secondary_active_pure_moles = secondary_active_pure * self.param["active_element"]["secondary"]["moles_per_cell"]
+        # secondary_active_pure_eq_mat_moles = secondary_active_pure * self.param["active_element"]["secondary"]["eq_matrix_moles_per_cell"]
+        #
+        # matrix_moles_pure = self.matrix_moles_per_page - active_pure_eq_mat_moles - secondary_active_pure_eq_mat_moles
+        # whole_moles_pure = matrix_moles_pure + oxidant_pure_moles + active_pure_moles + secondary_active_pure_moles
+        #
+        # oxidant_pure_c = oxidant_pure_moles / whole_moles_pure
+        # active_pure_c = active_pure_moles / whole_moles_pure
+        # secondary_active_pure_c = secondary_active_pure_moles / whole_moles_pure
+
+        oxidant_pure_moles = oxidant_moles + product_moles * 3 + secondary_product_moles * 3
+        active_pure_moles = active_moles + product_moles * 2
+        active_pure_eq_mat_moles = active_pure_moles * Config.ACTIVES.PRIMARY.T
+        secondary_active_pure_moles = secondary_active_moles + secondary_product_moles * 2
+        secondary_active_pure_eq_mat_moles = secondary_active_pure_moles * Config.ACTIVES.SECONDARY.T
+
+        matrix_moles_pure = self.matrix_moles_per_page - active_pure_eq_mat_moles - secondary_active_pure_eq_mat_moles
+        neg_ind = np.where(matrix_moles_pure < 0)[0]
+        matrix_moles_pure[neg_ind] = 0
+        whole_moles_pure = matrix_moles_pure + oxidant_pure_moles + active_pure_moles + secondary_active_pure_moles
+
+        oxidant_pure_c = oxidant_pure_moles * 100 / whole_moles_pure
+        active_pure_c = active_pure_moles * 100 / whole_moles_pure
+        secondary_active_pure_c = secondary_active_pure_moles * 100 / whole_moles_pure
+
+        self.curr_look_up = self.TdDATA.get_look_up_data((active_pure_c, secondary_active_pure_c, oxidant_pure_c))
+
+        primary_diff = self.curr_look_up.primary - product_c
+        primary_pos_ind = np.where(primary_diff >= 0)[0]
+        primary_neg_ind = np.where(primary_diff < 0)[0]
+
+        secondary_diff = self.curr_look_up.secondary - secondary_product_c
+        secondary_pos_ind = np.where(secondary_diff >= 0)[0]
+        secondary_neg_ind = np.where(secondary_diff < 0)[0]
+
+        self.cur_case = self.cases.first
+        if len(primary_pos_ind) > 0:
+            oxidant_indexes = np.where(oxidant > 0)[0]
+            active_indexes = np.where(active > 0)[0]
+
+            min_act = active_indexes.min(initial=self.cells_per_axis)
+            indexs = np.where(oxidant_indexes >= min_act - 1)[0]
+            self.comb_indexes = oxidant_indexes[indexs]
+            self.comb_indexes = np.intersect1d(primary_pos_ind, self.comb_indexes)
+
+            if len(self.comb_indexes) > 0:
+                self.precip_step_two_products()
+                self.dissolution_zhou_wei_no_bsf()
+
+        if len(primary_neg_ind) > 0:
+            self.comb_indexes = primary_neg_ind
+            self.cur_case.dissolution_probabilities.adapt_probabilities(self.comb_indexes, np.ones(len(self.comb_indexes)))
+            self.dissolution_zhou_wei_no_bsf()
+            self.cur_case.dissolution_probabilities.adapt_probabilities(self.comb_indexes,
+                                                                        np.zeros(len(self.comb_indexes)))
+
+        self.cur_case = self.cases.second
+        if len(secondary_pos_ind) > 0:
+            self.get_combi_ind_two_products(self.secondary_active)
+            self.comb_indexes = np.intersect1d(secondary_pos_ind, self.comb_indexes)
+
+            if len(self.comb_indexes) > 0:
+                self.precip_step_two_products()
+                self.dissolution_zhou_wei_no_bsf()
+
+        if len(secondary_neg_ind) > 0:
+            self.comb_indexes = secondary_neg_ind
+            self.cur_case.dissolution_probabilities.adapt_probabilities(self.comb_indexes,
+                                                                        np.ones(len(self.comb_indexes)))
+            self.dissolution_zhou_wei_no_bsf()
+            self.cur_case.dissolution_probabilities.adapt_probabilities(self.comb_indexes,
+                                                                        np.zeros(len(self.comb_indexes)))
+
     def precipitation_first_case(self):
         # Only one oxidant and one active elements exist. Only one product can be created
         self.furthest_index = self.primary_oxidant.calc_furthest_index()
@@ -1396,7 +1520,7 @@ class CellularAutomata:
                         # temp_ind = np.where(in_gb)[0]
                         # oxidant_cells = oxidant_cells[temp_ind]
                         # ______________________________________________________________________________________
-                        self.ci_single_two_products_no_growth(oxidant_cells)
+                        self.ci_single_two_products(oxidant_cells)
 
     def precip_step_no_growth(self):
         for plane_index in reversed(self.comb_indexes):
@@ -1785,8 +1909,9 @@ class CellularAutomata:
             flat_arounds = all_arounds[:, 0:self.cur_case.product.lind_flat_arr]
             arr_len_in_flat = self.cur_case.go_around_func_ref(flat_arounds)
             homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
-            needed_prob = self.nucl_prob.get_probabilities(arr_len_in_flat, seeds[0][2])
-            needed_prob[homogeneous_ind] = self.nucl_prob.nucl_prob.values_pp[seeds[0][2]]  # seeds[0][2] - current plane index
+            needed_prob = self.cur_case.nucleation_probabilities.get_probabilities(arr_len_in_flat, seeds[0][2])
+            needed_prob[homogeneous_ind] = self.cur_case.nucleation_probabilities.nucl_prob.values_pp[
+                seeds[0][2]]  # seeds[0][2] - current plane index
             randomise = np.array(np.random.random_sample(arr_len_in_flat.size), dtype=np.float64)
             temp_ind = np.where(randomise < needed_prob)[0]
         # _________________________________________________________________________________________________

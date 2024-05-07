@@ -28,9 +28,6 @@ class NucleationProbabilities:
                                                              np.e ** (self.const_b_pp * self.oxidation_number))))
         self.const_d_pp = self.p1.values_pp - self.const_a_pp * np.e ** (self.const_b_pp * self.oxidation_number +
                                                                          self.const_c_pp)
-        # Config.GENERATED_VALUES.const_c_pp_nucleation = self.const_c_pp
-        # Config.GENERATED_VALUES.const_d_pp_nucleation = self.const_d_pp
-
         self.adapt_probabilities = None
         if param.nucl_adapt_function == 0:
             self.adapt_probabilities = self.adapt_nucl_prob

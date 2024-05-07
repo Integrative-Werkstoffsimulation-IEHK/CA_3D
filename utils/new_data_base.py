@@ -1,5 +1,4 @@
 import sqlite3 as sql
-import time
 import pickle
 from configuration import Config
 from configuration import get_static_vars_dict
@@ -7,8 +6,6 @@ from configuration import get_static_vars_dict
 
 class Database:
     def __init__(self):
-        # Config.GENERATED_VALUES.DB_ID = str(int(time.time()))
-        # Config.GENERATED_VALUES.DB_PATH = Config.SAVE_PATH + Config.GENERATED_VALUES.DB_ID + '.db'
         self.conn = sql.connect(Config.GENERATED_VALUES.DB_PATH)
         self.c = self.conn.cursor()
         self.create_precipitation_front_table()
@@ -16,35 +13,11 @@ class Database:
         self.save_pickled_config_to_db()
 
     def save_pickled_config_to_db(self):
-        # config_instance = Config()
-        # pickled_instance = pickle.dumps(config_instance)
-        # self.c.execute('''CREATE TABLE IF NOT EXISTS PickledConfig (pickled_data BLOB)''')
-        # self.c.execute("INSERT INTO PickledConfig (pickled_data) VALUES (?)", (pickled_instance,))
-        # self.conn.commit()
-
         dict_config_to_pickle = get_static_vars_dict(Config)
         pickled_instance = pickle.dumps(dict_config_to_pickle)
         self.c.execute('''CREATE TABLE IF NOT EXISTS PickledConfig (pickled_data BLOB)''')
         self.c.execute("INSERT INTO PickledConfig (pickled_data) VALUES (?)", (pickled_instance,))
         self.conn.commit()
-
-        # self.c.execute("SELECT pickled_data FROM PickledConfig")
-        # result = self.c.fetchone()
-        # pickled_instance = result[0]
-        # config = pickle.loads(pickled_instance)
-        # print()
-        # self.conn.commit()
-        # self.conn.close()
-        # print()
-        #
-        # self.conn = sql.connect(Config.GENERATED_VALUES.DB_PATH)
-        # self.c = self.conn.cursor()
-        #
-        # self.c.execute("SELECT pickled_data FROM PickledConfig")
-        # result = self.c.fetchone()
-        # pickled_instance = result[0]
-        # config = pickle.loads(pickled_instance)
-        # print()
 
     def insert_particle_data(self, particle_type, iteration, data):
         """Particle types allowed: primary_oxidant, secondary_oxidant, primary_active, secondary_active,

@@ -204,8 +204,10 @@ class Utils:
         molar_mass2 = Config.ACTIVES.SECONDARY.MOLAR_MASS
 
         t_1 = Config.ACTIVES.PRIMARY.MOLAR_MASS * Config.MATRIX.DENSITY / (Config.ACTIVES.PRIMARY.DENSITY * Config.MATRIX.MOLAR_MASS)
+        Config.ACTIVES.PRIMARY.T = t_1
         Config.ACTIVES.PRIMARY.n_ELEM = 1 - t_1
         t_2 = Config.ACTIVES.SECONDARY.MOLAR_MASS * Config.MATRIX.DENSITY / (Config.ACTIVES.SECONDARY.DENSITY * Config.MATRIX.MOLAR_MASS)
+        Config.ACTIVES.SECONDARY.T = t_2
         Config.ACTIVES.SECONDARY.n_ELEM = 1 - t_2
         denom = 1 + atomic_c_1 * (t_1 - 1) + atomic_c_2 * (t_2 - 1)
 

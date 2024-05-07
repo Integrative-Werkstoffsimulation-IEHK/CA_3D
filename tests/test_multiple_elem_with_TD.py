@@ -30,19 +30,19 @@ if __name__ == '__main__':
                   "diff_out_precipitation": 3.05 * 10 ** -14,  # [m2/sek]
                   "temperature": 1100,  # °C
                   "n_cells_per_axis": 102,  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
-                  "n_iterations": 300000,  # must be >= n_cells_per_axis
+                  "n_iterations": 30000000,  # must be >= n_cells_per_axis
                   "stride": 40,  # n_iterations / stride = n_iterations for outward diffusion
-                  "sim_time": 36000,  # [sek]
-                  "size": 150 * (10**-6),  # [m]
+                  "sim_time": 720000,  # [sek]
+                  "size": 100 * (10**-6),  # [m]
 
                   "threshold_inward": 1,
                   "threshold_outward": 1,
                   "sol_prod": 6.25 * 10 ** -31,  # 5.621 * 10 ** -10
 
-                  "nucleation_probability": 0,
+                  "nucleation_probability": 0.1,
                   "het_factor": 10**0.5,  # not used anymore
 
-                  "dissolution_p": 1 * 10**-3,
+                  "dissolution_p": 1 * 10**-2,
                   "dissolution_n": 2,  # not used anymore
                   "exponent_power": 0,  # not used anymore
                   "block_scale_factor": 1,
@@ -62,42 +62,39 @@ if __name__ == '__main__':
 
                   "phase_fraction_lim": 0.045,
                   "hf_deg_lim": 10**10,
-                  "lowest_neigh_numb": 16,
-                  "final_nucl_prob": 1*10**-5,
+                  "lowest_neigh_numb": 16,  # not used anymore
+                  "final_nucl_prob": 1 * 10 ** 0,
 
-                  "min_dissol_prob": 1 * 10 ** -4.00001,
+                  "min_dissol_prob": 1 * 10 ** -10,
                   "het_factor_dissolution": 10 ** 1,  # not used anymore
                   "final_dissol_prob": 1 * 10 ** 0,
                   "final_het_factor_dissol": 10 ** 0,  # not used anymore
-                  "final_min_dissol_prob": 1 * 10 ** -5,
+                  "final_min_dissol_prob": 1 * 10 ** 0,
 
-                  "max_neigh_numb": 20,
+                  "max_neigh_numb": 0,
                   "product_kinetic_const": 0.0000003,  # not used anymore
                   "error_prod_conc": 1.01,  # not used anymore
 
-                  "init_P1": 1 * 10 ** -0.01,
-                  "final_P1": 1 * 10 ** -3,
-                  "b_const_P1": -3,
+                  "init_P1": 5 * 10 ** -1,
+                  "final_P1": 1 * 10 ** 0,
+                  "b_const_P1": 1,
 
-                  "nucl_adapt_function": 2,
-                  "dissol_adapt_function": 4,
+                  "nucl_adapt_function": 3,
+                  "dissol_adapt_function": 5,
 
-                  "init_P1_diss": 1 * 10 ** -4,
+                  "init_P1_diss": 1 * 10 ** -3,
                   "final_P1_diss": 1 * 10 ** 0,
-                  "b_const_P1_diss": 50,
+                  "b_const_P1_diss": 1,
 
-                  "b_const_P0_nucl": -(10**10),
+                  "b_const_P0_nucl": 1,
 
-                  "bend_b_init": -0.00001,
+                  "bend_b_init": 0.07,
                   "bend_b_final": -20,
+
                   }
 
     backup_user_input = copy.deepcopy(user_input)
     eng = CellularAutomata(user_input=user_input)
-
-
-
-
 
     try:
         eng.simulation()

@@ -1,6 +1,8 @@
 import csv
 import pickle
 import os
+from scipy.spatial import KDTree
+import random
 
 
 class CompPool:
@@ -143,11 +145,16 @@ def post_process_dict(my_dict):
             prev_value = value
 
 
+def find_closest_key(target, tree, keys):
+    dist, idx = tree.query(target)
+    return keys[idx]
+
+
 if __name__ == "__main__":
     # Example usage:
     # directory = "W:/SIMCA/TC/Simulations_Klaus_first_ALL/"
     # output_file = "consolidated_data.pkl"
-    p_output_file = "p_consolidated_data.pkl"
+    p_output_file = "TD_look_up.pkl"
 
     # Read data from CSV files
     # data = read_csv_files3(directory)
@@ -164,6 +171,9 @@ if __name__ == "__main__":
 
     p_consolidated_data = load_data_from_file(p_output_file)
 
+    keys = list(p_consolidated_data.keys())
+    tree = KDTree(keys)
+
     # for key, value in consolidated_data.items():
     #     if value.primary != 0 and value.secondary != 0:
     #         print(key)
@@ -177,8 +187,20 @@ if __name__ == "__main__":
         print("O: ")
         o_c = float(input())
 
-        value_from_dict = p_consolidated_data[cr_c, al_c, o_c]
+        # # cr_c = np.around(np.linspace(0, 25, 10), decimals=4)
+        # cr_c = random.uniform(0, 40)
+        # # al_c = np.around(np.linspace(0, 2.5, 10), decimals=4)
+        # al_c = random.uniform(0, 40)
+        # # o_c = np.around(np.linspace(0, 60, 10), decimals=8)
+        # o_c = random.uniform(0, 60)
+
+        target_value = (cr_c, al_c, o_c)
+        print(target_value)
+
+        closest_key = find_closest_key(target_value, tree, keys)
+        print(closest_key)
+
+        value_from_dict = p_consolidated_data[closest_key]
 
         print("Cr_oxide: ", value_from_dict.primary)
         print("Al_oxide: ", value_from_dict.secondary)
-
