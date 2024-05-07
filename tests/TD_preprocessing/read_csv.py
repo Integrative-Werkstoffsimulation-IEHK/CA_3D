@@ -133,18 +133,52 @@ def load_data_from_file(input_file):
     return data
 
 
+def post_process_dict(my_dict):
+    prev_value = None
+    for key, value in my_dict.items():
+        if value.primary == 0 and value.secondary == 0:
+            if prev_value is not None:
+                my_dict[key] = prev_value
+        else:
+            prev_value = value
+
+
 if __name__ == "__main__":
     # Example usage:
-    directory = "C:/Users/alexe/Desktop/Simulations_Klaus_first_ALL/"
-    output_file = "consolidated_data.pkl"
+    # directory = "W:/SIMCA/TC/Simulations_Klaus_first_ALL/"
+    # output_file = "consolidated_data.pkl"
+    p_output_file = "p_consolidated_data.pkl"
 
     # Read data from CSV files
-    data = read_csv_files3(directory)
+    # data = read_csv_files3(directory)
 
     # Write data to a single file
-    write_data_to_file(data, output_file)
+    # write_data_to_file(data, output_file)
 
     # Load data from the consolidated file
-    consolidated_data = load_data_from_file(output_file)
+    # consolidated_data = load_data_from_file(output_file)
 
-    print()
+    # post_process_dict(consolidated_data)
+
+    # write_data_to_file(consolidated_data, p_output_file)
+
+    p_consolidated_data = load_data_from_file(p_output_file)
+
+    # for key, value in consolidated_data.items():
+    #     if value.primary != 0 and value.secondary != 0:
+    #         print(key)
+
+    for _ in range(100):
+        print("next value: ")
+        print("Cr: ")
+        cr_c = float(input())
+        print("Al: ")
+        al_c = float(input())
+        print("O: ")
+        o_c = float(input())
+
+        value_from_dict = p_consolidated_data[cr_c, al_c, o_c]
+
+        print("Cr_oxide: ", value_from_dict.primary)
+        print("Al_oxide: ", value_from_dict.secondary)
+
