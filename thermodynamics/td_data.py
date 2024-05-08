@@ -11,13 +11,13 @@ class Component:
 
 class CompPool:
     def __init__(self):
-        self.primary = None
-        self.secondary = None
+        self.primary = 0
+        self.secondary = 0
 
 
 class TdDATA:
     def __init__(self):
-        self.TD_file = "TD_look_up.pkl"
+        self.TD_file = "C:/Users/aseregin/PycharmProjects/CA_3D/thermodynamics/TD_look_up.pkl"
 
         self.TD_lookup = None
         self.keys = None
@@ -25,7 +25,7 @@ class TdDATA:
 
         self.fetch_look_up_from_file()
 
-    def gen_table_nesed_dict(self):
+    def gen_table_nested_dict(self):
         # Define the composition ranges for Cr, Al, and O
         cr_range = np.around(np.linspace(0, 25, 10), decimals=4)  # Example Cr composition values
         al_range = np.around(np.linspace(0, 2.5, 10), decimals=4)  # Example Al composition values
@@ -73,12 +73,33 @@ class TdDATA:
             self.TD_lookup = pickle.load(file)
         self.keys = list(self.TD_lookup.keys())
         self.tree = KDTree(self.keys)
+        self.keys = np.array(self.keys)
 
-    def get_look_up_data(self, target):
-        dist, idx = self.tree.query(target)
-        return self.TD_lookup[self.keys[idx]]
+    def get_look_up_data(self, primary, secondary, oxidant):
+        # targets = [(prim, sec, ox) for prim, sec, ox in zip(primary, secondary, oxidant)]
+        # distances, indexes = self.tree.query(targets)
+        # nearest_keys = [self.keys[ind] for ind in indexes]
+        # objects = [self.TD_lookup[key] for key in nearest_keys]
+        # return [[obj.primary, obj.secondary] for obj in objects]
+
+        # Convert input lists to numpy arrays
+        targets = np.array((primary, secondary, oxidant)).T
+
+        # Query the KD-tree for nearest neighbors
+        distances, indexes = self.tree.query(targets)
+
+        # Retrieve nearest keys directly from indexes
+        nearest_keys = self.keys[indexes]
+        # nearest_keys = [self.keys[ind] for ind in indexes]
+
+        # Retrieve objects directly from TD_lookup using nearest_keys
+        objects = [self.TD_lookup[tuple(key)] for key in nearest_keys]
+
+        # Extract primary and secondary attributes from objects
+        return np.array([[obj.primary, obj.secondary] for obj in objects]).T
 
 
 if __name__ == '__main__':
     test_data = TdDATA()
     test_data.fetch_look_up_from_file()
+

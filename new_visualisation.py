@@ -1394,21 +1394,25 @@ ELAPSED TIME: {message}
 
         primary_product = np.zeros(self.axlim, dtype=int)
         primary_product_moles = np.zeros(self.axlim, dtype=int)
+        primary_product_moles_tc = np.zeros(self.axlim, dtype=int)
         primary_product_mass = np.zeros(self.axlim, dtype=int)
         primary_product_eq_mat_moles = np.zeros(self.axlim, dtype=int)
 
         secondary_product = np.zeros(self.axlim, dtype=int)
         secondary_product_moles = np.zeros(self.axlim, dtype=int)
+        secondary_product_moles_tc = np.zeros(self.axlim, dtype=int)
         secondary_product_mass = np.zeros(self.axlim, dtype=int)
         secondary_product_eq_mat_moles = np.zeros(self.axlim, dtype=int)
 
         ternary_product = np.zeros(self.axlim, dtype=int)
         ternary_product_moles = np.zeros(self.axlim, dtype=int)
+        ternary_product_moles_tc = np.zeros(self.axlim, dtype=int)
         ternary_product_mass = np.zeros(self.axlim, dtype=int)
         ternary_product_eq_mat_moles = np.zeros(self.axlim, dtype=int)
 
         quaternary_product = np.zeros(self.axlim, dtype=int)
         quaternary_product_moles = np.zeros(self.axlim, dtype=int)
+        quaternary_product_moles_tc = np.zeros(self.axlim, dtype=int)
         quaternary_product_mass = np.zeros(self.axlim, dtype=int)
         quaternary_product_eq_mat_moles = np.zeros(self.axlim, dtype=int)
 
@@ -1448,6 +1452,7 @@ ELAPSED TIME: {message}
             if np.any(items):
                 primary_product = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
                 primary_product_moles = primary_product * self.Config.PRODUCTS.PRIMARY.MOLES_PER_CELL
+                primary_product_moles_tc = primary_product * self.Config.PRODUCTS.PRIMARY.MOLES_PER_CELL_TC
                 primary_product_mass = primary_product * self.Config.PRODUCTS.PRIMARY.MASS_PER_CELL
                 primary_product_eq_mat_moles = primary_product * self.Config.ACTIVES.PRIMARY.EQ_MATRIX_MOLES_PER_CELL
 
@@ -1456,6 +1461,7 @@ ELAPSED TIME: {message}
                 items = np.array(self.c.fetchall())
                 secondary_product = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
                 secondary_product_moles = secondary_product * self.Config.PRODUCTS.SECONDARY.MOLES_PER_CELL
+                secondary_product_moles_tc = secondary_product * self.Config.PRODUCTS.SECONDARY.MOLES_PER_CELL_TC
                 secondary_product_mass = secondary_product * self.Config.PRODUCTS.SECONDARY.MASS_PER_CELL
                 secondary_product_eq_mat_moles = secondary_product * self.Config.ACTIVES.SECONDARY.EQ_MATRIX_MOLES_PER_CELL
 
@@ -1463,12 +1469,14 @@ ELAPSED TIME: {message}
                 items = np.array(self.c.fetchall())
                 ternary_product = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
                 ternary_product_moles = ternary_product * self.Config.PRODUCTS.TERNARY.MOLES_PER_CELL
+                ternary_product_moles_tc = ternary_product * self.Config.PRODUCTS.TERNARY.MOLES_PER_CELL_TC
                 ternary_product_mass = ternary_product * self.Config.PRODUCTS.TERNARY.MASS_PER_CELL
                 ternary_product_eq_mat_moles = ternary_product * self.Config.ACTIVES.PRIMARY.EQ_MATRIX_MOLES_PER_CELL
 
                 self.c.execute("SELECT * from quaternary_product_iter_{}".format(iteration))
                 items = np.array(self.c.fetchall())
                 quaternary_product = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
+                quaternary_product_moles_tc = quaternary_product * self.Config.PRODUCTS.QUATERNARY.MOLES_PER_CELL
                 quaternary_product_moles = quaternary_product * self.Config.PRODUCTS.QUATERNARY.MOLES_PER_CELL
                 quaternary_product_mass = quaternary_product * self.Config.PRODUCTS.QUATERNARY.MASS_PER_CELL
                 quaternary_product_eq_mat_moles = quaternary_product * self.Config.ACTIVES.SECONDARY.EQ_MATRIX_MOLES_PER_CELL
@@ -1525,6 +1533,24 @@ ELAPSED TIME: {message}
             secondary_product = secondary_product_moles * 100 / whole_moles
             ternary_product = ternary_product_moles * 100 / whole_moles
             quaternary_product = quaternary_product_moles * 100 / whole_moles
+
+        elif conc_type.lower() == "atomic_tc":
+            conc_type_caption = "Concentration [at%]"
+            whole_moles = matrix_moles +\
+                          inward_moles + sinward_moles +\
+                          outward_moles + soutward_moles +\
+                          primary_product_moles_tc + secondary_product_moles_tc +\
+                          ternary_product_moles_tc + quaternary_product_moles_tc
+
+            inward = inward_moles * 100 / whole_moles
+            sinward = sinward_moles * 100 / whole_moles
+            outward = outward_moles * 100 / whole_moles
+            soutward = soutward_moles * 100 / whole_moles
+
+            primary_product = primary_product_moles_tc * 100 / whole_moles
+            secondary_product = secondary_product_moles_tc * 100 / whole_moles
+            ternary_product = ternary_product_moles_tc * 100 / whole_moles
+            quaternary_product = quaternary_product_moles_tc * 100 / whole_moles
 
         elif conc_type.lower() == "cells":
             conc_type_caption = "cells concentration [%]"

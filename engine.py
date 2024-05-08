@@ -284,7 +284,7 @@ class CellularAutomata:
     def simulation(self):
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
             self.precip_func()
-            self.decomposition()
+            # self.decomposition()
             self.diffusion_inward()
             self.diffusion_outward()
             # self.save_results_only_prod()
