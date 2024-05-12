@@ -5,32 +5,35 @@ from configuration import Config
 if __name__ == '__main__':
 
     Config.COMMENT = """ 
-    eng.primary_oxidant.diffuse = eng.primary_oxidant.diffuse_bulk
-    eng.primary_active.diffuse = eng.primary_active.diffuse_bulk
-
-    eng.precip_func = eng.precipitation_first_case_no_growth
-    eng.get_combi_ind = eng.get_combi_ind_standard
+    eng.primary_oxidant.diffuse = eng.primary_oxidant.diffuse_with_scale
+    eng.primary_active.diffuse = eng.primary_active.diffuse_with_scale
+    eng.precip_func = eng.precipitation_first_case
+    eng.get_combi_ind = eng.get_combi_ind_atomic_opt_for_growth
     eng.precip_step = eng.precip_step_standard
-    eng.check_intersection = eng.ci_single_no_growth
-    eng.cur_case = eng.cases.first
-
-    eng.decomposition = None
+    eng.check_intersection = eng.ci_single
+    eng.decomposition = eng.dissolution_test
     
-    First Wagner check.
+    eng.cur_case = eng.cases.first
+    eng.cur_case.nucleation_probabilities = NucleationProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
+    eng.cur_case.dissolution_probabilities = DissolutionProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
+    
+    Script name: new_main.py
+    In domain slides where product concentration reached the limit, nucleation and dissolution was stopped completely! 
 """
 
     eng = CellularAutomata()
 
-    eng.primary_oxidant.diffuse = eng.primary_oxidant.diffuse_bulk
-    eng.primary_active.diffuse = eng.primary_active.diffuse_bulk
-    eng.secondary_active.diffuse = eng.secondary_active.diffuse_bulk
+    eng.primary_oxidant.diffuse = eng.primary_oxidant.diffuse_with_scale
+    eng.primary_active.diffuse = eng.primary_active.diffuse_with_scale
+    eng.precip_func = eng.precipitation_first_case
+    eng.get_combi_ind = eng.get_combi_ind_atomic_opt_for_growth
+    eng.precip_step = eng.precip_step_standard
+    eng.check_intersection = eng.ci_single
+    eng.decomposition = eng.dissolution_test
+    eng.cur_case = eng.cases.first
 
-    eng.precip_func = eng.precipitation_with_td
-    eng.get_combi_ind = None
-    eng.precip_step = None
-    eng.check_intersection = None
-    eng.cur_case = None
-    eng.decomposition = None
+    eng.cur_case.nucleation_probabilities = NucleationProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
+    eng.cur_case.dissolution_probabilities = DissolutionProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
 
     try:
         eng.simulation()

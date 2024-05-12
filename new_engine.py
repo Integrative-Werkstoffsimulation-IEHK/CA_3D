@@ -226,16 +226,28 @@ class CellularAutomata:
             # self.nucl_prob = NucleationProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
             # self.dissol_prob = DissolutionProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
 
-            self.cases.first.nucleation_probabilities = NucleationProbabilities(Config.PROBABILITIES.PRIMARY,
-                                                                                Config.PRODUCTS.PRIMARY)
-            self.cases.first.dissolution_probabilities = DissolutionProbabilities(Config.PROBABILITIES.PRIMARY,
-                                                                                  Config.PRODUCTS.PRIMARY)
-
-            self.cases.second.nucleation_probabilities = NucleationProbabilities(Config.PROBABILITIES.SECONDARY,
-                                                                                 Config.PRODUCTS.SECONDARY)
-            self.cases.second.dissolution_probabilities = DissolutionProbabilities(Config.PROBABILITIES.SECONDARY,
-                                                                                   Config.PRODUCTS.SECONDARY)
+            # self.cases.first.nucleation_probabilities = NucleationProbabilities(Config.PROBABILITIES.PRIMARY,
+            #                                                                     Config.PRODUCTS.PRIMARY)
+            # self.cases.first.dissolution_probabilities = DissolutionProbabilities(Config.PROBABILITIES.PRIMARY,
+            #                                                                       Config.PRODUCTS.PRIMARY)
+            #
+            # self.cases.second.nucleation_probabilities = NucleationProbabilities(Config.PROBABILITIES.SECONDARY,
+            #                                                                      Config.PRODUCTS.SECONDARY)
+            # self.cases.second.dissolution_probabilities = DissolutionProbabilities(Config.PROBABILITIES.SECONDARY,
+            #                                                                        Config.PRODUCTS.SECONDARY)
             # ________________________________________________________________________
+
+            self.cases.first.nucleation_probabilities = None  # must be defined elsewhere
+            self.cases.first.dissolution_probabilities = None  # must be defined elsewhere
+
+            self.cases.second.nucleation_probabilities = None  # must be defined elsewhere
+            self.cases.second.dissolution_probabilities = None  # must be defined elsewhere
+
+            self.cases.third.nucleation_probabilities = None  # must be defined elsewhere
+            self.cases.third.dissolution_probabilities = None  # must be defined elsewhere
+
+            self.cases.fourth.nucleation_probabilities = None  # must be defined elsewhere
+            self.cases.fourth.dissolution_probabilities = None  # must be defined elsewhere
 
             self.furthest_index = 0
             self.comb_indexes = None
@@ -247,8 +259,8 @@ class CellularAutomata:
             self.save_flag = False
             self.product_x_nzs = np.full(self.cells_per_axis, False, dtype=bool)
             self.product_x_not_stab = np.full(self.cells_per_axis, True, dtype=bool)
-            self.TdDATA = TdDATA()
-            self.TdDATA.fetch_look_up_from_file()
+            # self.TdDATA = TdDATA()
+            # self.TdDATA.fetch_look_up_from_file()
             self.curr_look_up = None
 
         self.begin = time.time()
@@ -256,7 +268,7 @@ class CellularAutomata:
     def simulation(self):
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
             self.precip_func()
-            # self.decomposition()
+            self.decomposition()
             self.diffusion_inward()
             self.diffusion_outward()
             # self.decomposition()
@@ -1587,8 +1599,8 @@ class CellularAutomata:
             # arr_len_in_flat = self.go_around(self.precipitations3d_init, flat_arounds)
             arr_len_in_flat = self.cur_case.go_around_func_ref(flat_arounds)
             homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
-            needed_prob = self.nucl_prob.get_probabilities(arr_len_in_flat, seeds[0][2])
-            needed_prob[homogeneous_ind] = self.nucl_prob.nucl_prob.values_pp[seeds[0][2]]  # seeds[0][2] - current plane index
+            needed_prob = self.cases.first.nucleation_probabilities.get_probabilities(arr_len_in_flat, seeds[0][2])
+            needed_prob[homogeneous_ind] = self.cases.first.nucleation_probabilities.nucl_prob.values_pp[seeds[0][2]]  # seeds[0][2] - current plane index
             randomise = np.array(np.random.random_sample(arr_len_in_flat.size), dtype=np.float64)
             temp_ind = np.where(randomise < needed_prob)[0]
         # _________________________________________________________________________________________________
