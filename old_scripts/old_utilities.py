@@ -1,10 +1,8 @@
-from . import physical_data
-from . import data_base
-from . import templates
+from utils import physical_data
+from old_scripts import data_base
 import sys
 import numpy as np
 from math import *
-from configuration import Config
 
 
 class Utils:

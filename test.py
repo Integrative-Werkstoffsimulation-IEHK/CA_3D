@@ -64,46 +64,46 @@ from configuration import Config
 # conn.close()
 
 
-def get_static_vars_dict(cls):
-    # Initialize an empty dictionary
-    static_vars_dict = {}
-    # Iterate over class attributes
-    for attr_name, attr_value in cls.__dict__.items():
-        # Exclude special methods and variables starting with '__'
-        if not attr_name.startswith('__') and not isinstance(attr_value, classmethod):
-            # If the attribute is an instance of another class, recursively convert it to a dictionary
-            if isinstance(attr_value, type):
-                static_vars_dict[attr_name] = get_static_vars_dict(attr_value)
-            else:
-                static_vars_dict[attr_name] = attr_value
-    return static_vars_dict
-
-
-def update_class_from_dict(cls, data):
-    for key, value in data.items():
-        if isinstance(value, dict):
-            setattr(cls, key, type(key, (), value))
-        else:
-            setattr(cls, key, value)
-
-
-Config.COMMENT = """sgsfg
-sfgsdfg
-fg"""
-Config.GENERATED_VALUES.new_val = 1234
-Config.PRODUCTS.PRIMARY.OXID_NUMB = 23
-
-dict_to_pickle = get_static_vars_dict(Config)
-pickled_instance = pickle.dumps(dict_to_pickle)
-
-# Connect to SQLite database
-conn = sqlite3.connect("test_db")
-cursor = conn.cursor()
-
-cursor.execute('''CREATE TABLE IF NOT EXISTS PickledConfig (pickled_data BLOB)''')
-cursor.execute("INSERT INTO PickledConfig (pickled_data) VALUES (?)", (pickled_instance,))
-conn.commit()
-conn.close()
+# def get_static_vars_dict(cls):
+#     # Initialize an empty dictionary
+#     static_vars_dict = {}
+#     # Iterate over class attributes
+#     for attr_name, attr_value in cls.__dict__.items():
+#         # Exclude special methods and variables starting with '__'
+#         if not attr_name.startswith('__') and not isinstance(attr_value, classmethod):
+#             # If the attribute is an instance of another class, recursively convert it to a dictionary
+#             if isinstance(attr_value, type):
+#                 static_vars_dict[attr_name] = get_static_vars_dict(attr_value)
+#             else:
+#                 static_vars_dict[attr_name] = attr_value
+#     return static_vars_dict
+#
+#
+# def update_class_from_dict(cls, data):
+#     for key, value in data.items():
+#         if isinstance(value, dict):
+#             setattr(cls, key, type(key, (), value))
+#         else:
+#             setattr(cls, key, value)
+#
+#
+# Config.COMMENT = """sgsfg
+# sfgsdfg
+# fg"""
+# Config.GENERATED_VALUES.new_val = 1234
+# Config.PRODUCTS.PRIMARY.OXID_NUMB = 23
+#
+# dict_to_pickle = get_static_vars_dict(Config)
+# pickled_instance = pickle.dumps(dict_to_pickle)
+#
+# # Connect to SQLite database
+# conn = sqlite3.connect("test_db")
+# cursor = conn.cursor()
+#
+# cursor.execute('''CREATE TABLE IF NOT EXISTS PickledConfig (pickled_data BLOB)''')
+# cursor.execute("INSERT INTO PickledConfig (pickled_data) VALUES (?)", (pickled_instance,))
+# conn.commit()
+# conn.close()
 
 
 # # Connect to SQLite database
@@ -125,3 +125,30 @@ conn.close()
 #
 #     update_class_from_dict(Config, n_dict)
 #     print()
+
+
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
+
+# Create a figure and a 3D axis
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+# Define the grid for the plane
+x = np.linspace(-5, 5, 10)
+y = np.linspace(-5, 5, 10)
+X, Y = np.meshgrid(x, y)
+
+# Define the Z coordinates for the plane
+Z = np.full(X.shape, 2)  # This sets Z = 2 for the entire plane, making it parallel to the YX axis
+
+# Plot the plane
+ax.plot_surface(X, Y, Z, color='cyan', alpha=0.5)  # Set alpha to a value between 0 and 1 for transparency
+
+# Optionally, add more elements to the plot for context
+ax.scatter([0], [0], [2], color='red', s=100)  # Example point to show position relative to the plane
+
+
+# Show the plot
+plt.show()

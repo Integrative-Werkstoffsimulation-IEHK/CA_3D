@@ -1,5 +1,5 @@
 # from visualisation import *
-from new_visualisation import *
+from visualisation import *
 import tkinter as tk
 from tkinter import filedialog
 
@@ -13,12 +13,10 @@ visualise = Visualisation(database_name)
 #
 visualise.plot_3d(plot_separate=False, const_cam_pos=False)
 # visualise.plot_3d(plot_separate=False, const_cam_pos=False, iteration=iter)
-
 # visualise.animate_2d(plot_separate=False)
 
 visualise.plot_2d(plot_separate=False)
 # visualise.plot_2d(plot_separate=False, iteration=2080)
-
 # visualise.animate_concentration(conc_type="cells", analytic_sol=False)
 
 visualise.plot_concentration(plot_separate=False, conc_type="atomic", analytic_sol=False)

@@ -89,48 +89,6 @@ DEFAULT_PARAM = {
     "bend_b_final":  0.123456789,
 }
 
-DEFAULT_OBJ_REF = {
-    0: {"oxidant": None,
-        "active": None,
-        "product": None,
-        "to_check_with": None,
-        "prod_indexes": None,
-        "go_around_func_ref": None,
-        "fix_init_precip_func_ref": None,
-        "precip_3d_init": None,
-        },
-
-    1: {"oxidant": None,
-        "active": None,
-        "product": None,
-        "to_check_with": None,
-        "prod_indexes": None,
-        "go_around_func_ref": None,
-        "fix_init_precip_func_ref": None,
-        "precip_3d_init": None},
-
-    2: {"oxidant": None,
-        "active": None,
-        "product": None,
-        "to_check_with": None,
-        "prod_indexes": None,
-        "go_around_func_ref": None,
-        "fix_init_precip_func_ref": None,
-        "precip_3d_init": None
-        },
-
-    3: {"oxidant": None,
-        "active": None,
-        "product": None,
-        "to_check_with": None,
-        "prod_indexes": None,
-        "go_around_func_ref": None,
-        "fix_init_precip_func_ref": None,
-        "precip_3d_init": None
-        }
-
-                   }
-
 
 class CaseSetUp:
     def __init__(self):

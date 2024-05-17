@@ -1,28 +1,29 @@
+# import time
+import numpy as np
+import random
 # from microstructure import voronoi
 from utils.numba_functions import *
-from configuration import Config
-import random
 
 
 class ActiveElem:
     def __init__(self, settings):
-        self.cells_per_axis = Config.N_CELLS_PER_AXIS
-        self.neigh_range = Config.NEIGH_RANGE
+        self.cells_per_axis = settings["cells_per_axis"]
+        self.neigh_range = settings["neigh_range"]
         self.shape = (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis)
-        self.p1_range = settings.PROBABILITIES[0]
+        self.p1_range = settings["probabilities"][0]
         self.p2_range = 2 * self.p1_range
         self.p3_range = 3 * self.p1_range
         self.p4_range = 4 * self.p1_range
-        self.p_r_range = self.p4_range + settings.PROBABILITIES[1]
-        self.n_per_page = settings.N_PER_PAGE
+        self.p_r_range = self.p4_range + settings["probabilities"][1]
+        self.n_per_page = settings["n_per_page"]
 
         # self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
-        self.precip_transform_depth = int(41)  # min self.neigh_range !!!
+        self.precip_transform_depth = int(20)  # min self.neigh_range !!!
 
         self.extended_axis = self.cells_per_axis + self.neigh_range
         self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
 
-        self.diffuse = None  # must be defined elsewhere
+        self.diffuse = None
         self.scale = None
 
         self.i_descards = None
@@ -262,15 +263,15 @@ class ActiveElem:
 
 class OxidantElem:
     def __init__(self, settings, utils):
-        self.cells_per_axis = Config.N_CELLS_PER_AXIS
-        self.p1_range = settings.PROBABILITIES[0]
+        self.cells_per_axis = settings["cells_per_axis"]
+        self.p1_range = settings["probabilities"][0]
         self.p2_range = 2 * self.p1_range
         self.p3_range = 3 * self.p1_range
         self.p4_range = 4 * self.p1_range
-        self.p_r_range = self.p4_range + settings.PROBABILITIES[1]
-        self.p0_2d = settings.PROBABILITIES_2D
-        self.n_per_page = settings.N_PER_PAGE
-        self.neigh_range = Config.NEIGH_RANGE
+        self.p_r_range = self.p4_range + settings["probabilities"][1]
+        self.p0_2d = settings["p0_2d"]
+        self.n_per_page = settings["n_per_page"]
+        self.neigh_range = settings["neigh_range"]
         self.current_count = 0
         self.furthest_index = None
         self.i_descards = None
@@ -461,7 +462,8 @@ class OxidantElem:
         # Diffusion at the interface between matrix the scale. If the current particle is on the product particle
         # it will be boosted along ballistic direction
 
-        # self.diffuse_interface()
+        self.diffuse_interface()
+
 
         # Diffusion through the scale. If the current particle is inside the product particle
         # it will be reflected
@@ -625,11 +627,11 @@ class OxidantElem:
 
 class Product:
     def __init__(self, settings):
-        self.constitution = settings.CONSTITUTION
-        cells_per_axis = Config.N_CELLS_PER_AXIS
+        self.constitution = settings["constitution"]
+        cells_per_axis = settings["cells_per_axis"]
         shape = (cells_per_axis, cells_per_axis, cells_per_axis + 1)
-        self.oxidation_number = settings.OXIDATION_NUMBER
-        self.lind_flat_arr = settings.LIND_FLAT_ARRAY
+        self.oxidation_number = settings["oxidation_number"]
+        self.lind_flat_arr = settings["lind_flat_arr"]
 
         if self.oxidation_number == 1:
             self.fix_full_cells = self.fix_full_cells_ox_numb_single
@@ -657,3 +659,7 @@ class Product:
         precipitations = np.array(np.nonzero(self.c3d), dtype=np.short)
         counts = self.c3d[precipitations[0], precipitations[1], precipitations[2]]
         return np.array(np.repeat(precipitations, counts, axis=1), dtype=np.short)
+
+
+
+

@@ -1,17 +1,13 @@
 import pyvoro
 import matplotlib.pyplot as plt
-# from . import bresenham
+from .bresenham import *
 import numpy as np
 import time
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-# from . import own_seeds
-import own_seeds
+from .own_seeds import *
 
 
 class VoronoiMicrostructure:
-    """
-        TODO: 1 -> Write functions for 7 and more vertices!
-    """
     def __init__(self, n_cells_per_axis):
         self.lines = np.array([[[0,0,0], [0,0,0]]])
         self.lines_faces = np.array([[[0,0,0], [0,0,0]]])
@@ -26,7 +22,7 @@ class VoronoiMicrostructure:
         self.ca_faces = None
 
     def generate_voronoi_3d(self, number_of_grains, periodic=False, seeds=None):
-        self.divisor = int(self.n_cells_per_axis / 1)
+        self.divisor = int(self.n_cells_per_axis / 0.5)
         if seeds is None:
             seeds = np.random.random_sample((number_of_grains, 3))
 
@@ -56,11 +52,18 @@ class VoronoiMicrostructure:
                               [0.86900279, 0.63286860, 0.99611049],
                               [0.10538952, 0.91241952, 0.26677793]])
         elif seeds == 'own':
-            seeds = np.array(own_seeds.G_1000)
+            seeds = np.array(G_1000)
 
         elif seeds == "plane":
             seeds = np.array([[0.1, 0.5, 0.5],
                               [0.9, 0.5, 0.5]])
+
+        elif seeds == "mult_planes":
+            seeds = np.array([[0.000001, 0.5, 0.5],
+                              [0.25, 0.5, 0.5],
+                              [0.5, 0.5, 0.5],
+                              [0.75, 0.5, 0.5],
+                              [0.99999, 0.5, 0.5]])
 
         vor = pyvoro.compute_voronoi(seeds, [[0.0, 1.0], [0.0, 1.0], [0.0, 1.0]], 10,
                                      periodic=[periodic, periodic, periodic])
@@ -101,7 +104,7 @@ class VoronoiMicrostructure:
 
         starts_edges = np.array(np.array(self.lines)[:, 0] * (self.n_cells_per_axis - 1), dtype=np.short)
         ends_edges = np.array(np.array(self.lines)[:, 1] * (self.n_cells_per_axis - 1), dtype=np.short)
-        res_edges = np.array([bresenham.bresenhamlines(np.array([start]), np.array([finish]), -1)[0] for start, finish
+        res_edges = np.array([bresenhamlines(np.array([start]), np.array([finish]), -1)[0] for start, finish
                               in zip(starts_edges, ends_edges)], dtype=object)
 
         shift = self.n_cells_per_axis
@@ -135,7 +138,7 @@ class VoronoiMicrostructure:
         # working with faces
         starts_faces = np.array(np.array(self.lines_faces)[:, 0] * (self.n_cells_per_axis - 1), dtype=np.short)
         ends_faces = np.array(np.array(self.lines_faces)[:, 1] * (self.n_cells_per_axis - 1), dtype=np.short)
-        res_faces = np.array([bresenham.bresenhamlines(np.array([start]), np.array([finish]), -1)[0] for start, finish
+        res_faces = np.array([bresenhamlines(np.array([start]), np.array([finish]), -1)[0] for start, finish
                               in zip(starts_faces, ends_faces)], dtype=object)
         shift = self.n_cells_per_axis
         bresenham_s_faces = res_faces + shift
@@ -216,7 +219,8 @@ class VoronoiMicrostructure:
         # return np.array(ca_faces), np.array(ca_edges)
         # return np.nonzero(ca_faces), np.nonzero(ca_edges)
 
-    def generate_voronoi_3d_continious(self, number_of_grains, seeds=None):
+    @staticmethod
+    def generate_voronoi_3d_continious(number_of_grains, seeds=None):
         if seeds is None:
             seeds = np.random.random_sample((number_of_grains, 3))
             for item in seeds:
@@ -553,69 +557,69 @@ class VoronoiMicrostructure:
         ax.set_zlim3d(0, n_cells_per_axis)
 
         plt.show()
-        plt.close()
+        # plt.close()
 
-        # _____Plot slices_______
-        div_step = int(n_cells_per_axis / 9)
-
-        cut1 = np.nonzero(self.grain_boundaries[div_step, :, :])
-        x1 = cut1[0]
-        y1 = cut1[1]
-
-        cut2 = np.nonzero(self.grain_boundaries[div_step * 2, :, :])
-        x2 = cut2[0]
-        y2 = cut2[1]
-
-        cut3 = np.nonzero(self.grain_boundaries[div_step * 3, :, :])
-        x3 = cut3[0]
-        y3 = cut3[1]
-
-        cut4 = np.nonzero(self.grain_boundaries[div_step * 4, :, :])
-        x4 = cut4[0]
-        y4 = cut4[1]
-
-        cut5 = np.nonzero(self.grain_boundaries[div_step * 5, :, :])
-        x5 = cut5[0]
-        y5 = cut5[1]
-
-        cut6 = np.nonzero(self.grain_boundaries[div_step * 6, :, :])
-        x6 = cut6[0]
-        y6 = cut6[1]
-
-        cut7 = np.nonzero(self.grain_boundaries[div_step * 7, :, :])
-        x7 = cut7[0]
-        y7 = cut7[1]
-
-        cut8 = np.nonzero(self.grain_boundaries[div_step * 8, :, :])
-        x8 = cut8[0]
-        y8 = cut8[1]
-
-        cut9 = np.nonzero(self.grain_boundaries[div_step * 9, :, :])
-        x9 = cut9[0]
-        y9 = cut9[1]
-
-        fig = plt.figure()
-        ax1 = fig.add_subplot(331)
-        ax2 = fig.add_subplot(332)
-        ax3 = fig.add_subplot(333)
-        ax4 = fig.add_subplot(334)
-        ax5 = fig.add_subplot(335)
-        ax6 = fig.add_subplot(336)
-        ax7 = fig.add_subplot(337)
-        ax8 = fig.add_subplot(338)
-        ax9 = fig.add_subplot(339)
-
-        ax1.scatter(x1, y1, color='b', marker='s', s=10)
-        ax2.scatter(x2, y2, color='b', marker='s', s=10)
-        ax3.scatter(x3, y3, color='b', marker='s', s=10)
-        ax4.scatter(x4, y4, color='b', marker='s', s=10)
-        ax5.scatter(x5, y5, color='b', marker='s', s=10)
-        ax6.scatter(x6, y6, color='b', marker='s', s=10)
-        ax7.scatter(x7, y7, color='b', marker='s', s=10)
-        ax8.scatter(x8, y8, color='b', marker='s', s=10)
-        ax9.scatter(x9, y9, color='b', marker='s', s=10)
-
-        plt.show()
+        # # _____Plot slices_______
+        # div_step = int(n_cells_per_axis / 9)
+        #
+        # cut1 = np.nonzero(self.grain_boundaries[div_step, :, :])
+        # x1 = cut1[0]
+        # y1 = cut1[1]
+        #
+        # cut2 = np.nonzero(self.grain_boundaries[div_step * 2, :, :])
+        # x2 = cut2[0]
+        # y2 = cut2[1]
+        #
+        # cut3 = np.nonzero(self.grain_boundaries[div_step * 3, :, :])
+        # x3 = cut3[0]
+        # y3 = cut3[1]
+        #
+        # cut4 = np.nonzero(self.grain_boundaries[div_step * 4, :, :])
+        # x4 = cut4[0]
+        # y4 = cut4[1]
+        #
+        # cut5 = np.nonzero(self.grain_boundaries[div_step * 5, :, :])
+        # x5 = cut5[0]
+        # y5 = cut5[1]
+        #
+        # cut6 = np.nonzero(self.grain_boundaries[div_step * 6, :, :])
+        # x6 = cut6[0]
+        # y6 = cut6[1]
+        #
+        # cut7 = np.nonzero(self.grain_boundaries[div_step * 7, :, :])
+        # x7 = cut7[0]
+        # y7 = cut7[1]
+        #
+        # cut8 = np.nonzero(self.grain_boundaries[div_step * 8, :, :])
+        # x8 = cut8[0]
+        # y8 = cut8[1]
+        #
+        # cut9 = np.nonzero(self.grain_boundaries[div_step * 9, :, :])
+        # x9 = cut9[0]
+        # y9 = cut9[1]
+        #
+        # fig = plt.figure()
+        # ax1 = fig.add_subplot(331)
+        # ax2 = fig.add_subplot(332)
+        # ax3 = fig.add_subplot(333)
+        # ax4 = fig.add_subplot(334)
+        # ax5 = fig.add_subplot(335)
+        # ax6 = fig.add_subplot(336)
+        # ax7 = fig.add_subplot(337)
+        # ax8 = fig.add_subplot(338)
+        # ax9 = fig.add_subplot(339)
+        #
+        # ax1.scatter(x1, y1, color='b', marker='s', s=10)
+        # ax2.scatter(x2, y2, color='b', marker='s', s=10)
+        # ax3.scatter(x3, y3, color='b', marker='s', s=10)
+        # ax4.scatter(x4, y4, color='b', marker='s', s=10)
+        # ax5.scatter(x5, y5, color='b', marker='s', s=10)
+        # ax6.scatter(x6, y6, color='b', marker='s', s=10)
+        # ax7.scatter(x7, y7, color='b', marker='s', s=10)
+        # ax8.scatter(x8, y8, color='b', marker='s', s=10)
+        # ax9.scatter(x9, y9, color='b', marker='s', s=10)
+        #
+        # plt.show()
 
 
 # Some tests

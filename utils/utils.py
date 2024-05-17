@@ -4,7 +4,7 @@ import numpy as np
 from configuration import Config
 import time
 import datetime
-from utils import new_data_base
+from utils import data_base
 
 
 class Utils:
