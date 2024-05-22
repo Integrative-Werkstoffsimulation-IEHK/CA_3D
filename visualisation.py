@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from scipy import special
 from math import *
 import numpy as np
-from utils import templates, utils
+import utils
 from scipy import ndimage
 import pickle
 from configuration import Config
@@ -23,7 +23,7 @@ class Visualisation:
         self.shape = None
         self.last_i = None
         self.oxid_numb = None
-        self.utils = new_utils.Utils()
+        self.utils = utils.Utils()
         self.generate_param_from_db()
         self.cell_size = 20
         self.linewidth = 0.3
@@ -66,7 +66,7 @@ class Visualisation:
             print("No OUTWARD data!")
 
     def generate_config_from_old_db(self):
-        user_input = templates.DEFAULT_PARAM
+        user_input = utils.DEFAULT_PARAM
         self.c.execute("SELECT * from user_input")
         user_input_from_db = self.c.fetchall()[0]
         for position, key in enumerate(user_input):
@@ -690,9 +690,9 @@ ELAPSED TIME: {message}
                                    s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
                                    alpha=self.alpha)
 
-                    # ax_all.scatter(not_fulls[:, 2], not_fulls[:, 1], not_fulls[:, 0], marker=',', color='r',
-                    #                s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
-                    #                alpha=self.alpha)
+                    ax_all.scatter(not_fulls[:, 2], not_fulls[:, 1], not_fulls[:, 0], marker=',', color='r',
+                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
+                                   alpha=self.alpha)
 
                 if self.Config.ACTIVES.SECONDARY_EXISTENCE and self.Config.OXIDANTS.SECONDARY_EXISTENCE:
                     self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))

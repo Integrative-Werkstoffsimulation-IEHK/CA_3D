@@ -8,18 +8,18 @@ if __name__ == '__main__':
     eng.primary_oxidant.diffuse = eng.primary_oxidant.diffuse_with_scale
     eng.primary_active.diffuse = eng.primary_active.diffuse_with_scale
     eng.precip_func = eng.precipitation_first_case
-    eng.get_combi_ind = eng.get_combi_ind_atomic_opt_for_growth
+    eng.get_combi_ind = eng.get_combi_ind_atomic
     eng.precip_step = eng.precip_step_standard
     eng.check_intersection = eng.ci_single
-    eng.decomposition = eng.dissolution_atomic
+    eng.decomposition = eng.dissolution_atomic_if_stable_higer_p
     eng.cur_case = eng.cases.first
 
-    eng.cur_case.nucleation_probabilities = NucleationProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
-    eng.cur_case.dissolution_probabilities = DissolutionProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
+    eng.cur_case.nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
+    eng.cur_case.dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
     
     Script name: main.py
     Nucleation and dissolution throughout the whole simulation (both schemes applied before reaching the concentration).
-    BUT after the concentration has been reached, the dissolution/nucleation stops completely.
+    After the concentration is reached, the dissolution with higher probabilities is applied.
 """
 
     eng = CellularAutomata()
@@ -27,14 +27,14 @@ if __name__ == '__main__':
     eng.primary_oxidant.diffuse = eng.primary_oxidant.diffuse_with_scale
     eng.primary_active.diffuse = eng.primary_active.diffuse_with_scale
     eng.precip_func = eng.precipitation_first_case
-    eng.get_combi_ind = eng.get_combi_ind_atomic_opt_for_growth
+    eng.get_combi_ind = eng.get_combi_ind_atomic
     eng.precip_step = eng.precip_step_standard
     eng.check_intersection = eng.ci_single
-    eng.decomposition = eng.dissolution_atomic
+    eng.decomposition = eng.dissolution_atomic_if_stable_higer_p
     eng.cur_case = eng.cases.first
 
     eng.cur_case.nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
-    eng.cur_case.dissolution_probabilities = DissolutionProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
+    eng.cur_case.dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
 
     try:
         eng.simulation()

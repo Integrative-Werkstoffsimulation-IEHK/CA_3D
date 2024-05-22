@@ -48,7 +48,7 @@ class Config:
     SIZE = 500 * (10 ** -6)  # [m]
 
     SOL_PROD = 6.25 * 10 ** -31  # 5.621 * 10 ** -10
-    PHASE_FRACTION_LIMIT = 0.06
+    PHASE_FRACTION_LIMIT = 0.055
     THRESHOLD_INWARD = 1
     THRESHOLD_OUTWARD = 1
     NEIGH_RANGE = 1   # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
@@ -101,7 +101,7 @@ class Config:
     PROBABILITIES.PRIMARY.global_d_B_f = -0.33
     PROBABILITIES.PRIMARY.n = 2
     PROBABILITIES.PRIMARY.bsf = 1
-    PROBABILITIES.PRIMARY.dissol_adapt_function = 5
+    PROBABILITIES.PRIMARY.dissol_adapt_function = 3
     # ________________________
 
     # nucleation SECONDARY

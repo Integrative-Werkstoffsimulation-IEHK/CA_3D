@@ -1,10 +1,10 @@
-from . import physical_data
+from .physical_data import *
 import sys
 import numpy as np
 from configuration import Config
 import time
 import datetime
-from utils import data_base
+from .data_base import *
 
 
 class Utils:
@@ -44,7 +44,7 @@ class Utils:
                                 (-1, 0, 0): [[0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1], [-1, 0, 0]]}
 
     def create_database(self):
-        self.db = new_data_base.Database()
+        self.db = Database()
 
     def generate_param(self):
         Config.GENERATED_VALUES.TAU = Config.SIM_TIME / Config.N_ITERATIONS
@@ -171,28 +171,24 @@ class Utils:
 
     @staticmethod
     def fetch_from_physical_data():
-        Config.ACTIVES.PRIMARY.DENSITY = physical_data.DENSITY[Config.ACTIVES.PRIMARY.ELEMENT]
-        Config.ACTIVES.PRIMARY.MOLAR_MASS = physical_data.MOLAR_MASS[Config.ACTIVES.PRIMARY.ELEMENT]
-        Config.ACTIVES.PRIMARY.DIFFUSION_COEFFICIENT = (
-            physical_data.get_diff_coeff(Config.TEMPERATURE, Config.ACTIVES.PRIMARY.DIFFUSION_CONDITION))
-
-        Config.ACTIVES.SECONDARY.DENSITY = physical_data.DENSITY[Config.ACTIVES.SECONDARY.ELEMENT]
-        Config.ACTIVES.SECONDARY.MOLAR_MASS = physical_data.MOLAR_MASS[Config.ACTIVES.SECONDARY.ELEMENT]
-        Config.ACTIVES.SECONDARY.DIFFUSION_COEFFICIENT = (
-            physical_data.get_diff_coeff(Config.TEMPERATURE, Config.ACTIVES.SECONDARY.DIFFUSION_CONDITION))
-
-        Config.OXIDANTS.PRIMARY.DENSITY = physical_data.DENSITY[Config.OXIDANTS.PRIMARY.ELEMENT]
-        Config.OXIDANTS.PRIMARY.MOLAR_MASS = physical_data.MOLAR_MASS[Config.OXIDANTS.PRIMARY.ELEMENT]
-        Config.OXIDANTS.PRIMARY.DIFFUSION_COEFFICIENT = (
-            physical_data.get_diff_coeff(Config.TEMPERATURE, Config.OXIDANTS.PRIMARY.DIFFUSION_CONDITION))
-
-        Config.OXIDANTS.SECONDARY.DENSITY = physical_data.DENSITY[Config.OXIDANTS.SECONDARY.ELEMENT]
-        Config.OXIDANTS.SECONDARY.MOLAR_MASS = physical_data.MOLAR_MASS[Config.OXIDANTS.SECONDARY.ELEMENT]
-        Config.OXIDANTS.SECONDARY.DIFFUSION_COEFFICIENT = (
-            physical_data.get_diff_coeff(Config.TEMPERATURE, Config.OXIDANTS.SECONDARY.DIFFUSION_CONDITION))
-
-        Config.MATRIX.DENSITY = physical_data.DENSITY[Config.MATRIX.ELEMENT]
-        Config.MATRIX.MOLAR_MASS = physical_data.MOLAR_MASS[Config.MATRIX.ELEMENT]
+        Config.ACTIVES.PRIMARY.DENSITY = DENSITY[Config.ACTIVES.PRIMARY.ELEMENT]
+        Config.ACTIVES.PRIMARY.MOLAR_MASS = MOLAR_MASS[Config.ACTIVES.PRIMARY.ELEMENT]
+        Config.ACTIVES.PRIMARY.DIFFUSION_COEFFICIENT = (get_diff_coeff(Config.TEMPERATURE,
+                                                                       Config.ACTIVES.PRIMARY.DIFFUSION_CONDITION))
+        Config.ACTIVES.SECONDARY.DENSITY = DENSITY[Config.ACTIVES.SECONDARY.ELEMENT]
+        Config.ACTIVES.SECONDARY.MOLAR_MASS = MOLAR_MASS[Config.ACTIVES.SECONDARY.ELEMENT]
+        Config.ACTIVES.SECONDARY.DIFFUSION_COEFFICIENT = (get_diff_coeff(Config.TEMPERATURE,
+                                                                         Config.ACTIVES.SECONDARY.DIFFUSION_CONDITION))
+        Config.OXIDANTS.PRIMARY.DENSITY = DENSITY[Config.OXIDANTS.PRIMARY.ELEMENT]
+        Config.OXIDANTS.PRIMARY.MOLAR_MASS = MOLAR_MASS[Config.OXIDANTS.PRIMARY.ELEMENT]
+        Config.OXIDANTS.PRIMARY.DIFFUSION_COEFFICIENT = (get_diff_coeff(Config.TEMPERATURE,
+                                                                        Config.OXIDANTS.PRIMARY.DIFFUSION_CONDITION))
+        Config.OXIDANTS.SECONDARY.DENSITY = DENSITY[Config.OXIDANTS.SECONDARY.ELEMENT]
+        Config.OXIDANTS.SECONDARY.MOLAR_MASS = MOLAR_MASS[Config.OXIDANTS.SECONDARY.ELEMENT]
+        Config.OXIDANTS.SECONDARY.DIFFUSION_COEFFICIENT = (get_diff_coeff(Config.TEMPERATURE,
+                                                                          Config.OXIDANTS.SECONDARY.DIFFUSION_CONDITION))
+        Config.MATRIX.DENSITY = DENSITY[Config.MATRIX.ELEMENT]
+        Config.MATRIX.MOLAR_MASS = MOLAR_MASS[Config.MATRIX.ELEMENT]
         cell_volume = Config.GENERATED_VALUES.LAMBDA ** 3
         Config.MATRIX.MOLES_PER_CELL = Config.MATRIX.DENSITY * cell_volume / Config.MATRIX.MOLAR_MASS
         Config.MATRIX.MASS_PER_CELL = Config.MATRIX.MOLES_PER_CELL * Config.MATRIX.MOLAR_MASS

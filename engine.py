@@ -1092,7 +1092,7 @@ class CellularAutomata:
             self.precip_step_no_growth_solub_prod_test()
         self.primary_oxidant.transform_to_descards()
 
-    def dissolution_atomic(self):
+    def dissolution_atomic_stop_if_stable(self):
         self.product_indexes = np.where(self.product_x_nzs)[0]
         where_not_stab = np.where(self.product_x_not_stab)[0]
         self.product_indexes = np.intersect1d(self.product_indexes, where_not_stab)
@@ -1138,6 +1138,47 @@ class CellularAutomata:
 
         if len(self.comb_indexes) > 0:
             # self.cur_case.dissolution_probabilities.adapt_probabilities(self.comb_indexes, frac)
+            self.dissolution_zhou_wei_no_bsf()
+
+    def dissolution_atomic_if_stable_higer_p(self):
+        self.comb_indexes = np.where(self.product_x_nzs)[0]
+        # where_not_stab = np.where(self.product_x_not_stab)[0]
+        # self.product_indexes = np.intersect1d(self.product_indexes, where_not_stab)
+
+        self.primary_oxidant.transform_to_3d()
+        oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
+                            in self.comb_indexes], dtype=np.uint32)
+        oxidant_moles = oxidant * Config.OXIDANTS.PRIMARY.MOLES_PER_CELL
+        self.primary_oxidant.transform_to_descards()
+
+        active = np.array([np.sum(self.primary_active.c3d[:, :, plane_ind]) for plane_ind
+                           in self.comb_indexes], dtype=np.uint32)
+        active_moles = active * Config.ACTIVES.PRIMARY.MOLES_PER_CELL
+        outward_eq_mat_moles = active * Config.ACTIVES.PRIMARY.EQ_MATRIX_MOLES_PER_CELL
+
+        product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
+                            in self.comb_indexes], dtype=np.uint32)
+        product_moles = product * Config.PRODUCTS.PRIMARY.MOLES_PER_CELL
+        product_eq_mat_moles = product * Config.ACTIVES.PRIMARY.EQ_MATRIX_MOLES_PER_CELL
+
+        matrix_moles = self.matrix_moles_per_page - outward_eq_mat_moles - product_eq_mat_moles
+        whole_moles = matrix_moles + oxidant_moles + active_moles + product_moles
+        product_c = product_moles / whole_moles
+
+        # temp_ind = np.where(product == 0)[0]
+        # self.product_x_nzs[self.product_indexes[temp_ind]] = False
+
+        # product_c = np.delete(product_c, temp_ind)
+        # self.comb_indexes = np.delete(self.product_indexes, temp_ind)
+
+        temp_ind = np.where(product_c > Config.PHASE_FRACTION_LIMIT)[0]
+        # self.product_x_not_stab[self.comb_indexes[temp_ind]] = False
+        # self.comb_indexes = np.delete(self.comb_indexes, temp_ind)
+        frac = np.zeros(len(self.comb_indexes))
+        frac[temp_ind] = 1
+
+        if len(self.comb_indexes) > 0:
+            self.cur_case.dissolution_probabilities.adapt_probabilities(self.comb_indexes, frac)
             self.dissolution_zhou_wei_no_bsf()
 
     def dissolution_test(self):

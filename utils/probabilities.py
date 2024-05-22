@@ -1,6 +1,6 @@
 import numpy as np
 import sys
-from utils import Config
+from configuration import Config
 
 
 class NucleationProbabilities:
