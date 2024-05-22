@@ -338,30 +338,31 @@ ELAPSED TIME: {message}
         def animate(iteration):
             ax_all.cla()
             ax_all.dist = 4
-            # if self.Config.INWARD_DIFFUSION:
-            #     self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
-            #     items = np.array(self.c.fetchall())
-            #     if np.any(items):
-            #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b',
-            #                        s=self.cell_size * (72. / fig.dpi) ** 2)
-            #     if self.Config.OXIDANTS.SECONDARY_EXISTENCE:
-            #         self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
-            #         items = np.array(self.c.fetchall())
-            #         if np.any(items):
-            #             ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='deeppink',
-            #                            s=self.cell_size * (72. / fig.dpi) ** 2)
-            # if self.Config.OUTWARD_DIFFUSION:
-            #     self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
-            #     items = np.array(self.c.fetchall())
-            #     if np.any(items):
-            #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='g',
-            #                        s=self.cell_size * (72. / fig.dpi) ** 2)
-            #     if self.Config.ACTIVES.SECONDARY_EXISTENCE:
-            #         self.c.execute("SELECT * from secondary_active_iter_{}".format(iteration))
-            #         items = np.array(self.c.fetchall())
-            #         if np.any(items):
-            #             ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='darkorange',
-            #                            s=self.cell_size * (72. / fig.dpi) ** 2)
+            if self.Config.INWARD_DIFFUSION:
+                self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
+                items = np.array(self.c.fetchall())
+                if np.any(items):
+                    ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b',
+                                   s=self.cell_size * (72. / fig.dpi) ** 2)
+
+                if self.Config.OXIDANTS.SECONDARY_EXISTENCE:
+                    self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
+                    items = np.array(self.c.fetchall())
+                    if np.any(items):
+                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='deeppink',
+                                       s=self.cell_size * (72. / fig.dpi) ** 2)
+            if self.Config.OUTWARD_DIFFUSION:
+                self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
+                items = np.array(self.c.fetchall())
+                if np.any(items):
+                    ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='g',
+                                   s=self.cell_size * (72. / fig.dpi) ** 2)
+                if self.Config.ACTIVES.SECONDARY_EXISTENCE:
+                    self.c.execute("SELECT * from secondary_active_iter_{}".format(iteration))
+                    items = np.array(self.c.fetchall())
+                    if np.any(items):
+                        ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='darkorange',
+                                       s=self.cell_size * (72. / fig.dpi) ** 2)
             if self.Config.COMPUTE_PRECIPITATION:
                 self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
                 items = np.array(self.c.fetchall())
@@ -445,7 +446,7 @@ ELAPSED TIME: {message}
             ax_all = fig.add_subplot(111, projection='3d')
             animation = FuncAnimation(fig, animate)
         plt.show()
-        # plt.savefig(f'W:/SIMCA/test_runs_data/{"_"}.jpeg')
+        # plt.savefig(f'C:/test_runs_data/{"_"}.jpeg')
 
     def plot_3d(self, plot_separate=False, iteration=None, const_cam_pos=False):
         if iteration is None:
@@ -471,6 +472,7 @@ ELAPSED TIME: {message}
                     ax_inward.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b',
                                       s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
                                    alpha=self.alpha)
+
                 if self.Config.OXIDANTS.SECONDARY_EXISTENCE:
                     self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
                     items = np.array(self.c.fetchall())
@@ -595,7 +597,6 @@ ELAPSED TIME: {message}
             # # Plot the plane
             # ax_all.plot_surface(X, Y, Z, color='r', alpha=0.5, zorder=0)  # Set alpha to a value between 0 and 1 for transparency
 
-
             # if self.Config.INWARD_DIFFUSION:
             #     self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
             #     items = np.array(self.c.fetchall())
@@ -603,7 +604,8 @@ ELAPSED TIME: {message}
             #         items = items * rescale_factor
             #         ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='b',
             #                        s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
-            #                        alpha=self.alpha, zorder=1)
+            #                        alpha=self.alpha)
+
             #     if self.Config.OXIDANTS.SECONDARY_EXISTENCE:
             #         self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
             #         items = np.array(self.c.fetchall())
@@ -627,6 +629,7 @@ ELAPSED TIME: {message}
             #             ax_all.scatter(items[:, 2], items[:, 1], items[:, 0], marker=',', color='gold',
             #                            s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
             #                        alpha=self.alpha)
+
             if self.Config.COMPUTE_PRECIPITATION:
                 self.c.execute("SELECT * from primary_product_iter_{}".format(iteration))
                 items = np.array(self.c.fetchall())
@@ -726,45 +729,45 @@ ELAPSED TIME: {message}
             ax_all.set_ylim3d(0, self.axlim * rescale_factor)
             ax_all.set_zlim3d(0, self.axlim * rescale_factor)
             if const_cam_pos:
-                ax_all.azim = -116
-                ax_all.elev = 19
-                ax_all.dist = 7.5
+                ax_all.azim = -62
+                ax_all.elev = 17
+                ax_all.dist = 2
 
         cm = 1 / 2.54  # centimeters in inches
+        #
+        # # fig.set_size_inches((12*cm, 12*cm))
+        # # plt.savefig(f'C:/test_runs_data/{iteration}.jpeg')
+        # # plt.savefig(f"//juno/homes/user/aseregin/Desktop/simuls/{iteration}.jpeg")
+        #
+        # csfont = {'fontname': 'Times New Roman'}
+        # # # # Rescale the axis values
+        # ticks = np.arange(0, new_axlim + 1, 500)
+        # ax_all.set_xticks(ticks)
+        # ax_all.set_yticks(ticks)
+        # ax_all.set_zticks(ticks)
+        #
+        # # Set font properties for the ticks
+        # f_size = 40
+        # ax_all.tick_params(axis='x', labelsize=f_size * cm, labelcolor='black', pad=10)
+        # ax_all.tick_params(axis='y', labelsize=f_size * cm, labelcolor='black', pad=10)
+        # ax_all.tick_params(axis='z', labelsize=f_size * cm, labelcolor='black', pad=10)
+        #
+        # # Get the tick labels and set font properties
+        # for tick in ax_all.get_xticklabels():
+        #     tick.set_fontname('Times New Roman')
+        # for tick in ax_all.get_yticklabels():
+        #     tick.set_fontname('Times New Roman')
+        # for tick in ax_all.get_zticklabels():
+        #     tick.set_fontname('Times New Roman')
+        #
+        # ax_all.set_xlabel("X [µm]", **csfont, fontsize=f_size*cm, labelpad=17)
+        # ax_all.set_ylabel("Y [µm]", **csfont, fontsize=f_size*cm, labelpad=17)
+        # ax_all.set_zlabel("Z [µm]", **csfont, fontsize=f_size*cm, labelpad=17)
 
-        # fig.set_size_inches((12*cm, 12*cm))
-        # plt.savefig(f'C:/test_runs_data/{iteration}.jpeg')
-        # plt.savefig(f"//juno/homes/user/aseregin/Desktop/simuls/{iteration}.jpeg")
-
-        csfont = {'fontname': 'Times New Roman'}
-        # # # Rescale the axis values
-        ticks = np.arange(0, new_axlim + 1, 500)
-        ax_all.set_xticks(ticks)
-        ax_all.set_yticks(ticks)
-        ax_all.set_zticks(ticks)
-
-        # Set font properties for the ticks
-        f_size = 40
-        ax_all.tick_params(axis='x', labelsize=f_size * cm, labelcolor='black', pad=10)
-        ax_all.tick_params(axis='y', labelsize=f_size * cm, labelcolor='black', pad=10)
-        ax_all.tick_params(axis='z', labelsize=f_size * cm, labelcolor='black', pad=10)
-
-        # Get the tick labels and set font properties
-        for tick in ax_all.get_xticklabels():
-            tick.set_fontname('Times New Roman')
-        for tick in ax_all.get_yticklabels():
-            tick.set_fontname('Times New Roman')
-        for tick in ax_all.get_zticklabels():
-            tick.set_fontname('Times New Roman')
-
-        ax_all.set_xlabel("X [µm]", **csfont, fontsize=f_size*cm, labelpad=17)
-        ax_all.set_ylabel("Y [µm]", **csfont, fontsize=f_size*cm, labelpad=17)
-        ax_all.set_zlabel("Z [µm]", **csfont, fontsize=f_size*cm, labelpad=17)
-
-        fig.set_size_inches((10 * cm, 10 * cm))
+        # fig.set_size_inches((40 * cm, 40 * cm))
         plt.show()
-        # plt.savefig(f'C:/test_runs_data/OWR_anim/{iteration}.jpeg')
-        # plt.close()
+        # plt.savefig(f'C:/test_runs_data/{iteration}.jpeg', dpi=300)
+        plt.close()
 
     def plot_2d(self, plot_separate=False, iteration=None, slice_pos=None):
         if iteration is None:

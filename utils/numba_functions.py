@@ -3,12 +3,12 @@ import numpy as np
 
 
 @numba.njit(nopython=True)
-def go_around_bool(array_3d, arrounds):
+def go_around_bool(array_3d, arounds):
     all_neighbours = []
     # trick to initialize an empty list with known type
     single_neighbours = [np.ubyte(x) for x in range(0)]
-    for seed_arrounds in arrounds:
-        for point in seed_arrounds:
+    for seed_arounds in arounds:
+        for point in seed_arounds:
             single_neighbours.append(array_3d[point[0], point[1], point[2]])
         all_neighbours.append(single_neighbours)
         single_neighbours = [np.ubyte(x) for x in range(0)]
@@ -16,35 +16,25 @@ def go_around_bool(array_3d, arrounds):
 
 
 @numba.njit(nopython=True)
-def go_around_int(array_3d, arrounds):
+def go_around_int(array_3d, arounds):
     all_neighbours = []
-    # all_where_full = []
     # trick to initialize an empty list with known type
     single_neighbours = [np.ubyte(x) for x in range(0)]
-    # single_where_full = [np.bool_(x) for x in range(0)]
-    for seed_arrounds in arrounds:
-        for point in seed_arrounds:
+    for seed_arounds in arounds:
+        for point in seed_arounds:
             single_neighbours.append(array_3d[point[0], point[1], point[2]])
-            # if array_3d[point[0], point[1], point[2]] == 4:
-            #     single_where_full.append(np.bool_(True))
-            # else:
-            #     single_where_full.append(np.bool_(False))
         all_neighbours.append(single_neighbours)
         single_neighbours = [np.ubyte(x) for x in range(0)]
-
-        # all_where_full.append(single_where_full)
-        # single_where_full = [np.bool_(x) for x in range(0)]
-    # return np.array(all_neighbours, dtype=np.ubyte), np.array(all_where_full, dtype=np.bool_)
     return np.array(all_neighbours, dtype=np.ubyte)
 
 
 @numba.njit(nopython=True)
-def go_around_bool_dissol(array_3d, arrounds):
+def go_around_bool_dissol(array_3d, arounds):
     all_neigh = []
     # trick to initialize an empty list with known type
     single_neigh = [np.bool_(x) for x in range(0)]
-    for seed_arrounds in arrounds:
-        for point in seed_arrounds:
+    for seed_arounds in arounds:
+        for point in seed_arounds:
             single_neigh.append(array_3d[point[0], point[1], point[2]])
         all_neigh.append(single_neigh)
         single_neigh = [np.bool_(x) for x in range(0)]

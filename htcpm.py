@@ -6,10 +6,10 @@ if __name__ == '__main__':
 
     Config.COMMENT = """ 
     eng.primary_oxidant.diffuse = eng.primary_oxidant.diffuse_gb
-    seeds = plane
+    seeds = G_100
 
     Script name: htcpm.py
-    For poster, to check with Fisher.
+    For the GB-video.
 """
 
     eng = CellularAutomata()

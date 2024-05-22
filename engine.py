@@ -1,3 +1,5 @@
+import numpy as np
+
 import utils
 import progressbar
 from elements import *
@@ -175,7 +177,7 @@ class CellularAutomata:
             self.decomposition()
             self.diffusion_inward()
             self.diffusion_outward()
-            # self.save_results_only_prod()
+            # self.save_results_only_inw()
 
         end = time.time()
         self.elapsed_time = (end - self.begin)
@@ -278,7 +280,6 @@ class CellularAutomata:
 
     def dissolution_zhou_wei_with_bsf(self):
         """Implementation of Zhou and Wei approach. Works for any oxidation nuber!"""
-        # plane_indxs = np.array([50])
         nz_ind = np.array(np.nonzero(self.primary_product.c3d[:, :, self.product_indexes]))
         self.coord_buffer.copy_to_buffer(nz_ind)
         self.coord_buffer.update_buffer_at_axis(self.product_indexes[nz_ind[2]], axis=2)
@@ -295,7 +296,6 @@ class CellularAutomata:
 
             to_dissol_pn_no_neigh = np.array(self.coord_buffer.get_elem_instead_ind(where_full), dtype=np.short)
             self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(where_full))
-            # self.to_dissol_pn_buffer.append_to_buffer(self.coord_buffer.get_elem_instead_ind(where_full))
 
             if self.coord_buffer.last_in_buffer > 0:
                 all_neigh = all_neigh[where_full]
@@ -1179,6 +1179,30 @@ class CellularAutomata:
 
         if len(self.comb_indexes) > 0:
             self.cur_case.dissolution_probabilities.adapt_probabilities(self.comb_indexes, frac)
+            self.dissolution_zhou_wei_no_bsf()
+
+    def dissolution_atomic_stop_if_no_active(self):
+        self.product_indexes = np.where(self.product_x_nzs)[0]
+
+        active = np.array([np.sum(self.primary_active.c3d[:, :, plane_ind]) for plane_ind
+                           in self.product_indexes], dtype=np.uint32)
+
+        product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
+                            in self.product_indexes], dtype=np.uint32)
+        temp_ind = np.where(product == 0)[0]
+        self.product_x_nzs[self.product_indexes[temp_ind]] = False
+
+        active = np.delete(active, temp_ind)
+        self.comb_indexes = np.delete(self.product_indexes, temp_ind)
+
+        temp_ind = np.where(active == 0)[0]
+
+        # if len(temp_ind) > 0:
+        #     print()
+
+        self.comb_indexes = np.delete(self.comb_indexes, temp_ind)
+
+        if len(self.comb_indexes) > 0:
             self.dissolution_zhou_wei_no_bsf()
 
     def dissolution_test(self):

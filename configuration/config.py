@@ -101,7 +101,7 @@ class Config:
     PROBABILITIES.PRIMARY.global_d_B_f = -0.33
     PROBABILITIES.PRIMARY.n = 2
     PROBABILITIES.PRIMARY.bsf = 1
-    PROBABILITIES.PRIMARY.dissol_adapt_function = 3
+    PROBABILITIES.PRIMARY.dissol_adapt_function = 5
     # ________________________
 
     # nucleation SECONDARY

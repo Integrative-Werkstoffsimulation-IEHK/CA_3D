@@ -4,39 +4,28 @@ from configuration import Config
 
 if __name__ == '__main__':
 
-    Config.COMMENT = """
-    
-    eng.primary_oxidant.diffuse = eng.primary_oxidant.diffuse_with_scale
-    eng.primary_active.diffuse = eng.primary_active.diffuse_with_scale
+    Config.COMMENT = """ 
+    eng.primary_oxidant.diffuse = eng.primary_oxidant.diffuse_bulk
+    eng.primary_active.diffuse = eng.primary_active.diffuse_bulk
     eng.precip_func = eng.precipitation_first_case
-    eng.get_combi_ind = eng.get_combi_ind_atomic
+    eng.get_combi_ind = eng.get_combi_ind_standard
     eng.precip_step = eng.precip_step_standard
-    eng.check_intersection = eng.ci_single
-    eng.decomposition = eng.dissolution_atomic_stop_if_no_active
+    eng.check_intersection = eng.ci_single_no_growth
     eng.cur_case = eng.cases.first
 
-    eng.cur_case.nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
-    eng.cur_case.dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
-    
-    Script name: main.py
-    Nucleation and dissolution throughout the whole simulation (both schemes applied).
-    This goes until all the active element is consumed! After that the dissolution stops completely and further will
-    be only nucleated at this regions. No dependency from phase fraction of product!
+    Script name: second_wagner_new_config.py
+    Simple second 
 """
 
     eng = CellularAutomata()
 
-    eng.primary_oxidant.diffuse = eng.primary_oxidant.diffuse_with_scale
-    eng.primary_active.diffuse = eng.primary_active.diffuse_with_scale
+    eng.primary_oxidant.diffuse = eng.primary_oxidant.diffuse_bulk
+    eng.primary_active.diffuse = eng.primary_active.diffuse_bulk
     eng.precip_func = eng.precipitation_first_case
     eng.get_combi_ind = eng.get_combi_ind_standard
     eng.precip_step = eng.precip_step_standard
-    eng.check_intersection = eng.ci_single
-    eng.decomposition = eng.dissolution_atomic_stop_if_no_active
+    eng.check_intersection = eng.ci_single_no_growth
     eng.cur_case = eng.cases.first
-
-    eng.cur_case.nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
-    eng.cur_case.dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
 
     try:
         eng.simulation()
