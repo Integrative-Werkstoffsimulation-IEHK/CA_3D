@@ -9,10 +9,10 @@ if __name__ == '__main__':
     eng.primary_oxidant.diffuse = eng.primary_oxidant.diffuse_with_scale
     eng.primary_active.diffuse = eng.primary_active.diffuse_with_scale
     eng.precip_func = eng.precipitation_first_case
-    eng.get_combi_ind = eng.get_combi_ind_atomic
+    eng.get_combi_ind = eng.get_combi_ind_standard
     eng.precip_step = eng.precip_step_standard
     eng.check_intersection = eng.ci_single
-    eng.decomposition = eng.dissolution_atomic_stop_if_no_active
+    eng.decomposition = eng.dissolution_atomic_stop_if_no_active_or_no_oxidant
     eng.cur_case = eng.cases.first
 
     eng.cur_case.nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
@@ -20,8 +20,9 @@ if __name__ == '__main__':
     
     Script name: main.py
     Nucleation and dissolution throughout the whole simulation (both schemes applied).
-    This goes until all the active element is consumed! After that the dissolution stops completely and further will
-    be only nucleated at this regions. No dependency from phase fraction of product!
+    This goes until all the active element OR all the oxidant is consumed! After that the dissolution stops until either
+    oxidant or active will come again. No dependency from phase fraction of product!
+
 """
 
     eng = CellularAutomata()
@@ -32,7 +33,7 @@ if __name__ == '__main__':
     eng.get_combi_ind = eng.get_combi_ind_standard
     eng.precip_step = eng.precip_step_standard
     eng.check_intersection = eng.ci_single
-    eng.decomposition = eng.dissolution_atomic_stop_if_no_active
+    eng.decomposition = eng.dissolution_atomic_stop_if_no_active_or_no_oxidant
     eng.cur_case = eng.cases.first
 
     eng.cur_case.nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)

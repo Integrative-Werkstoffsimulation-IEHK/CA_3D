@@ -173,11 +173,12 @@ class CellularAutomata:
 
     def simulation(self):
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
-            self.precip_func()
-            self.decomposition()
+            if self.iteration % Config.STRIDE == 0:
+                self.precip_func()
+                self.decomposition()
             self.diffusion_inward()
             self.diffusion_outward()
-            # self.save_results_only_inw()
+            # self.save_results_only_prod()
 
         end = time.time()
         self.elapsed_time = (end - self.begin)
@@ -1199,6 +1200,36 @@ class CellularAutomata:
 
         # if len(temp_ind) > 0:
         #     print()
+
+        self.comb_indexes = np.delete(self.comb_indexes, temp_ind)
+
+        if len(self.comb_indexes) > 0:
+            self.dissolution_zhou_wei_no_bsf()
+
+    def dissolution_atomic_stop_if_no_active_or_no_oxidant(self):
+        self.product_indexes = np.where(self.product_x_nzs)[0]
+
+        self.primary_oxidant.transform_to_3d()
+        oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
+                            in self.product_indexes], dtype=np.uint32)
+        self.primary_oxidant.transform_to_descards()
+
+        active = np.array([np.sum(self.primary_active.c3d[:, :, plane_ind]) for plane_ind
+                           in self.product_indexes], dtype=np.uint32)
+
+        product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
+                            in self.product_indexes], dtype=np.uint32)
+        temp_ind = np.where(product == 0)[0]
+        self.product_x_nzs[self.product_indexes[temp_ind]] = False
+
+        active = np.delete(active, temp_ind)
+        oxidant = np.delete(oxidant, temp_ind)
+        self.comb_indexes = np.delete(self.product_indexes, temp_ind)
+
+        temp_ind = np.where(active == 0)[0]
+        temp_ind1 = np.where(oxidant == 0)[0]
+
+        temp_ind = np.unique(np.concatenate((temp_ind, temp_ind1)))
 
         self.comb_indexes = np.delete(self.comb_indexes, temp_ind)
 

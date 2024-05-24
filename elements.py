@@ -16,7 +16,7 @@ class ActiveElem:
         self.n_per_page = settings.N_PER_PAGE
 
         # self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
-        self.precip_transform_depth = int(41)  # min self.neigh_range !!!
+        self.precip_transform_depth = int(21)  # min self.neigh_range !!!
 
         self.extended_axis = self.cells_per_axis + self.neigh_range
         self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
@@ -462,7 +462,6 @@ class OxidantElem:
         """
         # Diffusion at the interface between matrix the scale. If the current particle is on the product particle
         # it will be boosted along ballistic direction
-
         # self.diffuse_interface()
 
         # Diffusion through the scale. If the current particle is inside the product particle

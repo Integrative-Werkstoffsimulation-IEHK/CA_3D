@@ -6,7 +6,7 @@ from tkinter import filedialog
 root = tk.Tk()
 root.withdraw()
 database_name = filedialog.askopenfilename()
-iter = 61000
+iter = 28840
 visualise = Visualisation(database_name)
 
 # visualise.animate_3d(animate_separate=False, const_cam_pos=False)
