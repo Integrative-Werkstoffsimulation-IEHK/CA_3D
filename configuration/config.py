@@ -22,7 +22,7 @@ class Config:
     # primary oxidants
     OXIDANTS.PRIMARY.ELEMENT = "O"
     OXIDANTS.PRIMARY.DIFFUSION_CONDITION = "O in Ni Krupp"
-    OXIDANTS.PRIMARY.CELLS_CONCENTRATION = 0.0018
+    OXIDANTS.PRIMARY.CELLS_CONCENTRATION = 0.0012
     # secondary oxidants
     # OXIDANTS.SECONDARY.ELEMENT = "N"
     # OXIDANTS.SECONDARY.DIFFUSION_CONDITION = "N in Ni Krupp"
@@ -31,7 +31,7 @@ class Config:
     ACTIVES.PRIMARY.ELEMENT = "Al"
     ACTIVES.PRIMARY.DIFFUSION_CONDITION = "Al in Ni Krupp"
     ACTIVES.PRIMARY.MASS_CONCENTRATION = 0.025
-    ACTIVES.PRIMARY.CELLS_CONCENTRATION = 0.3
+    ACTIVES.PRIMARY.CELLS_CONCENTRATION = 0.2
     # secondary actives
     # ACTIVES.SECONDARY.ELEMENT = "Al"
     # ACTIVES.SECONDARY.DIFFUSION_CONDITION = "Al in Ni Krupp"
@@ -41,9 +41,9 @@ class Config:
     MATRIX.ELEMENT = "Ni"
 
     TEMPERATURE = 1100  # °C
-    N_CELLS_PER_AXIS = 300  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
-    N_ITERATIONS = 5000000  # must be >= n_cells_per_axis
-    STRIDE = 20  # n_iterations / stride = n_iterations for outward diffusion
+    N_CELLS_PER_AXIS = 102  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
+    N_ITERATIONS = 50000000  # must be >= n_cells_per_axis
+    STRIDE = 100  # n_iterations / stride = n_iterations for outward diffusion
     SIM_TIME = 1080000  # [sek]
     SIZE = 500 * (10 ** -6)  # [m]
 
@@ -79,16 +79,16 @@ class Config:
     PROBABILITIES.PRIMARY.p1_A_const = 1
     PROBABILITIES.PRIMARY.p1_B_const = 1
     PROBABILITIES.PRIMARY.global_A = 1
-    PROBABILITIES.PRIMARY.global_B = 0.24
+    PROBABILITIES.PRIMARY.global_B = 0.07
     PROBABILITIES.PRIMARY.global_B_f = -20
     PROBABILITIES.PRIMARY.max_neigh_numb = None
     PROBABILITIES.PRIMARY.nucl_adapt_function = 3
     # dissolution primary_________________________
-    PROBABILITIES.PRIMARY.p0_d = 0.01
+    PROBABILITIES.PRIMARY.p0_d = 0.001
     PROBABILITIES.PRIMARY.p0_d_f = 1
     PROBABILITIES.PRIMARY.p0_d_A_const = 1
     PROBABILITIES.PRIMARY.p0_d_B_const = 1
-    PROBABILITIES.PRIMARY.p1_d = 0.001
+    PROBABILITIES.PRIMARY.p1_d = 0.0001
     PROBABILITIES.PRIMARY.p1_d_f = 0.5
     PROBABILITIES.PRIMARY.p1_d_A_const = 1
     PROBABILITIES.PRIMARY.p1_d_B_const = 1
@@ -97,7 +97,7 @@ class Config:
     PROBABILITIES.PRIMARY.p6_d_A_const = 1
     PROBABILITIES.PRIMARY.p6_d_B_const = 1
     PROBABILITIES.PRIMARY.global_d_A = 1
-    PROBABILITIES.PRIMARY.global_d_B = -4
+    PROBABILITIES.PRIMARY.global_d_B = -1.15
     PROBABILITIES.PRIMARY.global_d_B_f = -0.33
     PROBABILITIES.PRIMARY.n = 2
     PROBABILITIES.PRIMARY.bsf = 1
