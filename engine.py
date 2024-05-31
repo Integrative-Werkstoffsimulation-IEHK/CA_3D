@@ -1,4 +1,7 @@
 import sys
+
+import numpy as np
+
 import utils
 import progressbar
 from elements import *
@@ -121,6 +124,7 @@ class CellularAutomata:
                         (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1), False, dtype=bool)
                 else:
                     self.cases.first.go_around_func_ref = self.go_around_mult_oxid_n
+                    # self.cases.first.go_around_func_ref = self.go_around_mult_oxid_n_also_partial_neigh  # CHANGE!!!!
                     self.cases.first.fix_init_precip_func_ref = self.fix_init_precip_int
                     self.cases.first.precip_3d_init = np.full(
                         (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1), 0, dtype=np.ubyte)
@@ -421,6 +425,165 @@ class CellularAutomata:
                 self.primary_active.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] += counts
                 # self.primary_active.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]+1] += counts
                 to_dissolve = np.repeat(to_dissolve, counts, axis=1)
+                # to_dissolve[2, :] -= 1
+                self.primary_oxidant.cells = np.concatenate((self.primary_oxidant.cells, to_dissolve), axis=1)
+                new_dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(to_dissolve[0]))
+                new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
+                new_dirs -= 1
+                self.primary_oxidant.dirs = np.concatenate((self.primary_oxidant.dirs, new_dirs), axis=1)
+
+    def dissolution_zhou_wei_no_bsf_also_partial_neigh(self):
+        """
+        Implementation of adjusted Zhou and Wei approach. Only side neighbours are checked. No need for block scale
+        factor. Works only for any oxidation nuber!
+        Im Gegensatz zu dissolution_zhou_wei_no_bsf werden auch die parziellen Nachbarn (weniger als oxidation numb inside)
+        berücksichtigt!
+        """
+        nz_ind = np.array(np.nonzero(self.cur_case.product.c3d[:, :, self.comb_indexes]))
+        self.coord_buffer.copy_to_buffer(nz_ind)
+        self.coord_buffer.update_buffer_at_axis(self.comb_indexes[nz_ind[2]], axis=2)
+
+        # count_at_coord = check_at_coord_dissol(self.primary_product.c3d, self.coord_buffer.get_buffer())
+        # where_full = np.where(count_at_coord == self.primary_oxid_numb)[0]
+        # self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_instead_ind(where_full))
+
+        if self.coord_buffer.last_in_buffer > 0:
+            all_arounds = self.utils.calc_sur_ind_decompose_flat(self.coord_buffer.get_buffer())
+            all_neigh = go_around_int(self.primary_product.c3d, all_arounds)
+
+            all_neigh_pn = all_neigh[[]]
+
+            # choose all the coordinates which have at least one full side neighbour
+            # where_full = np.unique(np.where(all_neigh == self.primary_oxid_numb)[0])
+
+            where_not_null = np.unique(np.where(all_neigh > 0)[0])
+            to_dissol_pn_no_neigh = np.array(self.coord_buffer.get_elem_instead_ind(where_not_null), dtype=np.short)
+            self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(where_not_null))
+
+            if self.coord_buffer.last_in_buffer > 0:
+                all_neigh = all_neigh[where_not_null]
+
+                # arr_len_flat = np.array([np.sum(item) for item in all_neigh], dtype=np.ubyte)
+                arr_len_flat = np.sum(all_neigh, axis=1)
+
+                index_outside = np.where((arr_len_flat < self.max_inside_neigh_number))[0]
+
+                self.to_dissol_pn_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(index_outside))
+                all_neigh_pn = arr_len_flat[index_outside]
+            else:
+                # all_neigh_pn = np.array([np.sum(item) for item in all_neigh_pn])
+                all_neigh_pn = np.sum(all_neigh_pn, axis=1)
+
+            probs_pn_no_neigh = self.cur_case.dissolution_probabilities.dissol_prob.values_pp[to_dissol_pn_no_neigh[2]]
+
+            to_dissolve_pn = self.to_dissol_pn_buffer.get_buffer()
+            probs_pn = self.cur_case.dissolution_probabilities.get_probabilities(all_neigh_pn, to_dissolve_pn[2])
+
+            randomise = np.random.random_sample(len(to_dissol_pn_no_neigh[0]))
+            temp_ind = np.where(randomise < probs_pn_no_neigh)[0]
+            to_dissol_pn_no_neigh = to_dissol_pn_no_neigh[:, temp_ind]
+
+            randomise = np.random.random_sample(len(to_dissolve_pn[0]))
+            temp_ind = np.where(randomise < probs_pn)[0]
+            to_dissolve_pn = to_dissolve_pn[:, temp_ind]
+
+            to_dissolve = np.concatenate((to_dissolve_pn, to_dissol_pn_no_neigh), axis=1)
+
+            self.coord_buffer.reset_buffer()
+            self.to_dissol_pn_buffer.reset_buffer()
+
+            if len(to_dissolve[0]) > 0:
+                counts = self.primary_product.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]]
+                self.primary_product.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = 0
+                self.primary_product.full_c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = False
+                self.primary_active.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] += counts
+                # self.primary_active.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]+1] += counts
+                to_dissolve = np.repeat(to_dissolve, counts, axis=1)
+                # to_dissolve[2, :] -= 1
+                self.primary_oxidant.cells = np.concatenate((self.primary_oxidant.cells, to_dissolve), axis=1)
+                new_dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(to_dissolve[0]))
+                new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
+                new_dirs -= 1
+                self.primary_oxidant.dirs = np.concatenate((self.primary_oxidant.dirs, new_dirs), axis=1)
+
+    def dissolution_zhou_wei_no_bsf_also_partial_neigh_aip(self):
+        """
+        Implementation of adjusted Zhou and Wei approach. Only side neighbours are checked. No need for block scale
+        factor. Works only for any oxidation nuber!
+        aip: Adjusted Inside Product!
+        Im Gegensatz zu dissolution_zhou_wei_no_bsf werden auch die parziellen Nachbarn (weniger als oxidation numb inside)
+        berücksichtigt!
+        Resolution inside a product: probability for each partial product adjusted according to a number of neighbours
+        """
+        nz_ind = np.array(np.nonzero(self.cur_case.product.c3d[:, :, self.comb_indexes]))
+        self.coord_buffer.copy_to_buffer(nz_ind)
+        self.coord_buffer.update_buffer_at_axis(self.comb_indexes[nz_ind[2]], axis=2)
+
+        if self.coord_buffer.last_in_buffer > 0:
+            all_arounds = self.utils.calc_sur_ind_decompose_flat_with_zero(self.coord_buffer.get_buffer())
+            all_neigh = go_around_int(self.primary_product.c3d, all_arounds)
+            all_neigh[:, 6] -= 1
+
+            all_neigh_pn = np.array([])
+            numb_in_prod = np.array([], dtype=int)
+
+            where_not_null = np.unique(np.where(all_neigh > 0)[0])
+            to_dissol_pn_no_neigh = np.array(self.coord_buffer.get_elem_instead_ind(where_not_null), dtype=np.short)
+            self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(where_not_null))
+
+            if self.coord_buffer.last_in_buffer > 0:
+                all_neigh = all_neigh[where_not_null]
+                numb_in_prod = all_neigh[:, 6]
+
+                arr_len_flat = np.sum(all_neigh, axis=1)
+
+                index_outside = np.where((arr_len_flat < self.max_inside_neigh_number))[0]
+
+                self.to_dissol_pn_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(index_outside))
+                all_neigh_pn = arr_len_flat[index_outside]
+                numb_in_prod = np.array(numb_in_prod[index_outside], dtype=int)
+
+            # some = int(np.sum(numb_in_prod))
+            # if some > 0:
+            #     print()
+
+            to_dissolve_pn = self.to_dissol_pn_buffer.get_buffer()
+            probs_pn = self.cur_case.dissolution_probabilities.get_probabilities(all_neigh_pn, to_dissolve_pn[2])
+
+            non_z_ind = np.where(numb_in_prod != 0)[0]
+            repeated_coords = np.repeat(to_dissolve_pn[:, non_z_ind], numb_in_prod[non_z_ind], axis=1)
+            repeated_probs = np.repeat(probs_pn[non_z_ind], numb_in_prod[non_z_ind])
+
+            to_dissolve_pn = np.concatenate((to_dissolve_pn, repeated_coords), axis=1)
+            probs_pn = np.concatenate((probs_pn, repeated_probs))
+
+            randomise = np.random.random_sample(len(to_dissolve_pn[0]))
+            temp_ind = np.where(randomise < probs_pn)[0]
+            to_dissolve_pn = to_dissolve_pn[:, temp_ind]
+
+            probs_pn_no_neigh = self.cur_case.dissolution_probabilities.dissol_prob.values_pp[to_dissol_pn_no_neigh[2]]
+            randomise = np.random.random_sample(len(to_dissol_pn_no_neigh[0]))
+            temp_ind = np.where(randomise < probs_pn_no_neigh)[0]
+            to_dissol_pn_no_neigh = to_dissol_pn_no_neigh[:, temp_ind]
+
+            to_dissolve = np.concatenate((to_dissolve_pn, to_dissol_pn_no_neigh), axis=1)
+
+            self.coord_buffer.reset_buffer()
+            self.to_dissol_pn_buffer.reset_buffer()
+
+            if len(to_dissolve[0]) > 0:
+                # counts = self.primary_product.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]]
+
+                just_decrease_counts(self.primary_product.c3d, to_dissolve)
+
+                # self.primary_product.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = 0
+                self.primary_product.full_c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = False
+
+                # self.primary_active.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] += counts
+                insert_counts(self.primary_active.c3d, to_dissolve)
+
+                # self.primary_active.c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]+1] += counts
+                # to_dissolve = np.repeat(to_dissolve, counts, axis=1)
                 # to_dissolve[2, :] -= 1
                 self.primary_oxidant.cells = np.concatenate((self.primary_oxidant.cells, to_dissolve), axis=1)
                 new_dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(to_dissolve[0]))
@@ -1233,7 +1396,7 @@ class CellularAutomata:
         self.comb_indexes = np.delete(self.comb_indexes, temp_ind)
 
         if len(self.comb_indexes) > 0:
-            self.dissolution_zhou_wei_no_bsf()
+            self.dissolution_zhou_wei_no_bsf_also_partial_neigh_aip()
 
     def dissolution_test(self):
         not_stable_ind = np.where(self.product_x_not_stab)[0]
@@ -2056,15 +2219,7 @@ class CellularAutomata:
             return [self.furthest_index]
 
     def go_around_single_oxid_n(self, around_coords):
-        flat_neighbours = go_around_bool(self.cur_case.precip_3d_init, around_coords)
-        return np.array([np.sum(item) for item in flat_neighbours], dtype=int)
-
-    def go_around_single_oxid_n_single_neigh(self, around_coords):
-        """Does not distinguish between multiple flat neighbours. If at least one flat neighbour P=P1"""
-        flat_neighbours = go_around_bool(self.cur_case.precip_3d_init, around_coords)
-        temp = np.array([np.sum(item) for item in flat_neighbours], dtype=bool)
-
-        return np.array(temp, dtype=np.ubyte)
+        return np.sum(go_around_bool(self.cur_case.precip_3d_init, around_coords), axis=1)
 
     def go_around_mult_oxid_n(self, around_coords):
         all_neigh = go_around_int(self.cur_case.precip_3d_init, around_coords)
@@ -2076,6 +2231,32 @@ class CellularAutomata:
         final_effective_flat_counts[where_full_side_neigh] = np.sum(all_neigh[where_full_side_neigh], axis=1)
         final_effective_flat_counts[only_inside_product] = 7 * self.cur_case.product.oxidation_number - 1
         return final_effective_flat_counts
+
+    def go_around_mult_oxid_n_also_partial_neigh(self, around_coords):
+
+        """Im Gegensatz zu go_around_mult_oxid_n werden auch die parziellen Nachbarn (weniger als oxidation numb inside)
+        berücksichtigt!
+        Resolution inside a product: If inside a product the probability is equal to ONE!!"""
+        all_neigh = go_around_int(self.cur_case.precip_3d_init, around_coords)
+        neigh_in_prod = all_neigh[:, 6].view()
+        nonzero_neigh_in_prod = np.array(np.nonzero(neigh_in_prod)[0])
+        final_effective_flat_counts = np.sum(all_neigh, axis=1)
+        final_effective_flat_counts[nonzero_neigh_in_prod] = 7 * self.cur_case.product.oxidation_number - 1
+        return final_effective_flat_counts
+
+    def go_around_mult_oxid_n_also_partial_neigh_aip(self, around_coords):
+        """Im Gegensatz zu go_around_mult_oxid_n werden auch die parziellen Nachbarn (weniger als oxidation numb inside)
+        berücksichtigt!!!
+        aip: Adjusted Inside Product!
+        Resolution inside a product: probability adjusted according to a number of neighbours"""
+        return np.sum(go_around_int(self.cur_case.precip_3d_init, around_coords), axis=1)
+
+    def go_around_single_oxid_n_single_neigh(self, around_coords):
+        """Does not distinguish between multiple flat neighbours. If at least one flat neighbour P=P1"""
+        flat_neighbours = go_around_bool(self.cur_case.precip_3d_init, around_coords)
+        temp = np.array([np.sum(item) for item in flat_neighbours], dtype=bool)
+
+        return np.array(temp, dtype=np.ubyte)
 
     def go_around_mult_oxid_n_single_neigh(self, around_coords):
         """Does not distinguish between multiple flat neighbours. If at least one flat neighbour P=P1"""

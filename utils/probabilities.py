@@ -23,10 +23,13 @@ class NucleationProbabilities:
         self.delt_b = self.b1 - self.b0
         self.const_b_pp = np.full(Config.N_CELLS_PER_AXIS, self.b0, dtype=float)
 
+        # self.left_point = self.oxidation_number
+        self.left_point = 1
+
         self.const_c_pp = np.log((1 - self.p1.values_pp) / (self.const_a_pp *
                                                             (np.e ** (self.const_b_pp * self.n_neigh_init) -
-                                                             np.e ** (self.const_b_pp * self.oxidation_number))))
-        self.const_d_pp = self.p1.values_pp - self.const_a_pp * np.e ** (self.const_b_pp * self.oxidation_number +
+                                                             np.e ** (self.const_b_pp * self.left_point))))
+        self.const_d_pp = self.p1.values_pp - self.const_a_pp * np.e ** (self.const_b_pp * self.left_point +
                                                                          self.const_c_pp)
         self.adapt_probabilities = None
         if param.nucl_adapt_function == 0:
@@ -43,8 +46,8 @@ class NucleationProbabilities:
     def update_constants(self):
         self.const_c_pp = np.log((1 - self.p1.values_pp) / (self.const_a_pp *
                                                             (np.e ** (self.const_b_pp * self.n_neigh_init) -
-                                                             np.e ** (self.const_b_pp * self.oxidation_number))))
-        self.const_d_pp = self.p1.values_pp - self.const_a_pp * np.e ** (self.const_b_pp * self.oxidation_number +
+                                                             np.e ** (self.const_b_pp * self.left_point))))
+        self.const_d_pp = self.p1.values_pp - self.const_a_pp * np.e ** (self.const_b_pp * self.left_point +
                                                                          self.const_c_pp)
 
     def get_probabilities_exp(self, numb_of_neighbours, page_ind):
@@ -89,14 +92,14 @@ class DissolutionProbabilities:
         self.delt_b = self.b1 - self.b0
         self.const_b_pp = np.full(Config.N_CELLS_PER_AXIS, self.b0, dtype=float)
 
+        # self.left_point = self.oxidation_number
+        self.left_point = 1
+
         self.const_c_pp = np.log((self.min_dissol_prob.values_pp - self.p1.values_pp) / (self.const_a_pp *
                                                             (np.e ** (self.const_b_pp * self.n_neigh_init) -
-                                                             np.e ** (self.const_b_pp * self.oxidation_number))))
-        self.const_d_pp = self.p1.values_pp - self.const_a_pp * np.e ** (self.const_b_pp * self.oxidation_number +
+                                                             np.e ** (self.const_b_pp * self.left_point))))
+        self.const_d_pp = self.p1.values_pp - self.const_a_pp * np.e ** (self.const_b_pp * self.left_point +
                                                                          self.const_c_pp)
-
-        # Config.GENERATED_VALUES.const_c_pp_dissolution = self.const_c_pp
-        # Config.GENERATED_VALUES.const_d_pp_dissolution = self.const_d_pp
 
         self.adapt_probabilities = None
         if param.dissol_adapt_function == 0:
@@ -115,8 +118,8 @@ class DissolutionProbabilities:
     def update_constants(self):
         self.const_c_pp = np.log((self.min_dissol_prob.values_pp - self.p1.values_pp) / (self.const_a_pp *
                                                             (np.e ** (self.const_b_pp * self.n_neigh_init) -
-                                                             np.e ** (self.const_b_pp * self.oxidation_number))))
-        self.const_d_pp = self.p1.values_pp - self.const_a_pp * np.e ** (self.const_b_pp * self.oxidation_number +
+                                                             np.e ** (self.const_b_pp * self.left_point))))
+        self.const_d_pp = self.p1.values_pp - self.const_a_pp * np.e ** (self.const_b_pp * self.left_point +
                                                                          self.const_c_pp)
 
     def get_probabilities(self, numb_of_neighbours, page_ind):

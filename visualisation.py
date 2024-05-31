@@ -25,7 +25,7 @@ class Visualisation:
         self.oxid_numb = None
         self.utils = utils.Utils()
         self.generate_param_from_db()
-        self.cell_size = 20
+        self.cell_size = 40
         self.linewidth = 0.3
         self.alpha = 1
         self.cm = {1: np.array([255, 200, 200])/255.0,
@@ -388,10 +388,10 @@ ELAPSED TIME: {message}
                                    linewidth=self.linewidth,
                                    alpha=self.alpha)
 
-                    # ax_all.scatter(not_fulls[:, 2], not_fulls[:, 1], not_fulls[:, 0], marker=',', color='r',
-                    #                s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black',
-                    #                linewidth=self.linewidth,
-                    #                alpha=self.alpha)
+                    ax_all.scatter(not_fulls[:, 2], not_fulls[:, 1], not_fulls[:, 0], marker=',', color='r',
+                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black',
+                                   linewidth=self.linewidth,
+                                   alpha=self.alpha)
 
                 if self.Config.ACTIVES.SECONDARY_EXISTENCE and self.Config.OXIDANTS.SECONDARY_EXISTENCE:
                     self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
@@ -693,9 +693,9 @@ ELAPSED TIME: {message}
                                    s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
                                    alpha=self.alpha)
 
-                    # ax_all.scatter(not_fulls[:, 2], not_fulls[:, 1], not_fulls[:, 0], marker=',', color='r',
-                    #                s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
-                    #                alpha=self.alpha)
+                    ax_all.scatter(not_fulls[:, 2], not_fulls[:, 1], not_fulls[:, 0], marker=',', color='r',
+                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth,
+                                   alpha=self.alpha)
 
                 if self.Config.ACTIVES.SECONDARY_EXISTENCE and self.Config.OXIDANTS.SECONDARY_EXISTENCE:
                     self.c.execute("SELECT * from secondary_product_iter_{}".format(iteration))
@@ -871,17 +871,9 @@ ELAPSED TIME: {message}
                 self.c.execute("SELECT * from primary_oxidant_iter_{}".format(iteration))
                 items = np.array(self.c.fetchall())
                 if np.any(items):
-                    # ind = np.where(items[:, 0] == slice_pos)
-                    # ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='b',
-                    #                s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth)
-
-                    # DELETE
-                    ind = np.where(items[:, 1] == slice_pos)
-                    ax_all.scatter(items[ind, 2], items[ind, 0], marker=',', color='b',
-                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black',
-                                   linewidth=self.linewidth)
-
-
+                    ind = np.where(items[:, 0] == slice_pos)
+                    ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='b',
+                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth)
             #     if self.Config.OXIDANTS.SECONDARY_EXISTENCE:
             #         self.c.execute("SELECT * from secondary_oxidant_iter_{}".format(iteration))
             #         items = np.array(self.c.fetchall())
@@ -889,13 +881,13 @@ ELAPSED TIME: {message}
             #             ind = np.where(items[:, 0] == slice_pos)
             #             ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='deeppink',
             #                            s=self.cell_size * (72. / fig.dpi) ** 2)
-            # if self.Config.OUTWARD_DIFFUSION:
-            #     self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
-            #     items = np.array(self.c.fetchall())
-            #     if np.any(items):
-            #         ind = np.where(items[:, 0] == slice_pos)
-            #         ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='g',
-            #                        s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth)
+            if self.Config.OUTWARD_DIFFUSION:
+                self.c.execute("SELECT * from primary_active_iter_{}".format(iteration))
+                items = np.array(self.c.fetchall())
+                if np.any(items):
+                    ind = np.where(items[:, 0] == slice_pos)
+                    ax_all.scatter(items[ind, 2], items[ind, 1], marker=',', color='g',
+                                   s=self.cell_size * (72. / fig.dpi) ** 2, edgecolors='black', linewidth=self.linewidth)
             #     if self.Config.ACTIVES.SECONDARY_EXISTENCE:
             #         self.c.execute("SELECT * from secondary_active_iter_{}".format(iteration))
             #         items = np.array(self.c.fetchall())

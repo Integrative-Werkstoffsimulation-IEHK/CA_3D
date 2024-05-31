@@ -42,13 +42,13 @@ def go_around_bool_dissol(array_3d, arounds):
 
 
 @numba.njit(nopython=True)
-def check_at_coord_dissol(array_3d, cells):
+def check_at_coord_dissol(array_3d, coords):
     # trick to initialize an empty list with known type
-    where_full = [np.uint32(x) for x in range(0)]
-    for index, coordinate in enumerate(cells.transpose()):
-        if array_3d[coordinate[0], coordinate[1], coordinate[2]]:
-            where_full.append(np.uint32(index))
-    return np.array(where_full, dtype=np.uint32)
+    result_coords = [np.uint32(x) for x in range(0)]
+    for coordinate in coords.transpose():
+        result_coords.append(array_3d[coordinate[0], coordinate[1], coordinate[2]])
+        # where_full.append(np.uint32(index))
+    return np.array(result_coords, dtype=np.uint32)
 
 
 @numba.njit(nopython=True)
@@ -88,6 +88,12 @@ def decrease_counts(array_3d, points):
         else:
             zero_positions.append(ind)
     return zero_positions
+
+
+@numba.njit(nopython=True)
+def just_decrease_counts(array_3d, points):
+    for point in points.transpose():
+        array_3d[point[0], point[1], point[2]] -= 1
 
 
 @numba.njit(nopython=True)
