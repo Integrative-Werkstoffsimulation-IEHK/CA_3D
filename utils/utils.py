@@ -28,7 +28,8 @@ class Utils:
             [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1], [0, 0, 0]], dtype=np.byte)
 
         if self.neigh_range > 1:
-            self.ind_formation = self.generate_neigh_indexes()
+            # self.ind_formation = self.generate_neigh_indexes()
+            self.ind_formation = self.generate_neigh_indexes_flat()
         else:
             self.ind_formation = np.array(
                 [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1], [0, 0, 0],
@@ -512,6 +513,18 @@ class Utils:
         temp = np.ones(neigh_shape, dtype=int)
         coord = np.array(np.nonzero(temp))
         coord -= neigh_range
+        coord = coord.transpose()
+        return np.array(coord, dtype=np.byte)
+
+    def generate_neigh_indexes_flat(self):
+        neigh_range = self.neigh_range
+        size = 3 + (neigh_range - 1) * 2
+        neigh_shape = (size, size, 3)
+        temp = np.ones(neigh_shape, dtype=int)
+        coord = np.array(np.nonzero(temp))
+        coord[0] -= neigh_range
+        coord[1] -= neigh_range
+        coord[2] -= 1
         coord = coord.transpose()
         return np.array(coord, dtype=np.byte)
 

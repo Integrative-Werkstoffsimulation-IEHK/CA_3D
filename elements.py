@@ -538,7 +538,7 @@ class OxidantElem:
         self.cells[1, np.where(self.cells[1] <= -1)] = self.cells_per_axis - 1
         self.cells[1, np.where(self.cells[1] >= self.cells_per_axis)] = 0
 
-        ind = np.where(self.cells[2] >= self.cells_per_axis)
+        ind = np.where(self.cells[2] >= self.cells_per_axis)[0]
         # closed right bound (reflection)____________
         # self.cells[2, ind] = self.cells_per_axis - 2
         # self.dirs[2, ind] = -1

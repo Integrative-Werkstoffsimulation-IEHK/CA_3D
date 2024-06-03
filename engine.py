@@ -183,7 +183,7 @@ class CellularAutomata:
                 self.decomposition()
             self.diffusion_inward()
             self.diffusion_outward_with_mult_sride()
-            # self.save_results_only_prod()
+            # self.save_results()
 
         end = time.time()
         self.elapsed_time = (end - self.begin)

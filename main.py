@@ -25,6 +25,8 @@ if __name__ == '__main__':
     oxidant or active will come again. No dependency from phase fraction of product!
     
     CHANGED THE SCHEMES OF NUCLEATION AND DISSOLUTION ->>> NOW ALSO THE PARTIAL NEIGHBOURS ARE CONSIDERED!!!!
+    
+    self.ind_formation = self.generate_neigh_indexes_flat() !!!!!!!!!!!
 
 """
 
