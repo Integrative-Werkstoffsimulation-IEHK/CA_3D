@@ -15,7 +15,7 @@ if __name__ == '__main__':
     eng.decomposition = eng.dissolution_atomic_stop_if_no_active_or_no_oxidant
     (inside this function the dissolution_zhou_wei_no_bsf_also_partial_neigh_aip() was called!!!!)
     eng.cur_case = eng.cases.first
-
+    eng.cases.first.go_around_func_ref = eng.go_around_mult_oxid_n_also_partial_neigh_aip
     eng.cur_case.nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
     eng.cur_case.dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
     

@@ -172,15 +172,17 @@ class CellularAutomata:
 
             self.prev_stab_count = 0
 
+            self.precipitation_stride = Config.STRIDE * Config.STRIDE_MULTIPLIER
+
         self.begin = time.time()
 
     def simulation(self):
         for self.iteration in progressbar.progressbar(range(self.n_iter)):
-            if self.iteration % Config.STRIDE == 0:
+            if self.iteration % self.precipitation_stride == 0:
                 self.precip_func()
                 self.decomposition()
             self.diffusion_inward()
-            self.diffusion_outward()
+            self.diffusion_outward_with_mult_sride()
             # self.save_results_only_prod()
 
         end = time.time()
@@ -2059,6 +2061,16 @@ class CellularAutomata:
                 self.secondary_active.transform_to_descards()
                 self.secondary_active.diffuse()
 
+    def diffusion_outward_with_mult_sride(self):
+        if self.iteration % Config.STRIDE == 0:
+            if self.iteration % self.precipitation_stride == 0 or self.iteration == 0:
+                self.primary_active.transform_to_descards()
+            self.primary_active.diffuse()
+
+            # if Config.ACTIVES.SECONDARY_EXISTENCE:
+            #     self.secondary_active.transform_to_descards()
+            #     self.secondary_active.diffuse()
+
     def calc_precip_front_1(self, iteration):
         """
         Calculating a position of a precipitation front. As a boundary a precipitation concentration of 0,1% is used.
@@ -2233,7 +2245,6 @@ class CellularAutomata:
         return final_effective_flat_counts
 
     def go_around_mult_oxid_n_also_partial_neigh(self, around_coords):
-
         """Im Gegensatz zu go_around_mult_oxid_n werden auch die parziellen Nachbarn (weniger als oxidation numb inside)
         berücksichtigt!
         Resolution inside a product: If inside a product the probability is equal to ONE!!"""

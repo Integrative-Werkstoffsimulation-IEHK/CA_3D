@@ -136,6 +136,7 @@ class Visualisation:
         Config.N_CELLS_PER_AXIS = user_input["n_cells_per_axis"]
         Config.N_ITERATIONS = user_input["n_iterations"]
         Config.STRIDE = user_input["stride"]
+        Config.STRIDE_MULTIPLIER = "WAS NOT IMPLEMENTED AT THAT TIME"
         Config.SIM_TIME = user_input["sim_time"]
         Config.SIZE = user_input["size"]
         Config.SOL_PROD = user_input["sol_prod"]
@@ -914,7 +915,7 @@ ELAPSED TIME: {message}
                     #     ax_all.scatter(dec[grade_ind, 2], dec[grade_ind, 1], marker=',',
                     #                    color=self.cm[grade], s=self.cell_size * (72. / fig.dpi) ** 2)
 
-                    full_ind = np.where(counts == 8)[0]
+                    full_ind = np.where(counts == self.oxid_numb)[0]
                     #
                     fulls = dec[full_ind]
                     not_fulls = np.delete(dec, full_ind, axis=0)

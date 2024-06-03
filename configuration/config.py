@@ -42,8 +42,9 @@ class Config:
 
     TEMPERATURE = 1100  # °C
     N_CELLS_PER_AXIS = 102  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
-    N_ITERATIONS = 50000000  # must be >= n_cells_per_axis
+    N_ITERATIONS = 5000000  # must be >= n_cells_per_axis
     STRIDE = 100  # n_iterations / stride = n_iterations for outward diffusion
+    STRIDE_MULTIPLIER = 10
     SIM_TIME = 1080000  # [sek]
     SIZE = 500 * (10 ** -6)  # [m]
 
@@ -70,34 +71,34 @@ class Config:
     # PROBABILITIES.TERNARY = ConfigProbabilities()
     # PROBABILITIES.QUATERNARY = ConfigProbabilities()
     # nucleation primary___________________________
-    PROBABILITIES.PRIMARY.p0 = 1e-4
+    PROBABILITIES.PRIMARY.p0 = 5e-1
     PROBABILITIES.PRIMARY.p0_f = 1
     PROBABILITIES.PRIMARY.p0_A_const = 1
     PROBABILITIES.PRIMARY.p0_B_const = 1
-    PROBABILITIES.PRIMARY.p1 = 1e-3
+    PROBABILITIES.PRIMARY.p1 = 0.999999999
     PROBABILITIES.PRIMARY.p1_f = 1
     PROBABILITIES.PRIMARY.p1_A_const = 1
     PROBABILITIES.PRIMARY.p1_B_const = 1
     PROBABILITIES.PRIMARY.global_A = 1
-    PROBABILITIES.PRIMARY.global_B = 0.36
+    PROBABILITIES.PRIMARY.global_B = 0.015
     PROBABILITIES.PRIMARY.global_B_f = -20
     PROBABILITIES.PRIMARY.max_neigh_numb = None
     PROBABILITIES.PRIMARY.nucl_adapt_function = 3
     # dissolution primary_________________________
-    PROBABILITIES.PRIMARY.p0_d = 1e-5
+    PROBABILITIES.PRIMARY.p0_d = 1e-1
     PROBABILITIES.PRIMARY.p0_d_f = 1
     PROBABILITIES.PRIMARY.p0_d_A_const = 1
     PROBABILITIES.PRIMARY.p0_d_B_const = 1
-    PROBABILITIES.PRIMARY.p1_d = 1e-8
+    PROBABILITIES.PRIMARY.p1_d = 1*10**-1.5
     PROBABILITIES.PRIMARY.p1_d_f = 0.9999
     PROBABILITIES.PRIMARY.p1_d_A_const = 1
     PROBABILITIES.PRIMARY.p1_d_B_const = 1
-    PROBABILITIES.PRIMARY.p6_d = 1*10**-12
+    PROBABILITIES.PRIMARY.p6_d = 1e-10
     PROBABILITIES.PRIMARY.p6_d_f = 0.01
     PROBABILITIES.PRIMARY.p6_d_A_const = 1
     PROBABILITIES.PRIMARY.p6_d_B_const = 1
     PROBABILITIES.PRIMARY.global_d_A = 1
-    PROBABILITIES.PRIMARY.global_d_B = -0.65
+    PROBABILITIES.PRIMARY.global_d_B = -0.14
     PROBABILITIES.PRIMARY.global_d_B_f = -0.33
     PROBABILITIES.PRIMARY.n = 2
     PROBABILITIES.PRIMARY.bsf = 1
