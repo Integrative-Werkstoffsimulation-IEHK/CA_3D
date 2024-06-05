@@ -8,7 +8,8 @@ class NucleationProbabilities:
         self.oxidation_number = corresponding_product.OXIDATION_NUMBER
         if not param.max_neigh_numb:
             if self.oxidation_number > 1:
-                self.n_neigh_init = 7 * self.oxidation_number - 1
+                # self.n_neigh_init = 7 * self.oxidation_number - 1
+                self.n_neigh_init = 6 * self.oxidation_number
             else:
                 self.n_neigh_init = 6
         else:

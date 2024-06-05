@@ -137,6 +137,7 @@ class Visualisation:
         Config.N_ITERATIONS = user_input["n_iterations"]
         Config.STRIDE = user_input["stride"]
         Config.STRIDE_MULTIPLIER = "WAS NOT IMPLEMENTED AT THAT TIME"
+        Config.PRECIP_TRANSFORM_DEPTH = "WAS NOT IMPLEMENTED AT THAT TIME"
         Config.SIM_TIME = user_input["sim_time"]
         Config.SIZE = user_input["size"]
         Config.SOL_PROD = user_input["sol_prod"]
@@ -1796,7 +1797,7 @@ ELAPSED TIME: {message}
 
                     mean = np.mean(clusters)
                     nz_len = len(clusters)
-                    print(nz_len, " ", mean)
+                    print(x_pos, nz_len, mean, sep=" ")
 
     def plot_h(self):
         fig = plt.figure()

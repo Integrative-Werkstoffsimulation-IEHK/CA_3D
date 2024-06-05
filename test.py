@@ -127,28 +127,62 @@ from configuration import Config
 #     print()
 
 
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+# import matplotlib.pyplot as plt
+# from mpl_toolkits.mplot3d import Axes3D
+# import numpy as np
+#
+# # Create a figure and a 3D axis
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
+#
+# # Define the grid for the plane
+# x = np.linspace(-5, 5, 10)
+# y = np.linspace(-5, 5, 10)
+# X, Y = np.meshgrid(x, y)
+#
+# # Define the Z coordinates for the plane
+# Z = np.full(X.shape, 2)  # This sets Z = 2 for the entire plane, making it parallel to the YX axis
+#
+# # Plot the plane
+# ax.plot_surface(X, Y, Z, color='cyan', alpha=0.5)  # Set alpha to a value between 0 and 1 for transparency
+#
+# # Optionally, add more elements to the plot for context
+# ax.scatter([0], [0], [2], color='red', s=100)  # Example point to show position relative to the plane
+#
+#
+# # Show the plot
+# plt.show()
+
 import numpy as np
+import timeit
 
-# Create a figure and a 3D axis
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+# Creating a large sample array for performance testing
+array = np.random.rand(100000, 10000)
 
-# Define the grid for the plane
-x = np.linspace(-5, 5, 10)
-y = np.linspace(-5, 5, 10)
-X, Y = np.meshgrid(x, y)
+def method_1():
+    temp = array[:, 0].copy()
+    array[:, 0] = array[:, 2]
+    array[:, 2] = temp
 
-# Define the Z coordinates for the plane
-Z = np.full(X.shape, 2)  # This sets Z = 2 for the entire plane, making it parallel to the YX axis
+def method_2():
+    array[:, [0, 2]] = array[:, [2, 0]].copy()
 
-# Plot the plane
-ax.plot_surface(X, Y, Z, color='cyan', alpha=0.5)  # Set alpha to a value between 0 and 1 for transparency
+def method_3():
+    array[:, [0, 2]] = array[:, [2, 0]]
 
-# Optionally, add more elements to the plot for context
-ax.scatter([0], [0], [2], color='red', s=100)  # Example point to show position relative to the plane
+# Measuring the execution time of each method
+time = 0
+for _ in range(10):
+    time += timeit.timeit(method_1, number=100)
+print(f"Method 1 time: {time/10}")
 
+time = 0
+for _ in range(10):
+    time += timeit.timeit(method_2, number=100)
+print(f"Method 2 time: {time/10}")
 
-# Show the plot
-plt.show()
+time = 0
+for _ in range(10):
+    time += timeit.timeit(method_3, number=100)
+print(f"Method 3 time: {time/10}")
+

@@ -21,6 +21,12 @@ class Utils:
              [1, 1, 0], [1, 0, -1], [1, 0, 1], [1, -1, 0], [0, 1, -1], [0, 1, 1],  # 19 side corners
              [0, -1, -1], [0, -1, 1], [-1, 1, 0], [-1, 0, -1], [-1, 0, 1], [-1, -1, 0]], dtype=np.byte)
 
+        self.ind_decompose_no_flat = np.array(
+            [[1, 1, -1], [1, 1, 1], [1, -1, -1], [1, -1, 1],
+             [-1, 1, -1], [-1, 1, 1], [-1, -1, -1], [-1, -1, 1],
+             [1, 1, 0], [1, 0, -1], [1, 0, 1], [1, -1, 0], [0, 1, -1], [0, 1, 1],
+             [0, -1, -1], [0, -1, 1], [-1, 1, 0], [-1, 0, -1], [-1, 0, 1], [-1, -1, 0]], dtype=np.byte)
+
         self.ind_decompose_flat = np.array(
             [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]], dtype=np.byte)
 
@@ -445,6 +451,20 @@ class Utils:
         around_seeds[around_seeds == -1] = self.n_cells_per_axis - 1
         return around_seeds
 
+    def calc_sur_ind_decompose_no_flat(self, seeds):
+        """
+        Calculating the descarts surrounding coordinates for each seed including the position of the seed itself.
+        :param seeds: seeds in descarts coordinates
+        :return: around_seeds: array of the surrounding coordinates for each seed (7 coordinates for each seed)
+        """
+        seeds = seeds.transpose()
+        # generating a neighbouring coordinates for each seed (including the position of the seed itself)
+        around_seeds = np.array([[item + self.ind_decompose_no_flat] for item in seeds], dtype=np.short)[:, 0]
+        # applying periodic boundary conditions
+        around_seeds[around_seeds == self.n_cells_per_axis] = 0
+        around_seeds[around_seeds == -1] = self.n_cells_per_axis - 1
+        return around_seeds
+
     def calc_sur_ind_formation(self, seeds, dummy_ind):
         """
         Calculating the descarts surrounding coordinates for each seed including the position of the seed itself.
@@ -521,11 +541,23 @@ class Utils:
         size = 3 + (neigh_range - 1) * 2
         neigh_shape = (size, size, 3)
         temp = np.ones(neigh_shape, dtype=int)
+
+        flat_ind = np.array(self.ind_decompose_flat_z)
+        flat_ind = flat_ind.transpose()
+        flat_ind[0] += neigh_range
+        flat_ind[1] += neigh_range
+        flat_ind[2] += 1
+
+        temp[flat_ind[0], flat_ind[1], flat_ind[2]] = 0
+
         coord = np.array(np.nonzero(temp))
         coord[0] -= neigh_range
         coord[1] -= neigh_range
         coord[2] -= 1
         coord = coord.transpose()
+
+        coord = np.concatenate((self.ind_decompose_flat_z, coord))
+
         return np.array(coord, dtype=np.byte)
 
     def print_static_params_to_file(self, cls, file_obj, indent=0):

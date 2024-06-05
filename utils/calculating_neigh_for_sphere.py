@@ -81,8 +81,13 @@ class Sphere:
         self.last_on_surface_ind = check_coords_if_belong(self.c3d, arrounds, self.real_radius, self.s_coord, self.on_surface,
                                                   self.last_on_surface_ind)
 
-        flat_arounds = self.calc_flat_sur_coord(self.on_surface[:self.last_on_surface_ind])
-        neighbours = go_around_bool(self.c3d, flat_arounds)
+        # flat_arounds = self.calc_flat_sur_coord(self.on_surface[:self.last_on_surface_ind])
+        all_arounds = self.calc_all_sur_coord(self.on_surface[:self.last_on_surface_ind])
+
+        neighbours = go_around_bool(self.c3d, all_arounds)
+
+
+
 
         flat_arr_len = np.array([np.sum(item) for item in neighbours], dtype=np.ubyte)
 

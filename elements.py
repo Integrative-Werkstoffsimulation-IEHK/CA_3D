@@ -16,7 +16,7 @@ class ActiveElem:
         self.n_per_page = settings.N_PER_PAGE
 
         # self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
-        self.precip_transform_depth = int(11)  # min self.neigh_range !!!
+        self.precip_transform_depth = int(Config.PRECIP_TRANSFORM_DEPTH)  # min self.neigh_range !!!
 
         self.extended_axis = self.cells_per_axis + self.neigh_range
         self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
@@ -203,12 +203,12 @@ class ActiveElem:
         # self.dirs = np.delete(self.dirs, ind, 1)
         # __________________________________________
 
-        self.cells[0, np.where(self.cells[0] == -1)] = self.cells_per_axis - 1
-        self.cells[0, np.where(self.cells[0] == self.cells_per_axis)] = 0
-        self.cells[1, np.where(self.cells[1] == -1)] = self.cells_per_axis - 1
-        self.cells[1, np.where(self.cells[1] == self.cells_per_axis)] = 0
+        self.cells[0, np.where(self.cells[0] <= -1)] = self.cells_per_axis - 1
+        self.cells[0, np.where(self.cells[0] >= self.cells_per_axis)] = 0
+        self.cells[1, np.where(self.cells[1] <= -1)] = self.cells_per_axis - 1
+        self.cells[1, np.where(self.cells[1] >= self.cells_per_axis)] = 0
 
-        ind = np.where(self.cells[2] == self.cells_per_axis)[0]
+        ind = np.where(self.cells[2] >= self.cells_per_axis)[0]
         # closed right bound (reflection)____________
         # self.cells[2, ind] = self.cells_per_axis - 2
         # self.dirs[2, ind] = -1
@@ -539,6 +539,7 @@ class OxidantElem:
         self.cells[1, np.where(self.cells[1] >= self.cells_per_axis)] = 0
 
         ind = np.where(self.cells[2] >= self.cells_per_axis)[0]
+
         # closed right bound (reflection)____________
         # self.cells[2, ind] = self.cells_per_axis - 2
         # self.dirs[2, ind] = -1
@@ -551,7 +552,6 @@ class OxidantElem:
         # self.cells[2, ind] = 0
         # ________________________________________________________
 
-        # UNCOMMENT!!!!
         # ___________________________________
         self.current_count = len(np.where(self.cells[2] == 0)[0])
         self.fill_first_page()
