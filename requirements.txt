@@ -4,3 +4,4 @@ progressbar
 progressbar2==4.0.0
 scipy
 numba
+pyvoro
