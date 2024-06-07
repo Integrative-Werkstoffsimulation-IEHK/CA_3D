@@ -43,9 +43,16 @@ class MyBufferSingle:
         self.buffer[:new_data.shape] = new_data
         self.last_in_buffer = new_data.shape
 
+    def append(self, value):
+        self.buffer[self.last_in_buffer] = value
+        self.last_in_buffer += 1
+
     def fill_buffer(self, furthest_index, array_3d):
         data = np.array(np.sum(array_3d[:, :, np.arange(furthest_index + 1)]), dtype=np.uint32)
         self.update_buffer(data)
 
     def get_buffer(self):
         return self.buffer[:self.last_in_buffer]
+
+    def reset_buffer(self):
+        self.last_in_buffer = 0

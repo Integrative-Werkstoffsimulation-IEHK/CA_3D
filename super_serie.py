@@ -22,28 +22,22 @@ if __name__ == '__main__':
                                                                             Config.PRODUCTS.PRIMARY)
                              
     Script name: super_serie.py
-    Nucleation and dissolution throughout the whole simulation. Precipitation everywhere (no cheme) dissiolution with scheme!
-    This goes until all the active element OR all the oxidant is consumed! After that the dissolution stops until either
-    oxidant and active will come again. No dependency from phase fraction of product!
+    
 
 """
 
     eng = CellularAutomata()
 
-    eng.primary_oxidant.diffuse = eng.primary_oxidant.diffuse_with_scale
-    eng.primary_active.diffuse = eng.primary_active.diffuse_with_scale
+    eng.primary_oxidant.diffuse = eng.primary_oxidant.diffuse_bulk
+    eng.primary_active.diffuse = eng.primary_active.diffuse_bulk
     eng.precip_func = eng.precipitation_first_case
     eng.get_combi_ind = eng.get_combi_ind_standard
     eng.precip_step = eng.precip_step_standard
-    eng.check_intersection = eng.ci_single_no_growth
-    eng.decomposition = eng.dissolution_atomic_stop_if_no_active_or_no_oxidant
+    eng.check_intersection = eng.ci_single_no_growth_only_p0
 
     eng.cur_case = eng.cases.first
-    eng.cases.first.go_around_func_ref = eng.go_around_mult_oxid_n_also_partial_neigh_aip
     eng.cases.first.fix_init_precip_func_ref = eng.fix_init_precip_dummy
 
-    eng.cur_case.dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY,
-                                                                            Config.PRODUCTS.PRIMARY)
 
     try:
         eng.simulation()

@@ -122,6 +122,18 @@ def separate_in_gb(bool_arr):
 
 
 @numba.njit(nopython=True)
+def aggregate(aggregated_ind, all_neigh_bool):
+    # trick to initialize an empty list with known type
+    where_blocks = [np.uint32(x) for x in range(0)]
+    for index, item in enumerate(all_neigh_bool):
+        for step in aggregated_ind:
+            if np.sum(item[step]) == 7:
+                where_blocks.append(np.uint32(index))
+                break
+    return np.array(where_blocks, dtype=np.uint32)
+
+
+@numba.njit(nopython=True)
 def diff_single(directions, probs, random_numbs):
     for index, direction in enumerate(directions.transpose()):
         rand_numb = random_numbs.random()

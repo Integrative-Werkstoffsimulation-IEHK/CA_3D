@@ -147,6 +147,10 @@ class Visualisation:
         Config.THRESHOLD_OUTWARD = user_input["threshold_outward"]
         Config.NEIGH_RANGE = user_input["neigh_range"]
 
+        Config.ROD_INCR_CONST = "WAS NOT IMPLEMENTED AT THAT TIME"
+        Config.ZETTA_ZERO = "WAS NOT IMPLEMENTED AT THAT TIME"
+        Config.ZETTA_FINAL = "WAS NOT IMPLEMENTED AT THAT TIME"
+
         Config.INWARD_DIFFUSION = user_input["inward_diffusion"]
         Config.OUTWARD_DIFFUSION = user_input["outward_diffusion"]
         Config.COMPUTE_PRECIPITATION = user_input["compute_precipitations"]

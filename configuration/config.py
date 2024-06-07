@@ -41,21 +41,26 @@ class Config:
     MATRIX.ELEMENT = "Ni"
 
     TEMPERATURE = 1100  # °C
-    N_CELLS_PER_AXIS = 105  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
-    N_ITERATIONS = 5000000  # must be >= n_cells_per_axis
-    STRIDE = 100  # n_iterations / stride = n_iterations for outward diffusion
-    STRIDE_MULTIPLIER = 1
+    N_CELLS_PER_AXIS = 110  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
+    N_ITERATIONS = 50000000  # must be >= n_cells_per_axis
+    STRIDE = 10  # n_iterations / stride = n_iterations for outward diffusion
+    STRIDE_MULTIPLIER = 10
     PRECIP_TRANSFORM_DEPTH = 41
     SIM_TIME = 1080000  # [sek]
     SIZE = 500 * (10 ** -6)  # [m]
 
     SOL_PROD = 6.25 * 10 ** -31  # 5.621 * 10 ** -10
-    PHASE_FRACTION_LIMIT = 0.055
+    PHASE_FRACTION_LIMIT = 0.056
     THRESHOLD_INWARD = 1
     THRESHOLD_OUTWARD = 1
-    NEIGH_RANGE = 3   # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
+    NEIGH_RANGE = 5   # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
                       #          and           |  |  |  |  |   |   |   |   |   |
                       # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
+
+    PROD_INCR_CONST = 1 * 10 ** -5.5
+    PROD_ERROR = 1 * 10 ** -3
+    ZETTA_ZERO = 25 * (10 ** -6)  # [m]
+    ZETTA_FINAL = 250 * (10 ** -6)  # [m]
 
     INWARD_DIFFUSION = True
     OUTWARD_DIFFUSION = True
@@ -72,7 +77,7 @@ class Config:
     # PROBABILITIES.TERNARY = ConfigProbabilities()
     # PROBABILITIES.QUATERNARY = ConfigProbabilities()
     # nucleation primary___________________________
-    PROBABILITIES.PRIMARY.p0 = 0.2
+    PROBABILITIES.PRIMARY.p0 = 0.1
     PROBABILITIES.PRIMARY.p0_f = 1
     PROBABILITIES.PRIMARY.p0_A_const = 1
     PROBABILITIES.PRIMARY.p0_B_const = 1
@@ -86,20 +91,20 @@ class Config:
     PROBABILITIES.PRIMARY.max_neigh_numb = None
     PROBABILITIES.PRIMARY.nucl_adapt_function = 3
     # dissolution primary_________________________
-    PROBABILITIES.PRIMARY.p0_d = 0.5
+    PROBABILITIES.PRIMARY.p0_d = 1*10**-1
     PROBABILITIES.PRIMARY.p0_d_f = 1
     PROBABILITIES.PRIMARY.p0_d_A_const = 1
     PROBABILITIES.PRIMARY.p0_d_B_const = 1
-    PROBABILITIES.PRIMARY.p1_d = 1*10**-1
+    PROBABILITIES.PRIMARY.p1_d = 1*10**-1.5
     PROBABILITIES.PRIMARY.p1_d_f = 0.9999
     PROBABILITIES.PRIMARY.p1_d_A_const = 1
     PROBABILITIES.PRIMARY.p1_d_B_const = 1
-    PROBABILITIES.PRIMARY.p6_d = 1e-5
+    PROBABILITIES.PRIMARY.p6_d = 1e-6
     PROBABILITIES.PRIMARY.p6_d_f = 0.01
     PROBABILITIES.PRIMARY.p6_d_A_const = 1
     PROBABILITIES.PRIMARY.p6_d_B_const = 1
     PROBABILITIES.PRIMARY.global_d_A = 1
-    PROBABILITIES.PRIMARY.global_d_B = -0.65
+    PROBABILITIES.PRIMARY.global_d_B = -0.73
     PROBABILITIES.PRIMARY.global_d_B_f = -0.33
     PROBABILITIES.PRIMARY.n = 2
     PROBABILITIES.PRIMARY.bsf = 10

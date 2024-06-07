@@ -59,6 +59,9 @@ class Utils:
     def generate_param(self):
         Config.GENERATED_VALUES.TAU = Config.SIM_TIME / Config.N_ITERATIONS
         Config.GENERATED_VALUES.LAMBDA = Config.SIZE / Config.N_CELLS_PER_AXIS
+
+        Config.GENERATED_VALUES.KINETIC_KONST = (Config.ZETTA_FINAL-Config.ZETTA_ZERO) / Config.SIM_TIME ** 0.5
+
         if Config.ACTIVES.SECONDARY.ELEMENT == "None":
             Config.ACTIVES.SECONDARY.MASS_CONCENTRATION = 0
             Config.ACTIVES.SECONDARY.CELLS_CONCENTRATION = 0
