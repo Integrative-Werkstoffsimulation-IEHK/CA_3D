@@ -15,7 +15,7 @@ if __name__ == '__main__':
     eng.check_intersection = eng.ci_single
 
     eng.decomposition = eng.dissolution_atomic_with_kinetic
-    eng.decomposition_intrinsic = eng.dissolution_zhou_wei_with_bsf_aip
+    eng.decomposition_intrinsic = eng.dissolution_zhou_wei_no_bsf_also_partial_neigh_aip
 
     eng.cur_case = eng.cases.first
     eng.cases.first.go_around_func_ref = eng.go_around_mult_oxid_n_also_partial_neigh_aip
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     eng.check_intersection = eng.ci_single
 
     eng.decomposition = eng.dissolution_atomic_with_kinetic
-    eng.decomposition_intrinsic = eng.dissolution_zhou_wei_with_bsf_aip
+    eng.decomposition_intrinsic = eng.dissolution_zhou_wei_no_bsf_also_partial_neigh_aip
 
     eng.cur_case = eng.cases.first
     eng.cases.first.go_around_func_ref = eng.go_around_mult_oxid_n_also_partial_neigh_aip

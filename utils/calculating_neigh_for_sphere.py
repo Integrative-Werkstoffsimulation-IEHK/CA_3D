@@ -6,9 +6,8 @@ import math
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-
 user_input = {"start_real_radius": 0.5,
-              "delta_radius": 0.5,
+              "delta_radius": 0.1,
               "n_cells_per_axis": 501  # must be odd!!
               }
 
@@ -21,9 +20,20 @@ class Sphere:
                                  [-1, 1, -1], [-1, 1, 1], [-1, -1, -1], [-1, -1, 1],
 
                                  [1, 1, 0], [1, 0, -1], [1, 0, 1], [1, -1, 0], [0, 1, -1], [0, 1, 1],
-                                 [0, -1, -1], [0, -1, 1], [-1, 1, 0], [-1, 0, -1], [-1, 0, 1], [-1, -1, 0]], dtype=np.byte)
+                                 [0, -1, -1], [0, -1, 1], [-1, 1, 0], [-1, 0, -1], [-1, 0, 1], [-1, -1, 0]],
+                                dtype=np.byte)
 
-        self.ind_flat = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]], dtype=np.byte)
+        self.aggregated_ind = np.array([[7, 0, 1, 2, 19, 16, 14],
+                                        [6, 0, 1, 5, 18, 15, 14],
+                                        [8, 0, 4, 5, 20, 15, 17],
+                                        [9, 0, 4, 2, 21, 16, 17],
+                                        [11, 3, 1, 2, 19, 24, 22],
+                                        [10, 3, 1, 5, 18, 23, 22],
+                                        [12, 3, 4, 5, 20, 23, 25],
+                                        [13, 3, 4, 2, 21, 24, 25]], dtype=np.int64)
+
+        self.ind_flat = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]],
+                                 dtype=np.byte)
 
         self.real_radius = params["start_real_radius"]
         self.delta_radius = params["delta_radius"]
@@ -40,14 +50,32 @@ class Sphere:
         self.c3d = np.array(np.full(self.shape, False, dtype=bool))
         self.c3d[self.s_coord, self.s_coord, self.s_coord] = True
 
-        self.stats = {params["start_real_radius"]: {"mean": 0,
-                                                    "n_cells": 0,
-                                                    0: 0,
-                                                    1: 0,
-                                                    2: 0,
-                                                    3: 0,
-                                                    4: 0,
-                                                    5: 0}}
+        # self.stats = {params["start_real_radius"]: {"mean": 0,
+        #                                             "n_cells": 0,
+        #                                             0: 0,
+        #                                             1: 0,
+        #                                             2: 0,
+        #                                             3: 0,
+        #                                             4: 0,
+        #                                             5: 0}}
+
+        self.stats = {params["start_real_radius"]: {
+            "NO_Block": {
+                "mean": 0,
+                0: 0,
+                1: 0,
+                2: 0,
+                3: 0,
+                4: 0,
+                5: 0
+            },
+            "Block": {
+                "mean": 0,
+                3: 0,
+                4: 0,
+                5: 0
+            }
+        }}
 
         # self.fig = plt.figure()
         # self.ax = self.fig.add_subplot(111, projection='3d')
@@ -66,48 +94,81 @@ class Sphere:
     def expand_radius(self):
         self.real_radius += self.delta_radius
         self.curr_side_lim = math.ceil(self.real_radius - (1 / 2))
-        self.stats[self.real_radius] = {"mean": 0, 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        # self.stats[self.real_radius] = {
+        #     "NO_Block": {"mean": 0, 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
+        #     "block": {"mean": 0, 3: 0, 4: 0, 5: 0 }
+        #                                 }
 
-    def update_stats(self, mean, freq, neig_n):
-        self.stats[self.real_radius]["mean"] = mean
-        self.stats[self.real_radius]["n_cells"] = int(np.sum(self.c3d[:, :, self.s_coord]))
-        for freq_i, number in zip(freq, neig_n):
-            self.stats[self.real_radius][number] = freq_i
+    def update_stats(self, mean_in_block, mean_no_block, freq_block, freq_NO_block, unique_numbs_block,
+                     unique_numbs_NO_block):
+        self.stats[self.real_radius] = {
+            "NO_Block": {
+                "mean": 0,
+                0: 0,
+                1: 0,
+                2: 0,
+                3: 0,
+                4: 0,
+                5: 0
+            },
+            "Block": {
+                "mean": 0,
+                3: 0,
+                4: 0,
+                5: 0
+            }
+        }
+
+        # self.stats[self.real_radius]["mean"] = mean
+        # self.stats[self.real_radius]["n_cells"] = int(np.sum(self.c3d[:, :, self.s_coord]))
+
+        # for freq_i, number in zip(freq, neig_n):
+        #     self.stats[self.real_radius][number] = freq_i
 
     def calc_mean_neigh(self):
         self.expand_radius()
         arrounds = self.calc_all_sur_coord(self.on_surface[:self.last_on_surface_ind])
 
-        self.last_on_surface_ind = check_coords_if_belong(self.c3d, arrounds, self.real_radius, self.s_coord, self.on_surface,
-                                                  self.last_on_surface_ind)
+        self.last_on_surface_ind = check_coords_if_belong(self.c3d, arrounds, self.real_radius, self.s_coord,
+                                                          self.on_surface,
+                                                          self.last_on_surface_ind)
 
         # flat_arounds = self.calc_flat_sur_coord(self.on_surface[:self.last_on_surface_ind])
         all_arounds = self.calc_all_sur_coord(self.on_surface[:self.last_on_surface_ind])
 
         neighbours = go_around_bool(self.c3d, all_arounds)
 
+        arr_len_flat = np.sum(neighbours[:, :6], axis=1)
+        # flat_arr_len = np.array([np.sum(item[:6], axis=1) for item in neighbours], dtype=np.ubyte)
 
-
-
-        flat_arr_len = np.array([np.sum(item) for item in neighbours], dtype=np.ubyte)
-
-        on_surface_ind = np.array(np.where(flat_arr_len < 6)[0])
-        flat_arr_len = flat_arr_len[on_surface_ind]
+        on_surface_ind = np.array(np.where(arr_len_flat < 6)[0])
+        arr_len_flat = arr_len_flat[on_surface_ind]
+        neighbours = neighbours[on_surface_ind]
 
         self.last_on_surface_ind = len(on_surface_ind)
         self.on_surface[:self.last_on_surface_ind] = self.on_surface[on_surface_ind]
 
-        all_arounds = self.calc_all_sur_coord(self.on_surface[:self.last_on_surface_ind])
-        all_neighbours = go_around_bool(self.c3d, all_arounds)
-        all_arr_len = np.array([np.sum(item) for item in all_neighbours], dtype=np.ubyte)
-        all_mean = np.mean(all_arr_len)
+        ind_where_blocks = aggregate(self.aggregated_ind, neighbours)
+        arr_len_flat_block = arr_len_flat[ind_where_blocks]
+        arr_len_flat_NO_block = np.delete(arr_len_flat, ind_where_blocks)
 
-        mean = np.mean(flat_arr_len)
-        unique_numbs = np.array(np.unique(flat_arr_len, return_counts=True))
-        freq = np.array(unique_numbs[1] / np.sum(unique_numbs[1]))
+        # all_arounds = self.calc_all_sur_coord(self.on_surface[:self.last_on_surface_ind])
+        # all_neighbours = go_around_bool(self.c3d, all_arounds)
+        # all_arr_len = np.array([np.sum(item) for item in all_neighbours], dtype=np.ubyte)
+        # all_mean = np.mean(all_arr_len)
 
-        # self.update_stats(mean, freq, unique_numbs[0])
-        print(self.real_radius, mean, all_mean, sep=" ")
+        mean_in_block = np.mean(arr_len_flat_block)
+        mean_no_block = np.mean(arr_len_flat_NO_block)
+
+        unique_numbs_block = np.array(np.unique(arr_len_flat_block, return_counts=True))
+        freq_block = np.array(unique_numbs_block[1] / np.sum(unique_numbs_block[1]))
+
+        unique_numbs_NO_block = np.array(np.unique(arr_len_flat_NO_block, return_counts=True))
+        freq_NO_block = np.array(unique_numbs_NO_block[1] / np.sum(unique_numbs_NO_block[1]))
+
+        print(self.real_radius, unique_numbs_block[0], freq_block, unique_numbs_NO_block[0], freq_NO_block, sep=" ")
+        # self.update_stats(mean_in_block,mean_no_block,  freq_block, freq_NO_block, unique_numbs_block[0], unique_numbs_NO_block[0])
+        # print(self.real_radius, mean, all_mean, sep=" ")
         # return np.mean(on_surface), unique_numbs[0], freq
         # return np.mean(on_surface)
 
@@ -170,6 +231,18 @@ def fill_sphere_coords(cells_3d, s_coord, r):
     return all_where_true
 
 
+@numba.njit(nopython=True)
+def aggregate(aggregated_ind, all_neigh_bool):
+    # trick to initialize an empty list with known type
+    where_blocks = [np.uint32(x) for x in range(0)]
+    for index, item in enumerate(all_neigh_bool):
+        for step in aggregated_ind:
+            if np.sum(item[step]) == 7:
+                where_blocks.append(np.uint32(index))
+                break
+    return np.array(where_blocks, dtype=np.uint32)
+
+
 def calc_mean_neigh(real_radius):
     # n_cells_per_axis = 2 * step + 3
     # real_radius = (2 * step + 1) / 2
@@ -206,12 +279,16 @@ def calc_mean_neigh(real_radius):
 if __name__ == "__main__":
     sphere = Sphere(user_input)
 
-    for _ in range(399):
+    for _ in range(500):
         sphere.calc_mean_neigh()
 
     # for key in sphere.stats:
     #     # print(f"""{key:.3f} {sphere.stats[key]["mean"]:.3f} {sphere.stats[key][0]:.3f} {sphere.stats[key][1]:.3f} {sphere.stats[key][2]:.3f} {sphere.stats[key][3]:.3f} {sphere.stats[key][4]:.3f} {sphere.stats[key][5]:.3f}""")
     #     print(f"""{key:.3f} {sphere.stats[key]["n_cells"]}""")
+
+
+
+
 
 
 
