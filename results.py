@@ -28,5 +28,4 @@ visualise.plot_concentration(plot_separate=False, conc_type="atomic", analytic_s
 # for plane_ind in range(0, 61000, 100):
 #     visualise.plot_3d(plot_separate=False, iteration=plane_ind, const_cam_pos=True)
 
-
 # visualise.calculate_phase_size()

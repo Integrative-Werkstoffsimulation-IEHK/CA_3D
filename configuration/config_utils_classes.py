@@ -97,3 +97,9 @@ def update_class_from_dict(cls, data):
             setattr(cls, key, type(key, (), value))
         else:
             setattr(cls, key, value)
+
+
+def save_script_contents_as_string(path, cls):
+    with open(path, 'r') as file:
+        script_content = file.read()
+    cls.INITIAL_SCRIPT = "Script: " + path + "\n\n" + script_content

@@ -147,9 +147,9 @@ class Visualisation:
         Config.THRESHOLD_OUTWARD = user_input["threshold_outward"]
         Config.NEIGH_RANGE = user_input["neigh_range"]
 
-        Config.ROD_INCR_CONST = "WAS NOT IMPLEMENTED AT THAT TIME"
-        Config.ZETTA_ZERO = "WAS NOT IMPLEMENTED AT THAT TIME"
-        Config.ZETTA_FINAL = "WAS NOT IMPLEMENTED AT THAT TIME"
+        Config.ROD_INCR_CONST = 0
+        Config.ZETTA_ZERO = 0
+        Config.ZETTA_FINAL = 0
 
         Config.INWARD_DIFFUSION = user_input["inward_diffusion"]
         Config.OUTWARD_DIFFUSION = user_input["outward_diffusion"]
@@ -206,6 +206,8 @@ class Visualisation:
         Config.PROBABILITIES.PRIMARY.bsf = "LOST"
         Config.PROBABILITIES.PRIMARY.dissol_adapt_function = "LOST"
         # ________________________
+        Config.COMMENT = """NO COMMENTS"""
+        Config.INITIAL_SCRIPT = "LOST"
 
         self.utils.generate_param()
         self.Config = Config()

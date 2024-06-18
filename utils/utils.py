@@ -5,6 +5,7 @@ from configuration import Config
 import time
 import datetime
 from .data_base import *
+import random
 
 
 class Utils:
@@ -84,6 +85,7 @@ class Utils:
         self.calc_initial_conc_and_moles()
 
         time_stamp = int(time.time())
+        # Config.GENERATED_VALUES.DB_ID = str(int(time_stamp + random.randint(1, 1000000)))
         Config.GENERATED_VALUES.DB_ID = str(time_stamp)
         Config.GENERATED_VALUES.DB_PATH = Config.SAVE_PATH + Config.GENERATED_VALUES.DB_ID + '.db'
         Config.GENERATED_VALUES.DATE_OF_CREATION = str(datetime.datetime.fromtimestamp(time_stamp))

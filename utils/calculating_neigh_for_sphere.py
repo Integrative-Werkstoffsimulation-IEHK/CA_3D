@@ -74,17 +74,29 @@ class Sphere:
                 3: 0,
                 4: 0,
                 5: 0
+            },
+
+            "Block_counts": {
+                0: 0,
+                1: 0,
+                2: 0,
+                3: 0,
+                4: 0,
+                5: 0,
+                6: 0,
+                7: 0,
+                8: 0,
             }
         }}
 
-        # self.fig = plt.figure()
-        # self.ax = self.fig.add_subplot(111, projection='3d')
-        self.cell_size = 0.5
+        self.fig = plt.figure()
+        self.ax = self.fig.add_subplot(111, projection='3d')
+        self.cell_size = 50
         # self.inside = np.empty((self.n_cells_per_axis**3, 3), dtype=np.short)
         # self.last_inside_ind = 0
 
     def calc_all_sur_coord(self, seeds):
-        around_seeds = np.array([item + self.ind_all for item in seeds], dtype=np.short)
+        around_seeds= np.array([item + self.ind_all for item in seeds], dtype=np.short)
         return around_seeds
 
     def calc_flat_sur_coord(self, seeds):
@@ -99,8 +111,7 @@ class Sphere:
         #     "block": {"mean": 0, 3: 0, 4: 0, 5: 0 }
         #                                 }
 
-    def update_stats(self, mean_in_block, mean_no_block, freq_block, freq_NO_block, unique_numbs_block,
-                     unique_numbs_NO_block):
+    def update_stats(self, mean_in_block, mean_no_block, freq_block, freq_NO_block, unique_numbs_block, unique_numbs_NO_block, freq_block_counts, unique_block_counts):
         self.stats[self.real_radius] = {
             "NO_Block": {
                 "mean": 0,
@@ -116,14 +127,32 @@ class Sphere:
                 3: 0,
                 4: 0,
                 5: 0
+            },
+            "Block_counts": {
+                0: 0,
+                1: 0,
+                2: 0,
+                3: 0,
+                4: 0,
+                5: 0,
+                6: 0,
+                7: 0,
+                8: 0,
             }
         }
 
-        # self.stats[self.real_radius]["mean"] = mean
+        self.stats[self.real_radius]["NO_Block"]["mean"] = mean_no_block
+        self.stats[self.real_radius]["Block"]["mean"] = mean_in_block
         # self.stats[self.real_radius]["n_cells"] = int(np.sum(self.c3d[:, :, self.s_coord]))
 
-        # for freq_i, number in zip(freq, neig_n):
-        #     self.stats[self.real_radius][number] = freq_i
+        for freq_i, number in zip(freq_block, unique_numbs_block):
+            self.stats[self.real_radius]["Block"][number] = freq_i
+
+        for freq_i, number in zip(freq_NO_block, unique_numbs_NO_block):
+            self.stats[self.real_radius]["NO_Block"][number] = freq_i
+
+        for freq_i, number in zip(freq_block_counts, unique_block_counts):
+            self.stats[self.real_radius]["Block_counts"][number] = freq_i
 
     def calc_mean_neigh(self):
         self.expand_radius()
@@ -148,7 +177,15 @@ class Sphere:
         self.last_on_surface_ind = len(on_surface_ind)
         self.on_surface[:self.last_on_surface_ind] = self.on_surface[on_surface_ind]
 
-        ind_where_blocks = aggregate(self.aggregated_ind, neighbours)
+        # ind_where_blocks = aggregate(self.aggregated_ind, neighbours)
+        block_counts = aggregate_and_count(self.aggregated_ind, neighbours)
+        ind_where_blocks = np.where(block_counts)[0]
+
+
+        unique_block_counts = np.array(np.unique(block_counts, return_counts=True))
+        freq_block_counts = np.array(unique_block_counts[1] / np.sum(unique_block_counts[1]))
+
+
         arr_len_flat_block = arr_len_flat[ind_where_blocks]
         arr_len_flat_NO_block = np.delete(arr_len_flat, ind_where_blocks)
 
@@ -166,8 +203,9 @@ class Sphere:
         unique_numbs_NO_block = np.array(np.unique(arr_len_flat_NO_block, return_counts=True))
         freq_NO_block = np.array(unique_numbs_NO_block[1] / np.sum(unique_numbs_NO_block[1]))
 
-        print(self.real_radius, unique_numbs_block[0], freq_block, unique_numbs_NO_block[0], freq_NO_block, sep=" ")
-        # self.update_stats(mean_in_block,mean_no_block,  freq_block, freq_NO_block, unique_numbs_block[0], unique_numbs_NO_block[0])
+        # print(self.real_radius, unique_numbs_block[0], freq_block, unique_numbs_NO_block[0], freq_NO_block, sep=" ")
+        self.update_stats(mean_in_block, mean_no_block,  freq_block, freq_NO_block, unique_numbs_block[0], unique_numbs_NO_block[0], freq_block_counts, unique_block_counts[0])
+
         # print(self.real_radius, mean, all_mean, sep=" ")
         # return np.mean(on_surface), unique_numbs[0], freq
         # return np.mean(on_surface)
@@ -181,9 +219,10 @@ class Sphere:
         self.ax.scatter(self.on_surface[:self.last_on_surface_ind][:, 2],
                         self.on_surface[:self.last_on_surface_ind][:, 1],
                         self.on_surface[:self.last_on_surface_ind][:, 0],
-                        marker=',', color='r', s=self.cell_size * (72. / self.fig.dpi) ** 2)
-
-        plt.savefig(f'W:/SIMCA/test_runs_data/{self.real_radius}.jpeg')
+                        marker=',', color='r', s=self.cell_size * (72. / self.fig.dpi) ** 2, edgecolors='black', linewidth=1)
+        plt.show()
+        # plt.close()
+        # plt.savefig(f'W:/SIMCA/test_runs_data/{self.real_radius}.jpeg')
 
 
 ind_formation = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]], dtype=np.byte)
@@ -243,6 +282,19 @@ def aggregate(aggregated_ind, all_neigh_bool):
     return np.array(where_blocks, dtype=np.uint32)
 
 
+@numba.njit(nopython=True)
+def aggregate_and_count(aggregated_ind, all_neigh_bool):
+    # trick to initialize an empty list with known type
+    block_counts = [np.uint32(x) for x in range(0)]
+    for item in all_neigh_bool:
+        curr_count = 0
+        for step in aggregated_ind:
+            if np.sum(item[step]) == 7:
+                curr_count += 1
+        block_counts.append(np.uint32(curr_count))
+    return np.array(block_counts, dtype=np.uint32)
+
+
 def calc_mean_neigh(real_radius):
     # n_cells_per_axis = 2 * step + 3
     # real_radius = (2 * step + 1) / 2
@@ -279,16 +331,14 @@ def calc_mean_neigh(real_radius):
 if __name__ == "__main__":
     sphere = Sphere(user_input)
 
-    for _ in range(500):
+    for step in range(500):
+        print(step)
         sphere.calc_mean_neigh()
 
-    # for key in sphere.stats:
-    #     # print(f"""{key:.3f} {sphere.stats[key]["mean"]:.3f} {sphere.stats[key][0]:.3f} {sphere.stats[key][1]:.3f} {sphere.stats[key][2]:.3f} {sphere.stats[key][3]:.3f} {sphere.stats[key][4]:.3f} {sphere.stats[key][5]:.3f}""")
-    #     print(f"""{key:.3f} {sphere.stats[key]["n_cells"]}""")
+    # sphere.plot_on_surface()
 
 
-
-
-
-
-
+    # print("R NO_Block_mean 0 1 2 3 4 5 Block_mean 3 4 5")
+    print("R 0 1 2 3 4 5 6 7 8")
+    for key in sphere.stats:
+        print(key, sphere.stats[key]["Block_counts"][0], sphere.stats[key]["Block_counts"][1], sphere.stats[key]["Block_counts"][2], sphere.stats[key]["Block_counts"][3], sphere.stats[key]["Block_counts"][4], sphere.stats[key]["Block_counts"][5], sphere.stats[key]["Block_counts"][6], sphere.stats[key]["Block_counts"][7], sphere.stats[key]["Block_counts"][8], sep=" ")

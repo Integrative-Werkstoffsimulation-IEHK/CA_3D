@@ -1,11 +1,10 @@
 import sys
-
-import numpy as np
-
 import utils
 import progressbar
 from elements import *
 import time
+import multiprocessing
+import ctypes
 
 
 class CellularAutomata:
@@ -131,11 +130,94 @@ class CellularAutomata:
                     self.cases.first.precip_3d_init = np.full(
                         (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1), 0, dtype=np.ubyte)
 
+                # # Create shared memory array
+                # self.shared_array_base = multiprocessing.Array(ctypes.c_ubyte, self.primary_product.c3d.size, lock=False)
+                # self.shared_array = np.frombuffer(self.shared_array_base, dtype=ctypes.c_ubyte)
+                # self.shared_array[:] = self.primary_product.c3d.flatten()
+                #
+                # self.result_array_base = multiprocessing.Array(ctypes.c_ubyte, self.primary_product.c3d.size, lock=False)
+                # self.result_array = np.frombuffer(self.result_array_base, dtype=np.ubyte).reshape(self.primary_product.c3d.shape)
+                #
+                # self.numb_of_proc = 8
+                # self.chunk_size = int(self.cells_per_axis // self.numb_of_proc ** 0.5)
+                # self.pool = multiprocessing.Pool(processes=self.numb_of_proc)
+                #
+                # self.chunk_ranges = np.full((self.numb_of_proc, 2, 2), 0)
+                #
+                # for step in range(self.numb_of_proc):
+                #
+                #     start_index = i * chunk_size
+                #
+                #     self.chunk_ranges[step]
+
             self.threshold_inward = Config.THRESHOLD_INWARD
             self.threshold_outward = Config.THRESHOLD_OUTWARD
 
             self.fetch_ind = None
             self.generate_fetch_ind()
+
+            # self.primary_product.c3d[1, 1, 50] = self.primary_oxid_numb
+            # self.primary_product.full_c3d[1, 1, 50] = True
+            #
+            # self.primary_product.c3d[1, 1, 49] = self.primary_oxid_numb
+            # self.primary_product.full_c3d[1, 1, 49] = True
+            #
+            # self.primary_product.c3d[1, 2, 49] = self.primary_oxid_numb
+            # self.primary_product.full_c3d[1, 2, 49] = True
+            #
+            # self.primary_product.c3d[1, 2, 50] = self.primary_oxid_numb
+            # self.primary_product.full_c3d[1, 2, 50] = True
+            #
+            # self.primary_product.c3d[1, 3, 49] = self.primary_oxid_numb
+            # self.primary_product.full_c3d[1, 3, 49] = True
+            #
+            #
+            # self.primary_product.c3d[2, 1, 50] = self.primary_oxid_numb
+            # self.primary_product.full_c3d[2, 1, 50] = True
+            #
+            # self.primary_product.c3d[2, 1, 49] = self.primary_oxid_numb
+            # self.primary_product.full_c3d[2, 1, 49] = True
+            #
+            # self.primary_product.c3d[2, 2, 49] = self.primary_oxid_numb
+            # self.primary_product.full_c3d[2, 2, 49] = True
+            #
+            # self.primary_product.c3d[2, 2, 50] = self.primary_oxid_numb
+            # self.primary_product.full_c3d[2, 2, 50] = True
+            #
+            #
+            # self.primary_product.c3d[2, 0, 50] = self.primary_oxid_numb
+            # self.primary_product.full_c3d[2, 0, 50] = True
+            #
+            # self.primary_product.c3d[2, 1, 51] = self.primary_oxid_numb
+            # self.primary_product.full_c3d[2, 1, 51] = True
+            #
+            # self.primary_product.c3d[3, 1, 50] = self.primary_oxid_numb
+            # self.primary_product.full_c3d[3, 1, 50] = True
+            #
+            #
+            # self.primary_product.c3d[3, 3, 50] = 2
+            # self.primary_product.c3d[10, 3, 50] = 2
+            # self.primary_product.c3d[35, 3, 50] = 2
+            #
+            #
+            # self.primary_product.c3d[1, 10, 50] = 2
+            # self.primary_product.c3d[1, 11, 50] = 2
+            # self.primary_product.c3d[1, 9, 50] = 2
+            # self.primary_product.c3d[1, 10, 49] = 2
+            #
+            # self.primary_product.c3d[45, 3, 50] = self.primary_oxid_numb
+            # self.primary_product.full_c3d[45, 3, 50] = True
+
+            # self.primary_product.full_c3d[minus:plus, minus:plus, minus:plus] = True
+            # self.primary_product.full_c3d[1, 1, 50] = True
+            # shift = 0
+            # self.precipitations3d[minus + shift:plus + shift, minus + shift:plus + shift, minus + shift:plus + shift] = True
+            # self.precipitations = np.array(np.nonzero(self.precipitations), dtype=int)
+            # self.precipitations3d = np.full(self.single_page_shape, False)
+            # self.precipitations3d_sec = np.full(self.single_page_shape, False)
+
+            # self.primary_product.c3d[:, :, :50] = self.primary_oxid_numb
+            # self.primary_product.full_c3d[:, :, :50] = True
 
             self.aggregated_ind = np.array([[7, 0, 1, 2, 19, 16, 14],
                                    [6, 0, 1, 5, 18, 15, 14],
@@ -499,6 +581,462 @@ class CellularAutomata:
                 new_dirs -= 1
                 self.primary_oxidant.dirs = np.concatenate((self.primary_oxidant.dirs, new_dirs), axis=1)
 
+    def dissolution_zhou_wei_with_bsf_aip_UPGRADE(self):
+        """Implementation of Zhou and Wei approach. Works for any oxidation nuber!
+        Here the problem was that the geometrical arrangement is considered properly! For higher oxidation numbers the
+         total number of neighbours does correlate with the geometrical configuration of the cluster!! 3 neighbours here
+         mean to 3 geometrical flat neighbours."""
+
+        nz_ind = np.array(np.nonzero(self.primary_product.c3d[:, :, self.comb_indexes]))
+        self.coord_buffer.copy_to_buffer(nz_ind)
+        self.coord_buffer.update_buffer_at_axis(self.comb_indexes[nz_ind[2]], axis=2)
+
+        if self.coord_buffer.last_in_buffer > 0:
+            flat_arounds = self.utils.calc_sur_ind_decompose_flat_with_zero(self.coord_buffer.get_buffer())
+            all_neigh = go_around_int(self.primary_product.c3d, flat_arounds)
+            all_neigh[:, 6] -= 1
+
+            all_neigh_block = np.array([])
+            all_neigh_no_block = np.array([])
+            numb_in_prod_block = np.array([], dtype=int)
+            numb_in_prod_no_block = np.array([], dtype=int)
+
+            where_not_null = np.unique(np.where(all_neigh > 0)[0])
+            to_dissol_no_neigh = np.array(self.coord_buffer.get_elem_instead_ind(where_not_null), dtype=np.short)
+            self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(where_not_null))
+
+            if self.coord_buffer.last_in_buffer > 0:
+                all_neigh = all_neigh[where_not_null]
+                arr_len_flat = np.sum(all_neigh[:, :6], axis=1)
+
+                index_outside = np.where((arr_len_flat < self.max_inside_neigh_number))[0]
+                self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(index_outside))
+                all_neigh = all_neigh[index_outside]
+
+                non_flat_arounds = self.utils.calc_sur_ind_decompose_no_flat(self.coord_buffer.get_buffer())
+                non_flat_neigh = go_around_int(self.primary_product.c3d, non_flat_arounds)
+                in_prod_column = np.array([all_neigh[:, 6]]).transpose()
+                all_neigh = np.concatenate((all_neigh[:, :6], non_flat_neigh, in_prod_column), axis=1)
+                numb_in_prod = all_neigh[:, -1]
+
+                all_neigh_bool = np.array(all_neigh, dtype=bool)
+
+                # aggregation = np.array([[np.sum(item[step]) for step in self.aggregated_ind] for item in all_neigh_bool],
+                #                        dtype=np.ubyte)
+                # ind_where_blocks = np.unique(np.where(aggregation == 7)[0])
+
+                ind_where_blocks = aggregate(self.aggregated_ind, all_neigh_bool)
+                # block_counts = aggregate_and_count(self.aggregated_ind, all_neigh_bool)
+                # some = np.where(block_counts > 4)[0]
+                #
+                # if len(some) > 0:
+                #     print()
+                # ind_where_blocks = np.where(block_counts)[0]
+
+                # if len(ind_where_blocks) > 0:
+                #
+                #     begin = time.time()
+                #     aggregation = np.array(
+                #         [[np.sum(item[step]) for step in self.aggregated_ind] for item in all_neigh_bool],
+                #         dtype=np.ubyte)
+                #     ind_where_blocks = np.unique(np.where(aggregation == 7)[0])
+                #     print("list comp: ", time.time() - begin)
+                #
+                #     begin = time.time()
+                #     ind_where_blocks2 = aggregate(self.aggregated_ind, all_neigh_bool)
+                #     print("numba: ", time.time() - begin)
+
+                if len(ind_where_blocks) > 0:
+                    self.to_dissol_pn_buffer.copy_to_buffer(self.coord_buffer.get_elem_instead_ind(ind_where_blocks))
+                    all_neigh_no_block = np.delete(all_neigh[:, :6], ind_where_blocks, axis=0)
+
+                    all_neigh_bool = np.delete(all_neigh_bool[:, :6], ind_where_blocks, axis=0)
+                    all_neigh_bool = np.sum(all_neigh_bool, axis=1)
+                    ind_to_raise = np.where((all_neigh_bool == 3) | (all_neigh_bool == 4))[0]
+
+                    numb_in_prod_no_block = np.delete(numb_in_prod, ind_where_blocks, axis=0)
+                    # all_neigh_no_block = np.sum(all_neigh_no_block[:, :6], axis=1) + numb_in_prod_no_block
+                    all_neigh_no_block = np.sum(all_neigh_no_block, axis=1) + numb_in_prod_no_block
+
+                    all_neigh_no_block[ind_to_raise] = 0
+
+                    self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(ind_where_blocks))
+                    # all_neigh_block = all_neigh[ind_where_blocks]
+                    all_neigh_block = all_neigh[ind_where_blocks, :6]
+                    numb_in_prod_block = numb_in_prod[ind_where_blocks]
+                    # all_neigh_block = np.sum(all_neigh_block[:, :6], axis=1) + numb_in_prod_block
+                    all_neigh_block = np.sum(all_neigh_block, axis=1) + numb_in_prod_block
+                else:
+                    self.to_dissol_pn_buffer.copy_to_buffer(self.coord_buffer.get_buffer())
+                    all_neigh_no_block = np.sum(all_neigh[:, :6], axis=1) + numb_in_prod
+
+                    all_neigh_bool = np.sum(all_neigh_bool[:, :6], axis=1)
+                    ind_to_raise = np.where((all_neigh_bool == 3) | (all_neigh_bool == 4))[0]
+
+                    all_neigh_no_block[ind_to_raise] = 0
+
+                    numb_in_prod_no_block = numb_in_prod
+
+                    self.coord_buffer.reset_buffer()
+                    all_neigh_block = np.array([])
+                    numb_in_prod_block = np.array([], dtype=int)
+
+            to_dissolve_no_block = self.to_dissol_pn_buffer.get_buffer()
+            probs_no_block = self.cur_case.dissolution_probabilities.get_probabilities(all_neigh_no_block,
+                                                                                       to_dissolve_no_block[2])
+            non_z_ind = np.where(numb_in_prod_no_block != 0)[0]
+            repeated_coords = np.repeat(to_dissolve_no_block[:, non_z_ind], numb_in_prod_no_block[non_z_ind], axis=1)
+            repeated_probs = np.repeat(probs_no_block[non_z_ind], numb_in_prod_no_block[non_z_ind])
+            to_dissolve_no_block = np.concatenate((to_dissolve_no_block, repeated_coords), axis=1)
+            probs_no_block = np.concatenate((probs_no_block, repeated_probs))
+            randomise = np.random.random_sample(len(to_dissolve_no_block[0]))
+            temp_ind = np.where(randomise < probs_no_block)[0]
+            to_dissolve_no_block = to_dissolve_no_block[:, temp_ind]
+
+            to_dissolve_block = self.coord_buffer.get_buffer()
+            probs_block = self.cur_case.dissolution_probabilities.get_probabilities_block(all_neigh_block,
+                                                                                          to_dissolve_block[2])
+            non_z_ind = np.where(numb_in_prod_block != 0)[0]
+            repeated_coords = np.repeat(to_dissolve_block[:, non_z_ind], numb_in_prod_block[non_z_ind], axis=1)
+            repeated_probs = np.repeat(probs_block[non_z_ind], numb_in_prod_block[non_z_ind])
+            to_dissolve_block = np.concatenate((to_dissolve_block, repeated_coords), axis=1)
+            probs_block = np.concatenate((probs_block, repeated_probs))
+            randomise = np.random.random_sample(len(to_dissolve_block[0]))
+            temp_ind = np.where(randomise < probs_block)[0]
+            to_dissolve_block = to_dissolve_block[:, temp_ind]
+
+            probs_no_neigh = self.cur_case.dissolution_probabilities.dissol_prob.values_pp[to_dissol_no_neigh[2]]
+            randomise = np.random.random_sample(len(to_dissol_no_neigh[0]))
+            temp_ind = np.where(randomise < probs_no_neigh)[0]
+            to_dissol_no_neigh = to_dissol_no_neigh[:, temp_ind]
+
+            to_dissolve = np.concatenate((to_dissolve_no_block, to_dissol_no_neigh, to_dissolve_block), axis=1)
+
+            self.coord_buffer.reset_buffer()
+            self.to_dissol_pn_buffer.reset_buffer()
+
+            if len(to_dissolve[0]) > 0:
+                just_decrease_counts(self.primary_product.c3d, to_dissolve)
+                self.primary_product.full_c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = False
+                insert_counts(self.primary_active.c3d, to_dissolve)
+                self.primary_oxidant.cells = np.concatenate((self.primary_oxidant.cells, to_dissolve), axis=1)
+                new_dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(to_dissolve[0]))
+                new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
+                new_dirs -= 1
+                self.primary_oxidant.dirs = np.concatenate((self.primary_oxidant.dirs, new_dirs), axis=1)
+
+    def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL(self):
+        nz_ind = np.array(np.nonzero(self.primary_product.c3d[:, :, self.comb_indexes]))
+        self.coord_buffer.copy_to_buffer(nz_ind)
+        self.coord_buffer.update_buffer_at_axis(self.comb_indexes[nz_ind[2]], axis=2)
+
+        if self.coord_buffer.last_in_buffer > 0:
+            flat_arounds = self.utils.calc_sur_ind_decompose_flat_with_zero(self.coord_buffer.get_buffer())
+            all_neigh = go_around_int(self.primary_product.c3d, flat_arounds)
+            all_neigh[:, 6] -= 1
+
+            all_neigh_block = np.array([])
+            all_neigh_no_block = np.array([])
+            numb_in_prod_block = np.array([], dtype=int)
+            numb_in_prod_no_block = np.array([], dtype=int)
+            ind_to_raise = np.array([], dtype=int)
+
+            where_not_null = np.unique(np.where(all_neigh[:, :6] > 0)[0])
+            to_dissol_no_neigh = np.array(self.coord_buffer.get_elem_instead_ind(where_not_null), dtype=np.short)
+            self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(where_not_null))
+
+            if self.coord_buffer.last_in_buffer > 0:
+                all_neigh = all_neigh[where_not_null]
+                numb_in_prod = all_neigh[:, -1]
+
+                all_neigh_bool = np.array(all_neigh[:, :6], dtype=bool)
+
+                arr_len_flat = np.sum(all_neigh_bool, axis=1)
+
+                index_outside = np.where((arr_len_flat < 6))[0]
+                self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(index_outside))
+
+                # all_neigh = all_neigh[index_outside]
+                all_neigh_bool = all_neigh_bool[index_outside]
+                arr_len_flat = arr_len_flat[index_outside]
+                numb_in_prod = numb_in_prod[index_outside]
+
+                non_flat_arounds = self.utils.calc_sur_ind_decompose_no_flat(self.coord_buffer.get_buffer())
+                # non_flat_neigh = go_around_int(self.primary_product.c3d, non_flat_arounds)
+                non_flat_neigh = go_around_bool(self.primary_product.c3d, non_flat_arounds)
+                # in_prod_column = np.array([all_neigh[:, 6]]).transpose()
+                # all_neigh = np.concatenate((all_neigh[:, :6], non_flat_neigh, in_prod_column), axis=1)
+                all_neigh_bool = np.concatenate((all_neigh_bool, non_flat_neigh), axis=1)
+
+                # all_neigh_bool = np.array(all_neigh, dtype=bool)
+
+                # aggregation = np.array([[np.sum(item[step]) for step in self.aggregated_ind] for item in all_neigh_bool],
+                #                        dtype=np.ubyte)
+                # ind_where_blocks = np.unique(np.where(aggregation == 7)[0])
+
+                ind_where_blocks = aggregate(self.aggregated_ind, all_neigh_bool)
+                # block_counts = aggregate_and_count(self.aggregated_ind, all_neigh_bool)
+                # some = np.where(block_counts > 4)[0]
+                #
+                # if len(some) > 0:
+                #     print()
+                # ind_where_blocks = np.where(block_counts)[0]
+
+                # if len(ind_where_blocks) > 0:
+                #
+                #     begin = time.time()
+                #     aggregation = np.array(
+                #         [[np.sum(item[step]) for step in self.aggregated_ind] for item in all_neigh_bool],
+                #         dtype=np.ubyte)
+                #     ind_where_blocks = np.unique(np.where(aggregation == 7)[0])
+                #     print("list comp: ", time.time() - begin)
+                #
+                #     begin = time.time()
+                #     ind_where_blocks2 = aggregate(self.aggregated_ind, all_neigh_bool)
+                #     print("numba: ", time.time() - begin)
+
+                if len(ind_where_blocks) > 0:
+                    self.to_dissol_pn_buffer.copy_to_buffer(self.coord_buffer.get_elem_instead_ind(ind_where_blocks))
+                    # all_neigh_no_block = np.delete(all_neigh[:, :6], ind_where_blocks, axis=0)
+
+                    # all_neigh_no_block = np.delete(all_neigh_bool[:, :6], ind_where_blocks, axis=0)
+                    # all_neigh_no_block = np.sum(all_neigh_no_block, axis=1)
+
+                    all_neigh_no_block = np.delete(arr_len_flat, ind_where_blocks)
+
+                    # ind_to_raise = np.where((all_neigh_no_block == 3) | (all_neigh_no_block == 4))[0]
+
+                    numb_in_prod_no_block = np.delete(numb_in_prod, ind_where_blocks, axis=0)
+                    # all_neigh_no_block = np.sum(all_neigh_no_block[:, :6], axis=1) + numb_in_prod_no_block
+                    # all_neigh_no_block = np.sum(all_neigh_no_block, axis=1) + numb_in_prod_no_block
+
+                    # all_neigh_no_block[ind_to_raise] = 0
+
+                    self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(ind_where_blocks))
+                    # all_neigh_block = all_neigh[ind_where_blocks]
+                    # all_neigh_block = all_neigh[ind_where_blocks, :6]
+                    all_neigh_block = arr_len_flat[ind_where_blocks]
+
+                    numb_in_prod_block = numb_in_prod[ind_where_blocks]
+                    # all_neigh_block = np.sum(all_neigh_block[:, :6], axis=1) + numb_in_prod_block
+                    # all_neigh_block = np.sum(all_neigh_block, axis=1)
+                else:
+                    self.to_dissol_pn_buffer.copy_to_buffer(self.coord_buffer.get_buffer())
+                    # all_neigh_no_block = np.sum(all_neigh[:, :6], axis=1) + numb_in_prod
+                    all_neigh_no_block = arr_len_flat
+                    # all_neigh_bool = np.sum(all_neigh_bool[:, :6], axis=1)
+
+                    # ind_to_raise = np.where((all_neigh_no_block == 3) | (all_neigh_no_block == 4))[0]
+
+                    # all_neigh_no_block[ind_to_raise] = 0
+
+                    numb_in_prod_no_block = numb_in_prod
+
+                    self.coord_buffer.reset_buffer()
+                    all_neigh_block = np.array([])
+                    numb_in_prod_block = np.array([], dtype=int)
+
+            to_dissolve_no_block = self.to_dissol_pn_buffer.get_buffer()
+            probs_no_block = self.cur_case.dissolution_probabilities.get_probabilities(all_neigh_no_block,
+                                                                                       to_dissolve_no_block[2])
+            # probs_no_block[ind_to_raise] = 1
+
+            non_z_ind = np.where(numb_in_prod_no_block != 0)[0]
+            repeated_coords = np.repeat(to_dissolve_no_block[:, non_z_ind], numb_in_prod_no_block[non_z_ind], axis=1)
+            repeated_probs = np.repeat(probs_no_block[non_z_ind], numb_in_prod_no_block[non_z_ind])
+            to_dissolve_no_block = np.concatenate((to_dissolve_no_block, repeated_coords), axis=1)
+            probs_no_block = np.concatenate((probs_no_block, repeated_probs))
+            randomise = np.random.random_sample(len(to_dissolve_no_block[0]))
+            temp_ind = np.where(randomise < probs_no_block)[0]
+            to_dissolve_no_block = to_dissolve_no_block[:, temp_ind]
+
+            to_dissolve_block = self.coord_buffer.get_buffer()
+            probs_block = self.cur_case.dissolution_probabilities.get_probabilities_block(all_neigh_block,
+                                                                                          to_dissolve_block[2])
+            non_z_ind = np.where(numb_in_prod_block != 0)[0]
+            repeated_coords = np.repeat(to_dissolve_block[:, non_z_ind], numb_in_prod_block[non_z_ind], axis=1)
+            repeated_probs = np.repeat(probs_block[non_z_ind], numb_in_prod_block[non_z_ind])
+            to_dissolve_block = np.concatenate((to_dissolve_block, repeated_coords), axis=1)
+            probs_block = np.concatenate((probs_block, repeated_probs))
+            randomise = np.random.random_sample(len(to_dissolve_block[0]))
+            temp_ind = np.where(randomise < probs_block)[0]
+            to_dissolve_block = to_dissolve_block[:, temp_ind]
+
+            probs_no_neigh = self.cur_case.dissolution_probabilities.dissol_prob.values_pp[to_dissol_no_neigh[2]]
+            randomise = np.random.random_sample(len(to_dissol_no_neigh[0]))
+            temp_ind = np.where(randomise < probs_no_neigh)[0]
+            to_dissol_no_neigh = to_dissol_no_neigh[:, temp_ind]
+
+            to_dissolve = np.concatenate((to_dissolve_no_block, to_dissol_no_neigh, to_dissolve_block), axis=1)
+
+            self.coord_buffer.reset_buffer()
+            self.to_dissol_pn_buffer.reset_buffer()
+
+            if len(to_dissolve[0]) > 0:
+                just_decrease_counts(self.primary_product.c3d, to_dissolve)
+                self.primary_product.full_c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = False
+                insert_counts(self.primary_active.c3d, to_dissolve)
+                self.primary_oxidant.cells = np.concatenate((self.primary_oxidant.cells, to_dissolve), axis=1)
+                new_dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(to_dissolve[0]))
+                new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
+                new_dirs -= 1
+                self.primary_oxidant.dirs = np.concatenate((self.primary_oxidant.dirs, new_dirs), axis=1)
+
+    def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(self):
+        nz_ind = np.array(np.nonzero(self.primary_product.c3d[:, :, self.comb_indexes]))
+        self.coord_buffer.copy_to_buffer(nz_ind)
+        self.coord_buffer.update_buffer_at_axis(self.comb_indexes[nz_ind[2]], axis=2)
+
+        if self.coord_buffer.last_in_buffer > 0:
+            flat_arounds = self.utils.calc_sur_ind_decompose_flat_with_zero(self.coord_buffer.get_buffer())
+            all_neigh = go_around_int(self.primary_product.c3d, flat_arounds)
+            all_neigh[:, 6] -= 1
+
+            all_neigh_block = np.array([])
+            all_neigh_no_block = np.array([])
+            numb_in_prod_block = np.array([], dtype=int)
+            numb_in_prod_no_block = np.array([], dtype=int)
+            ind_to_raise = np.array([], dtype=int)
+
+            where_not_null = np.unique(np.where(all_neigh[:, :6] > 0)[0])
+            to_dissol_no_neigh = np.array(self.coord_buffer.get_elem_instead_ind(where_not_null), dtype=np.short)
+            self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(where_not_null))
+
+            if self.coord_buffer.last_in_buffer > 0:
+                all_neigh = all_neigh[where_not_null]
+                numb_in_prod = all_neigh[:, -1]
+
+                all_neigh_bool = np.array(all_neigh[:, :6], dtype=bool)
+
+                arr_len_flat = np.sum(all_neigh_bool, axis=1)
+
+                index_outside = np.where((arr_len_flat < 6))[0]
+                self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(index_outside))
+
+                # all_neigh = all_neigh[index_outside]
+                all_neigh_bool = all_neigh_bool[index_outside]
+                arr_len_flat = arr_len_flat[index_outside]
+                numb_in_prod = numb_in_prod[index_outside]
+
+                non_flat_arounds = self.utils.calc_sur_ind_decompose_no_flat(self.coord_buffer.get_buffer())
+                # non_flat_neigh = go_around_int(self.primary_product.c3d, non_flat_arounds)
+                non_flat_neigh = go_around_bool(self.primary_product.c3d, non_flat_arounds)
+                # in_prod_column = np.array([all_neigh[:, 6]]).transpose()
+                # all_neigh = np.concatenate((all_neigh[:, :6], non_flat_neigh, in_prod_column), axis=1)
+                all_neigh_bool = np.concatenate((all_neigh_bool, non_flat_neigh), axis=1)
+
+                # all_neigh_bool = np.array(all_neigh, dtype=bool)
+
+                # aggregation = np.array([[np.sum(item[step]) for step in self.aggregated_ind] for item in all_neigh_bool],
+                #                        dtype=np.ubyte)
+                # ind_where_blocks = np.unique(np.where(aggregation == 7)[0])
+
+                ind_where_blocks = aggregate(self.aggregated_ind, all_neigh_bool)
+                # block_counts = aggregate_and_count(self.aggregated_ind, all_neigh_bool)
+                # some = np.where(block_counts > 4)[0]
+                #
+                # if len(some) > 0:
+                #     print()
+                # ind_where_blocks = np.where(block_counts)[0]
+
+                # if len(ind_where_blocks) > 0:
+                #
+                #     begin = time.time()
+                #     aggregation = np.array(
+                #         [[np.sum(item[step]) for step in self.aggregated_ind] for item in all_neigh_bool],
+                #         dtype=np.ubyte)
+                #     ind_where_blocks = np.unique(np.where(aggregation == 7)[0])
+                #     print("list comp: ", time.time() - begin)
+                #
+                #     begin = time.time()
+                #     ind_where_blocks2 = aggregate(self.aggregated_ind, all_neigh_bool)
+                #     print("numba: ", time.time() - begin)
+
+                if len(ind_where_blocks) > 0:
+                    self.to_dissol_pn_buffer.copy_to_buffer(self.coord_buffer.get_elem_instead_ind(ind_where_blocks))
+                    # all_neigh_no_block = np.delete(all_neigh[:, :6], ind_where_blocks, axis=0)
+
+                    # all_neigh_no_block = np.delete(all_neigh_bool[:, :6], ind_where_blocks, axis=0)
+                    # all_neigh_no_block = np.sum(all_neigh_no_block, axis=1)
+
+                    all_neigh_no_block = np.delete(arr_len_flat, ind_where_blocks)
+
+                    ind_to_raise = np.where((all_neigh_no_block == 3) | (all_neigh_no_block == 4))[0]
+
+                    numb_in_prod_no_block = np.delete(numb_in_prod, ind_where_blocks, axis=0)
+                    # all_neigh_no_block = np.sum(all_neigh_no_block[:, :6], axis=1) + numb_in_prod_no_block
+                    # all_neigh_no_block = np.sum(all_neigh_no_block, axis=1) + numb_in_prod_no_block
+
+                    # all_neigh_no_block[ind_to_raise] = 0
+
+                    self.coord_buffer.copy_to_buffer(self.coord_buffer.get_elem_at_ind(ind_where_blocks))
+                    # all_neigh_block = all_neigh[ind_where_blocks]
+                    # all_neigh_block = all_neigh[ind_where_blocks, :6]
+                    all_neigh_block = arr_len_flat[ind_where_blocks]
+
+                    numb_in_prod_block = numb_in_prod[ind_where_blocks]
+                    # all_neigh_block = np.sum(all_neigh_block[:, :6], axis=1) + numb_in_prod_block
+                    # all_neigh_block = np.sum(all_neigh_block, axis=1)
+                else:
+                    self.to_dissol_pn_buffer.copy_to_buffer(self.coord_buffer.get_buffer())
+                    # all_neigh_no_block = np.sum(all_neigh[:, :6], axis=1) + numb_in_prod
+                    all_neigh_no_block = arr_len_flat
+                    # all_neigh_bool = np.sum(all_neigh_bool[:, :6], axis=1)
+                    ind_to_raise = np.where((all_neigh_no_block == 3) | (all_neigh_no_block == 4))[0]
+
+                    # all_neigh_no_block[ind_to_raise] = 0
+
+                    numb_in_prod_no_block = numb_in_prod
+
+                    self.coord_buffer.reset_buffer()
+                    all_neigh_block = np.array([])
+                    numb_in_prod_block = np.array([], dtype=int)
+
+            to_dissolve_no_block = self.to_dissol_pn_buffer.get_buffer()
+            probs_no_block = self.cur_case.dissolution_probabilities.get_probabilities(all_neigh_no_block,
+                                                                                       to_dissolve_no_block[2])
+            probs_no_block[ind_to_raise] = 1
+
+            non_z_ind = np.where(numb_in_prod_no_block != 0)[0]
+            repeated_coords = np.repeat(to_dissolve_no_block[:, non_z_ind], numb_in_prod_no_block[non_z_ind], axis=1)
+            repeated_probs = np.repeat(probs_no_block[non_z_ind], numb_in_prod_no_block[non_z_ind])
+            to_dissolve_no_block = np.concatenate((to_dissolve_no_block, repeated_coords), axis=1)
+            probs_no_block = np.concatenate((probs_no_block, repeated_probs))
+            randomise = np.random.random_sample(len(to_dissolve_no_block[0]))
+            temp_ind = np.where(randomise < probs_no_block)[0]
+            to_dissolve_no_block = to_dissolve_no_block[:, temp_ind]
+
+            to_dissolve_block = self.coord_buffer.get_buffer()
+            probs_block = self.cur_case.dissolution_probabilities.get_probabilities_block(all_neigh_block,
+                                                                                          to_dissolve_block[2])
+            non_z_ind = np.where(numb_in_prod_block != 0)[0]
+            repeated_coords = np.repeat(to_dissolve_block[:, non_z_ind], numb_in_prod_block[non_z_ind], axis=1)
+            repeated_probs = np.repeat(probs_block[non_z_ind], numb_in_prod_block[non_z_ind])
+            to_dissolve_block = np.concatenate((to_dissolve_block, repeated_coords), axis=1)
+            probs_block = np.concatenate((probs_block, repeated_probs))
+            randomise = np.random.random_sample(len(to_dissolve_block[0]))
+            temp_ind = np.where(randomise < probs_block)[0]
+            to_dissolve_block = to_dissolve_block[:, temp_ind]
+
+            probs_no_neigh = self.cur_case.dissolution_probabilities.dissol_prob.values_pp[to_dissol_no_neigh[2]]
+            randomise = np.random.random_sample(len(to_dissol_no_neigh[0]))
+            temp_ind = np.where(randomise < probs_no_neigh)[0]
+            to_dissol_no_neigh = to_dissol_no_neigh[:, temp_ind]
+
+            to_dissolve = np.concatenate((to_dissolve_no_block, to_dissol_no_neigh, to_dissolve_block), axis=1)
+
+            self.coord_buffer.reset_buffer()
+            self.to_dissol_pn_buffer.reset_buffer()
+
+            if len(to_dissolve[0]) > 0:
+                just_decrease_counts(self.primary_product.c3d, to_dissolve)
+                self.primary_product.full_c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = False
+                insert_counts(self.primary_active.c3d, to_dissolve)
+                self.primary_oxidant.cells = np.concatenate((self.primary_oxidant.cells, to_dissolve), axis=1)
+                new_dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(to_dissolve[0]))
+                new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
+                new_dirs -= 1
+                self.primary_oxidant.dirs = np.concatenate((self.primary_oxidant.dirs, new_dirs), axis=1)
     def dissolution_zhou_wei_no_bsf(self):
         """
         Implementation of adjusted Zhou and Wei approach. Only side neighbours are checked. No need for block scale
@@ -1449,11 +1987,47 @@ class CellularAutomata:
         if len(self.comb_indexes) > 0:
             self.decomposition_intrinsic()
 
-    def dissolution_test(self):
-        not_stable_ind = np.where(self.product_x_not_stab)[0]
-        nz_ind = np.where(self.product_x_nzs)[0]
 
-        self.product_indexes = np.intersect1d(not_stable_ind, nz_ind)
+    def dissolution_atomic_with_kinetic_MP(self):
+        self.product_indexes = np.where(self.product_x_nzs)[0]
+
+        self.primary_oxidant.transform_to_3d()
+        oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
+                            in self.product_indexes], dtype=np.uint32)
+        oxidant_moles = oxidant * Config.OXIDANTS.PRIMARY.MOLES_PER_CELL
+        self.primary_oxidant.transform_to_descards()
+
+        active = np.array([np.sum(self.primary_active.c3d[:, :, plane_ind]) for plane_ind
+                           in self.product_indexes], dtype=np.uint32)
+        active_moles = active * Config.ACTIVES.PRIMARY.MOLES_PER_CELL
+        outward_eq_mat_moles = active * Config.ACTIVES.PRIMARY.EQ_MATRIX_MOLES_PER_CELL
+
+        product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
+                            in self.product_indexes], dtype=np.uint32)
+        product_moles = product * Config.PRODUCTS.PRIMARY.MOLES_PER_CELL
+        product_eq_mat_moles = product * Config.ACTIVES.PRIMARY.EQ_MATRIX_MOLES_PER_CELL
+
+        matrix_moles = self.matrix_moles_per_page - outward_eq_mat_moles - product_eq_mat_moles
+        whole_moles = matrix_moles + oxidant_moles + active_moles + product_moles
+        product_c = product_moles / whole_moles
+
+        temp = np.where((product_c > Config.PHASE_FRACTION_LIMIT) | (product_c > self.soll_prod))[0]
+        self.comb_indexes = self.product_indexes[temp]
+
+        if len(self.comb_indexes) > 0:
+
+
+
+            self.decomposition_intrinsic()
+
+    def dissolution_test(self):
+
+        self.comb_indexes = np.where(self.product_x_nzs)[0]
+
+        # not_stable_ind = np.where(self.product_x_not_stab)[0]
+        # nz_ind = np.where(self.product_x_nzs)[0]
+
+        # self.product_indexes = np.intersect1d(not_stable_ind, nz_ind)
 
         # product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
         #                     in self.product_indexes], dtype=np.uint32)
@@ -1463,7 +2037,7 @@ class CellularAutomata:
 
         # self.product_indexes = np.where(self.product_x_nzs)[0]
 
-        if len(self.product_indexes) > 0:
+        if len(self.comb_indexes) > 0:
             self.decomposition_intrinsic()
         # else:
         #     print("PRODUCT FULLY DISSOLVED AFTER ", self.iteration, " ITERATIONS")

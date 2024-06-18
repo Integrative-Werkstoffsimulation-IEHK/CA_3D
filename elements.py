@@ -610,9 +610,6 @@ class OxidantElem:
             self.dirs = np.concatenate((self.dirs, new_dirs), axis=1)
 
     def transform_to_3d(self):
-        # self.i_ind = np.array(np.where(self.cells[2] <= furthest_i)[0], dtype=np.uint32)
-        # self.i_descards = self.cells[:, self.i_ind]
-        # insert_counts(self.c3d, self.i_descards)
         insert_counts(self.c3d, self.cells)
 
     def transform_to_descards(self):

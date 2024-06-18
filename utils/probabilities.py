@@ -84,7 +84,8 @@ class DissolutionProbabilities:
         self.min_dissol_prob = ExpFunct(Config.N_CELLS_PER_AXIS, param.p6_d, param.p6_d_f,
                                         param.p6_d_A_const, param.p6_d_B_const)
         self.oxidation_number = corresponding_product.OXIDATION_NUMBER
-        self.n_neigh_init = self.oxidation_number * 5
+        # self.n_neigh_init = self.oxidation_number * 5
+        self.n_neigh_init = 5
         self.p3 = self.oxidation_number * 3
         self.bsf = param.bsf
         self.const_a_pp = np.full(Config.N_CELLS_PER_AXIS, param.global_d_A, dtype=float)

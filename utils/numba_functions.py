@@ -134,6 +134,19 @@ def aggregate(aggregated_ind, all_neigh_bool):
 
 
 @numba.njit(nopython=True)
+def aggregate_and_count(aggregated_ind, all_neigh_bool):
+    # trick to initialize an empty list with known type
+    block_counts = [np.uint32(x) for x in range(0)]
+    for item in all_neigh_bool:
+        curr_count = 0
+        for step in aggregated_ind:
+            if np.sum(item[step]) == 7:
+                curr_count += 1
+        block_counts.append(np.uint32(curr_count))
+    return np.array(block_counts, dtype=np.uint32)
+
+
+@numba.njit(nopython=True)
 def diff_single(directions, probs, random_numbs):
     for index, direction in enumerate(directions.transpose()):
         rand_numb = random_numbs.random()

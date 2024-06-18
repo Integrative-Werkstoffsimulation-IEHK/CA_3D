@@ -41,13 +41,13 @@ class Config:
     MATRIX.ELEMENT = "Ni"
 
     TEMPERATURE = 1100  # °C
-    N_CELLS_PER_AXIS = 110  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
-    N_ITERATIONS = 50000000  # must be >= n_cells_per_axis
+    N_CELLS_PER_AXIS = 66  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
+    N_ITERATIONS = 6000000  # must be >= n_cells_per_axis
     STRIDE = 10  # n_iterations / stride = n_iterations for outward diffusion
-    STRIDE_MULTIPLIER = 10
+    STRIDE_MULTIPLIER = 2
     PRECIP_TRANSFORM_DEPTH = 41
-    SIM_TIME = 1080000  # [sek]
-    SIZE = 500 * (10 ** -6)  # [m]
+    SIM_TIME = 72000  # [sek]
+    SIZE = 150 * (10 ** -6)  # [m]
 
     SOL_PROD = 6.25 * 10 ** -31  # 5.621 * 10 ** -10
     PHASE_FRACTION_LIMIT = 0.056
@@ -77,21 +77,21 @@ class Config:
     # PROBABILITIES.TERNARY = ConfigProbabilities()
     # PROBABILITIES.QUATERNARY = ConfigProbabilities()
     # nucleation primary___________________________
-    PROBABILITIES.PRIMARY.p0 = 0.1
+    PROBABILITIES.PRIMARY.p0 = 0.5
     PROBABILITIES.PRIMARY.p0_f = 1
     PROBABILITIES.PRIMARY.p0_A_const = 1
     PROBABILITIES.PRIMARY.p0_B_const = 1
-    PROBABILITIES.PRIMARY.p1 = 0.3
+    PROBABILITIES.PRIMARY.p1 = 0.7
     PROBABILITIES.PRIMARY.p1_f = 1
     PROBABILITIES.PRIMARY.p1_A_const = 1
     PROBABILITIES.PRIMARY.p1_B_const = 1
     PROBABILITIES.PRIMARY.global_A = 1
-    PROBABILITIES.PRIMARY.global_B = 0.07
+    PROBABILITIES.PRIMARY.global_B = 0.02
     PROBABILITIES.PRIMARY.global_B_f = -20
     PROBABILITIES.PRIMARY.max_neigh_numb = None
     PROBABILITIES.PRIMARY.nucl_adapt_function = 3
     # dissolution primary_________________________
-    PROBABILITIES.PRIMARY.p0_d = 3*10**-1
+    PROBABILITIES.PRIMARY.p0_d = 5*10**-1
     PROBABILITIES.PRIMARY.p0_d_f = 1
     PROBABILITIES.PRIMARY.p0_d_A_const = 1
     PROBABILITIES.PRIMARY.p0_d_B_const = 1
@@ -104,10 +104,10 @@ class Config:
     PROBABILITIES.PRIMARY.p6_d_A_const = 1
     PROBABILITIES.PRIMARY.p6_d_B_const = 1
     PROBABILITIES.PRIMARY.global_d_A = 1
-    PROBABILITIES.PRIMARY.global_d_B = -0.16
+    PROBABILITIES.PRIMARY.global_d_B = -1.2
     PROBABILITIES.PRIMARY.global_d_B_f = -0.33
     PROBABILITIES.PRIMARY.n = 2
-    PROBABILITIES.PRIMARY.bsf = 10
+    PROBABILITIES.PRIMARY.bsf = 5
     PROBABILITIES.PRIMARY.dissol_adapt_function = 5
     # ________________________
 
@@ -148,3 +148,4 @@ class Config:
 
     GENERATED_VALUES = GeneratedValues()
     COMMENT = """NO COMMENTS"""
+    INITIAL_SCRIPT = ""

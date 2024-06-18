@@ -4,6 +4,10 @@ import tkinter as tk
 from tkinter import filedialog
 import json
 from configuration import Config
+import multiprocessing
+from engine import *
+import traceback
+
 
 # #
 # # new_util = new_utils.NUtils()
@@ -153,36 +157,149 @@ from configuration import Config
 # # Show the plot
 # plt.show()
 
-import numpy as np
-import timeit
+# import numpy as np
+# import timeit
+#
+# # Creating a large sample array for performance testing
+# array = np.random.rand(100000, 10000)
+#
+# def method_1():
+#     temp = array[:, 0].copy()
+#     array[:, 0] = array[:, 2]
+#     array[:, 2] = temp
+#
+# def method_2():
+#     array[:, [0, 2]] = array[:, [2, 0]].copy()
+#
+# def method_3():
+#     array[:, [0, 2]] = array[:, [2, 0]]
+#
+# # Measuring the execution time of each method
+# time = 0
+# for _ in range(10):
+#     time += timeit.timeit(method_1, number=100)
+# print(f"Method 1 time: {time/10}")
+#
+# time = 0
+# for _ in range(10):
+#     time += timeit.timeit(method_2, number=100)
+# print(f"Method 2 time: {time/10}")
+#
+# time = 0
+# for _ in range(10):
+#     time += timeit.timeit(method_3, number=100)
+# print(f"Method 3 time: {time/10}")
 
-# Creating a large sample array for performance testing
-array = np.random.rand(100000, 10000)
 
-def method_1():
-    temp = array[:, 0].copy()
-    array[:, 0] = array[:, 2]
-    array[:, 2] = temp
+from engine import *
+import traceback
+from configuration import Config
 
-def method_2():
-    array[:, [0, 2]] = array[:, [2, 0]].copy()
 
-def method_3():
-    array[:, [0, 2]] = array[:, [2, 0]]
+def single_proc():
+        print("Started")
+        Config.COMMENT = """
+    
+        eng.primary_oxidant.diffuse = eng.primary_oxidant.diffuse_with_scale
+        eng.primary_active.diffuse = eng.primary_active.diffuse_with_scale
+    
+        eng.precip_func = eng.precipitation_first_case
+        eng.get_combi_ind = eng.get_combi_ind_atomic_with_kinetic
+        eng.precip_step = eng.precip_step_standard
+        eng.check_intersection = eng.ci_single
+    
+        eng.decomposition = eng.dissolution_atomic_with_kinetic
+        eng.decomposition_intrinsic = eng.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL
+    
+        eng.cur_case = eng.cases.first
+        eng.cases.first.go_around_func_ref = eng.go_around_mult_oxid_n_also_partial_neigh_aip
+    
+        eng.cur_case.nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY,
+                                                                              Config.PRODUCTS.PRIMARY)
+        eng.cur_case.dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
+    
+        Script name: main.py
+        Nucleation and dissolution throughout the whole simulation (both schemes applied). Also with kinetic coeeficient!!!
+        Go along the kinetic growth line! Check the kinetic file as well!!!
+    
+        CHANGED THE SCHEMES OF NUCLEATION AND DISSOLUTION ->>> NOW ALSO THE PARTIAL NEIGHBOURS ARE CONSIDERED!!!!
+    
+    """
 
-# Measuring the execution time of each method
-time = 0
-for _ in range(10):
-    time += timeit.timeit(method_1, number=100)
-print(f"Method 1 time: {time/10}")
+        eng = CellularAutomata()
 
-time = 0
-for _ in range(10):
-    time += timeit.timeit(method_2, number=100)
-print(f"Method 2 time: {time/10}")
+        eng.primary_oxidant.diffuse = eng.primary_oxidant.diffuse_with_scale
+        eng.primary_active.diffuse = eng.primary_active.diffuse_with_scale
 
-time = 0
-for _ in range(10):
-    time += timeit.timeit(method_3, number=100)
-print(f"Method 3 time: {time/10}")
+        eng.precip_func = eng.precipitation_first_case
+        eng.get_combi_ind = eng.get_combi_ind_atomic_with_kinetic
+        eng.precip_step = eng.precip_step_standard
+        eng.check_intersection = eng.ci_single
+
+        eng.decomposition = eng.dissolution_atomic_with_kinetic
+        eng.decomposition_intrinsic = eng.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL
+
+        eng.cur_case = eng.cases.first
+        eng.cases.first.go_around_func_ref = eng.go_around_mult_oxid_n_also_partial_neigh_aip
+
+        eng.cur_case.nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY,
+                                                                              Config.PRODUCTS.PRIMARY)
+        eng.cur_case.dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY,
+                                                                                Config.PRODUCTS.PRIMARY)
+
+        try:
+            eng.simulation()
+        finally:
+            try:
+                if not Config.SAVE_WHOLE:
+                    eng.save_results()
+
+            except (Exception,):
+                eng.save_results()
+                print("Not SAVED!")
+            #     backup_user_input["save_path"] = "C:/test_runs_data/"
+            #     eng.utils = Utils(backup_user_input)
+            #     eng.utils.create_database()
+            #     eng.utils.generate_param()
+            #     eng.save_results()
+            #     print()
+            #     print("____________________________________________________________")
+            #     print("Saving To Standard Folder Crashed!!!")
+            #     print("Saved To ->> C:/test_runs_data/!!!")
+            #     print("____________________________________________________________")
+            #     print()
+            #
+            iterations = np.arange(eng.cumul_prod.last_in_buffer) * eng.precipitation_stride
+
+            data = np.column_stack(
+                (iterations, eng.cumul_prod.get_buffer(), eng.growth_rate.get_buffer()))
+            output_file_path = "C:/test_runs_data/" + Config.GENERATED_VALUES.DB_ID + "_kinetics.txt"
+            with open(output_file_path, "w") as f:
+                for row in data:
+                    f.write(" ".join(map(str, row)) + "\n")
+
+            eng.insert_last_it()
+            eng.utils.db.conn.commit()
+            print()
+            print("____________________________________________________________")
+            print("Simulation was closed at Iteration: ", eng.iteration)
+            print("____________________________________________________________")
+            print()
+            traceback.print_exc()
+
+            print("Finished")
+
+
+if __name__ == '__main__':
+    # Create process objects
+    process1 = multiprocessing.Process(target=single_proc)
+    process2 = multiprocessing.Process(target=single_proc)
+
+    # Start the processes
+    process1.start()
+    process2.start()
+
+    # Wait for the processes to complete
+    process1.join()
+    process2.join()
 
