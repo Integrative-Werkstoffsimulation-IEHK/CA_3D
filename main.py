@@ -20,12 +20,12 @@ if __name__ == '__main__':
     eng.primary_active.diffuse = eng.primary_active.diffuse_with_scale
 
     eng.precip_func = eng.precipitation_first_case
-    eng.get_combi_ind = eng.get_combi_ind_atomic_with_kinetic
+    eng.get_combi_ind = eng.get_combi_ind_atomic_with_kinetic_and_KP
     eng.precip_step = eng.precip_step_standard
     eng.check_intersection = eng.ci_single
 
-    eng.decomposition = eng.dissolution_atomic_with_kinetic
-    eng.decomposition_intrinsic = eng.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL
+    eng.decomposition = eng.dissolution_atomic_with_kinetic_MP
+    eng.decomposition_intrinsic = eng.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP
 
     eng.cur_case = eng.cases.first
     eng.cases.first.go_around_func_ref = eng.go_around_mult_oxid_n_also_partial_neigh_aip
@@ -49,6 +49,14 @@ if __name__ == '__main__':
         data = np.column_stack(
             (iterations, eng.cumul_prod.get_buffer(), eng.growth_rate.get_buffer()))
         output_file_path = "C:/test_runs_data/" + Config.GENERATED_VALUES.DB_ID + "_kinetics.txt"
+        with open(output_file_path, "w") as f:
+            for row in data:
+                f.write(" ".join(map(str, row)) + "\n")
+
+
+        data = np.column_stack(
+            (iterations, eng.cumul_prod1.get_buffer(), eng.growth_rate1.get_buffer()))
+        output_file_path = "C:/test_runs_data/" + Config.GENERATED_VALUES.DB_ID + "1" + "_kinetics2.txt"
         with open(output_file_path, "w") as f:
             for row in data:
                 f.write(" ".join(map(str, row)) + "\n")

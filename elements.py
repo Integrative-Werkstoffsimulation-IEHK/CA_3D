@@ -293,7 +293,11 @@ class OxidantElem:
         self.c3d = np.full(self.extended_shape, 0, dtype=np.ubyte)
         self.scale = None
         self.diffuse = None
-        self.utils = utils
+
+
+        # UNDO THIS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        self.utils = None
+        # self.utils = utils
 
         self.cells = np.array([[], [], []], dtype=np.short)
         self.dirs = np.zeros((3, len(self.cells[0])), dtype=np.byte)

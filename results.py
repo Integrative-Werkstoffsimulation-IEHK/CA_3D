@@ -23,7 +23,7 @@ visualise.plot_concentration(plot_separate=False, conc_type="atomic", analytic_s
 # visualise.plot_concentration(plot_separate=False, conc_type="cells", analytic_sol=False,
 # iteration=29)
 
-# visualise.plot_h()
+visualise.plot_h()
 
 # for plane_ind in range(0, 61000, 100):
 #     visualise.plot_3d(plot_separate=False, iteration=plane_ind, const_cam_pos=True)

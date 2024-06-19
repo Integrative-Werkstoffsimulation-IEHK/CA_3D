@@ -35,8 +35,9 @@ if __name__ == '__main__':
                                                                             Config.PRODUCTS.PRIMARY)
 
     # set spheres
-    number_of_spheres = 30
+    number_of_spheres = 25
     max_rad = 5
+    depth = 20
 
     eng.primary_active.transform_to_3d(Config.N_CELLS_PER_AXIS)
     eng.primary_oxidant.transform_to_3d()
@@ -47,7 +48,7 @@ if __name__ == '__main__':
     for _ in range(number_of_spheres):
         rad = random.randint(1, max_rad)
 
-        x_pos = random.randint(0, int(Config.N_CELLS_PER_AXIS/2))
+        x_pos = random.randint(0, depth)
         y_pos = random.randint(0, Config.N_CELLS_PER_AXIS - 1)
         z_pos = random.randint(0, Config.N_CELLS_PER_AXIS - 1)
 
@@ -76,7 +77,7 @@ if __name__ == '__main__':
                             eng.primary_oxidant.c3d[z, y, x] = 0
                             eng.primary_active.c3d[z, y, x] = 0
 
-    eng.primary_active.c3d[:, :, :int(Config.N_CELLS_PER_AXIS/2)] = 0
+    eng.primary_active.c3d[:, :, :depth] = 0
 
     eng.primary_oxidant.transform_to_descards()
     eng.primary_active.transform_to_descards()
