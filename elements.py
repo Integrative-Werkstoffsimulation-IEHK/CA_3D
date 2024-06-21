@@ -1,6 +1,7 @@
 from microstructure import voronoi
 from utils.numba_functions import *
 from configuration import Config
+import random
 
 
 class ActiveElem:
@@ -77,9 +78,6 @@ class ActiveElem:
         self.current_count = None
 
     def diffuse_bulk(self):
-        """
-        Outgoing diffusion from the inside.
-        """
         # mixing particles according to Chopard and Droz
         randomise = np.array(np.random.random_sample(len(self.cells[0])), dtype=np.single)
         # randomise = np.array(np.random.random_sample(len(self.cells[0])))

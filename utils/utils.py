@@ -1,11 +1,9 @@
 from .physical_data import *
 import sys
 import numpy as np
-from configuration import Config
 import time
 import datetime
 from .data_base import *
-import random
 
 
 class Utils:
@@ -34,18 +32,24 @@ class Utils:
         self.ind_decompose_flat_z = np.array(
             [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1], [0, 0, 0]], dtype=np.byte)
 
+        self.ind_formation1 = np.array(
+            [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1], [0, 0, 0],
+             [1, 1, -1], [1, 1, 1], [1, -1, -1], [1, -1, 1],
+             [-1, 1, -1], [-1, 1, 1], [-1, -1, -1],
+             [-1, -1, 1], [1, 1, 0], [1, 0, -1], [1, 0, 1], [1, -1, 0], [0, 1, -1], [0, 1, 1],
+             [0, -1, -1], [0, -1, 1], [-1, 1, 0], [-1, 0, -1], [-1, 0, 1], [-1, -1, 0]], dtype=np.byte)
+
         if self.neigh_range > 1:
             # self.ind_formation = self.generate_neigh_indexes()
+            # self.ind_formation = self.generate_neigh_indexes_squashed()
             self.ind_formation = self.generate_neigh_indexes_flat()
         else:
-            self.ind_formation = np.array(
-                [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1], [0, 0, 0],
-                 [1, 1, -1], [1, 1, 1], [1, -1, -1], [1, -1, 1],
-                 [-1, 1, -1], [-1, 1, 1], [-1, -1, -1],
-                 [-1, -1, 1], [1, 1, 0], [1, 0, -1], [1, 0, 1], [1, -1, 0], [0, 1, -1], [0, 1, 1],
-                 [0, -1, -1], [0, -1, 1], [-1, 1, 0], [-1, 0, -1], [-1, 0, 1], [-1, -1, 0]], dtype=np.byte)
+            self.ind_formation = self.generate_neigh_indexes_flat()
+            # self.ind_formation = np.array(
+            #     [[1, 0, 0], [0, 1, 0], [-1, 0, 0], [0, -1, 0], [0, 0, 0],
+            #       [1, 1, 0], [1, -1, 0], [-1, 1, 0], [-1, -1, 0]], dtype=np.byte)
 
-        self.ind_formation_noz = np.array(np.delete(self.ind_formation, 13, 0), dtype=np.byte)
+        self.ind_formation_noz = np.array(np.delete(self.ind_formation1, 13, 0), dtype=np.byte)
 
         self.interface_neigh = {(0, 0, 1): [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1]],
                                 (0, 0, -1): [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, -1]],
@@ -54,8 +58,6 @@ class Utils:
                                 (1, 0, 0): [[0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1], [1, 0, 0]],
                                 (-1, 0, 0): [[0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1], [-1, 0, 0]]}
 
-    # def create_database(self):
-    #     self.db = Database()
 
     def generate_param(self):
         Config.GENERATED_VALUES.TAU = Config.SIM_TIME / Config.N_ITERATIONS
@@ -490,6 +492,22 @@ class Utils:
             around_seeds[indexes[0], indexes[1], indexes[2]] = self.n_cells_per_axis - shift - 1
         return around_seeds
 
+    def calc_sur_ind_formation_FLAT(self, seeds, dummy_ind):
+        """
+        """
+        # generating a neighbouring coordinates for each seed (including the position of the seed itself)
+        around_seeds = np.array([[item + self.ind_formation] for item in seeds], dtype=np.short)[:, 0]
+        # applying periodic boundary conditions
+        if seeds[0, 2] < self.neigh_range:
+            indexes = np.where(around_seeds[:, :, 2] < 0)
+            around_seeds[indexes[0], indexes[1], 2] = dummy_ind
+        for shift in range(self.neigh_range):
+            indexes = np.where(around_seeds[:, :, 0:2] == self.n_cells_per_axis + shift)
+            around_seeds[indexes[0], indexes[1], indexes[2]] = shift
+            indexes = np.where(around_seeds[:, :, 0:2] == - shift - 1)
+            around_seeds[indexes[0], indexes[1], indexes[2]] = self.n_cells_per_axis - shift - 1
+        return around_seeds
+
     def calc_sur_ind_formation_noz(self, seeds, dummy_ind):
         """
         Calculating the descarts surrounding coordinates for each seed including the position of the seed itself.
@@ -541,7 +559,7 @@ class Utils:
         coord = coord.transpose()
         return np.array(coord, dtype=np.byte)
 
-    def generate_neigh_indexes_flat(self):
+    def generate_neigh_indexes_squashed(self):
         neigh_range = self.neigh_range
         size = 3 + (neigh_range - 1) * 2
         neigh_shape = (size, size, 3)
@@ -562,6 +580,35 @@ class Utils:
         coord = coord.transpose()
 
         coord = np.concatenate((self.ind_decompose_flat_z, coord))
+
+        return np.array(coord, dtype=np.byte)
+
+    def generate_neigh_indexes_flat(self):
+        neigh_range = self.neigh_range
+        size = 3 + (neigh_range - 1) * 2
+        neigh_shape = (size, size, 3)
+        temp = np.ones(neigh_shape, dtype=int)
+        temp[:, :, 0] = 0
+        temp[:, :, 2] = 0
+
+        flat_ind = np.array(self.ind_decompose_flat_z)
+        flat_ind = flat_ind.transpose()
+        flat_ind[0] += neigh_range
+        flat_ind[1] += neigh_range
+        flat_ind[2] += 1
+
+        temp[flat_ind[0], flat_ind[1], flat_ind[2]] = 0
+
+        coord = np.array(np.nonzero(temp))
+        coord[0] -= neigh_range
+        coord[1] -= neigh_range
+        coord[2] -= 1
+        coord = coord.transpose()
+
+        coord = np.concatenate((self.ind_decompose_flat_z, coord))
+        addittional = coord[[2, 5]]
+        coord = np.delete(coord, [2, 5], axis=0)
+        coord = np.concatenate((coord, addittional))
 
         return np.array(coord, dtype=np.byte)
 

@@ -128,24 +128,27 @@ class CellularAutomata:
                         (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1), 0, dtype=np.ubyte)
 
                 if Config.MULTIPROCESSING:
-                    # # Create shared memory array
-                    # Create shared memory array with the correct dtype using Manager
-                    # self.manager = multiprocessing.Manager()
-                    # X_shape = (16, 1000000)
-                    # data = np.random.randn(*X_shape)
-                    # shared_array_base = multiprocessing.RawArray('d',  X_shape[0] * X_shape[1])
+                    self.shm_p = shared_memory.SharedMemory(create=True, size=self.primary_product.c3d.size)
+                    self.shared_array_p = np.ndarray(self.primary_product.c3d.shape, dtype=np.ubyte, buffer=self.shm_p.buf)
 
-                    # self.shared_array_base = multiprocessing.RawArray(ctypes.c_ubyte, self.primary_product.c3d.size)
-                    # self.shared_array = np.frombuffer(self.shared_array_base.get_obj()).reshape(self.primary_product.c3d.shape)
-                    # self.shared_array = np.frombuffer(self.shared_array_base, dtype=ctypes.c_ubyte).reshape(self.primary_product.c3d.shape)
-                    # self.shared_array = np.frombuffer(shared_array_base).reshape(X_shape)
-                    # np.copyto(self.shared_array, data)
-                    # self.shared_array = self.manager.Array(ctypes.c_ubyte, self.primary_product.c3d.size, lock=False)
+                    self.shm_p_b = shared_memory.SharedMemory(create=True, size=self.cases.first.precip_3d_init.size)
+                    self.shared_array_p_b = np.ndarray(self.cases.first.precip_3d_init.shape,
+                                                       dtype=self.cases.first.precip_3d_init.dtype,
+                                                       buffer=self.shm_p_b.buf)
 
-                    self.shm = shared_memory.SharedMemory(create=True, size=self.primary_product.c3d.size)
-                    self.shared_array = np.ndarray(self.primary_product.c3d.shape, dtype=np.ubyte, buffer=self.shm.buf)
+                    self.shm_p_FULL = shared_memory.SharedMemory(create=True, size=self.primary_product.full_c3d.size)
+                    self.shared_array_p_FULL = np.ndarray(self.primary_product.full_c3d.shape, dtype=bool,
+                                                       buffer=self.shm_p_FULL.buf)
+
+                    self.shm_a = shared_memory.SharedMemory(create=True, size=self.primary_active.c3d.size)
+                    self.shared_array_a = np.ndarray(self.primary_active.c3d.shape, dtype=np.ubyte,
+                                                     buffer=self.shm_a.buf)
+
+                    self.shm_o = shared_memory.SharedMemory(create=True, size=self.primary_oxidant.c3d.size)
+                    self.shared_array_o = np.ndarray(self.primary_oxidant.c3d.shape, dtype=np.ubyte,
+                                                     buffer=self.shm_o.buf)
+
                     self.numb_of_proc = Config.NUMBER_OF_PROCESSES
-
                     if self.cells_per_axis % self.numb_of_proc == 0:
                         chunk_size = int(self.cells_per_axis / self.numb_of_proc)
                     else:
@@ -155,18 +158,13 @@ class CellularAutomata:
                     self.chunk_ranges[0] = [0, chunk_size]
 
                     for pos in range(1, self.numb_of_proc):
-                        # self.chunk_ranges[pos] = [item, item+chunk_size]
                         self.chunk_ranges[pos, 0] = self.chunk_ranges[pos-1, 1]
                         self.chunk_ranges[pos, 1] = self.chunk_ranges[pos, 0] + chunk_size
                     self.chunk_ranges[-1, 1] = self.cells_per_axis
-                    # self.chunk_ranges[-1, 0] = self.chunk_ranges[-2, 1]
-
-                    # self.pool = multiprocessing.Pool(processes=self.numb_of_proc, initializer=init_worker,
-                    #                                  initargs=(self.shared_array_base, self.primary_product.c3d.shape))
-                    # self.pool = multiprocessing.Pool(processes=self.numb_of_proc)
 
                     self.input_queue = multiprocessing.Queue()
                     self.output_queue = multiprocessing.Queue()
+
                     self.workers = []
                     # Initialize and start worker processes
                     for _ in range(self.numb_of_proc):
@@ -245,7 +243,6 @@ class CellularAutomata:
             # self.primary_product.c3d[:, :, :50] = self.primary_oxid_numb
             # self.primary_product.full_c3d[:, :, :50] = True
 
-
             self.aggregated_ind = np.array([[7, 0, 1, 2, 19, 16, 14],
                                    [6, 0, 1, 5, 18, 15, 14],
                                    [8, 0, 4, 5, 20, 15, 17],
@@ -276,15 +273,10 @@ class CellularAutomata:
 
             self.save_flag = False
             self.product_x_nzs = np.full(self.cells_per_axis, False, dtype=bool)
-
-
             # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            self.primary_product.c3d[10:100, 10:100, 10:100] = self.primary_oxid_numb
-            self.primary_product.full_c3d[10:100, 10:100, 10:100] = True
-            self.product_x_nzs[:] = True
-
-
-
+            # self.primary_product.c3d[10:100, 10:100, 10:100] = self.primary_oxid_numb
+            # self.primary_product.full_c3d[10:100, 10:100, 10:100] = True
+            # self.product_x_nzs[:] = True
             self.product_x_not_stab = np.full(self.cells_per_axis, True, dtype=bool)
             # self.TdDATA = TdDATA()
             # self.TdDATA.fetch_look_up_from_file()
@@ -318,7 +310,10 @@ class CellularAutomata:
             args = input_queue.get()
             if args is None:  # Check for termination signal
                 break
-            result = CellularAutomata.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(*args)
+            # result = CellularAutomata.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(*args)
+            callback = args[-1]
+            args = args[:-1]
+            result = callback(*args)
             output_queue.put(result)
 
     # def simulation(self):
@@ -942,7 +937,7 @@ class CellularAutomata:
 
     @staticmethod
     def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(shape, shm, chunk_range, comb_ind, buffer_size, aggregated_ind, dissol_p, utils_inst):
-        to_dissolve = to_dissolve = np.array([[], [], []])
+        to_dissolve = to_dissolve = np.array([[], [], []], dtype=np.ushort)
         array_3D = np.ndarray(shape, dtype=np.ubyte, buffer=shm.buf)
 
         coord_buffer = utils.MyBufferCoords(buffer_size)
@@ -1468,10 +1463,7 @@ class CellularAutomata:
         self.curr_time = Config.GENERATED_VALUES.TAU * (self.iteration + 1)
 
         active_ind = np.where(self.active_times <= self.curr_time)[0]
-        # if self.furthest_index > np.amax(active_ind):
-        #     print("Not Stable!")
         ioz_bound = min(np.amax(active_ind), self.furthest_index)
-        # fur = self.furthest_index
 
         oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
                             in range(ioz_bound + 1)], dtype=np.uint32)
@@ -1489,8 +1481,6 @@ class CellularAutomata:
         whole_moles = matrix_moles + oxidant_moles + active_moles + product_moles
         product_c = product_moles / whole_moles
 
-        # self.soll_prod = Config.PROD_INCR_CONST * (Config.GENERATED_VALUES.TAU * (self.iteration + 1))**1.1
-
         soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[:ioz_bound + 1])**1.1
         self.diffs = product_c - soll_prod
 
@@ -1503,8 +1493,6 @@ class CellularAutomata:
         else:
             self.cumul_prod1.append(0)
             self.growth_rate1.append(0)
-
-        # self.product_indexes = np.where((product_c <= Config.PHASE_FRACTION_LIMIT) & (product_c < self.soll_prod))[0]
 
         self.product_indexes = np.where((product_c <= Config.PHASE_FRACTION_LIMIT) & (self.diffs <= 0))[0]
 
@@ -1751,6 +1739,54 @@ class CellularAutomata:
             # self.nucl_prob.adapt_probabilities(self.comb_indexes, self.rel_prod_fraction[self.comb_indexes],
             #                                    self.gamma_primes[self.comb_indexes])
             # self.nucl_prob.adapt_probabilities(self.comb_indexes, self.gamma_primes[self.comb_indexes])
+            self.cases.first.fix_init_precip_func_ref(self.furthest_index)
+            self.precip_step()
+
+        self.primary_oxidant.transform_to_descards()
+
+    def precipitation_first_case_MP(self):
+        # Only one oxidant and one active elements exist. Only one product can be created
+        self.furthest_index = self.primary_oxidant.calc_furthest_index()
+        self.primary_oxidant.transform_to_3d()
+
+        if self.iteration % Config.STRIDE == 0:
+            if self.furthest_index >= self.curr_max_furthest:
+                self.curr_max_furthest = self.furthest_index
+            self.primary_active.transform_to_3d(self.curr_max_furthest)
+
+        self.get_combi_ind()
+
+        if len(self.comb_indexes) > 0:
+            np.copyto(self.shared_array_a, self.primary_active.c3d)
+            np.copyto(self.shared_array_o, self.primary_oxidant.c3d)
+            np.copyto(self.shared_array_p_b, self.shared_array_p)
+            np.copyto(self.shared_array_p_FULL, self.primary_product.full_c3d)
+
+            # Dynamically feed new arguments to workers for this iteration
+            for ind in self.comb_indexes:
+                # args = (self.primary_product.c3d.shape, self.primary_product.full_c3d.shape, self.primary_product.full_c3d.shape,
+                #         self.primary_active.c3d.shape, self.primary_oxidant.c3d.shape,
+                #         self.shm_p, self.shm_p_b, self.shm_p_FULL, self.shm_a, self.shm_o, self.comb_indexes,
+                #         self.cur_case.nucleation_probabilities, self.utils, self.fetch_ind, self.cases.first.go_around_func_ref,
+                #         self.cur_case.product.fix_full_cells, CellularAutomata.ci_single_MP,
+                #         CellularAutomata.precip_step_standard_MP)
+
+                args = (self.primary_product.c3d.shape, self.primary_product.full_c3d.shape,
+                        self.primary_product.full_c3d.shape,
+                        self.primary_active.c3d.shape, self.primary_oxidant.c3d.shape,
+                        self.shm_p, self.shm_p_b, self.shm_p_FULL, self.shm_a, self.shm_o, self.comb_indexes,
+                        self.cur_case.nucleation_probabilities, self.utils, self.fetch_ind,
+                        0,
+                        self.cur_case.product.fix_full_cells, CellularAutomata.ci_single_MP,
+                        CellularAutomata.precip_step_standard_MP)
+                self.input_queue.put(args)
+
+            # Collect results for this iteration
+            results = []
+            for _ in self.chunk_ranges:
+                result = self.output_queue.get()
+                results.append(result)
+
             self.cases.first.fix_init_precip_func_ref(self.furthest_index)
             self.precip_step()
 
@@ -2094,35 +2130,12 @@ class CellularAutomata:
         self.comb_indexes = self.product_indexes[temp]
 
         if len(self.comb_indexes) > 0:
-            # self.shared_array[:] = self.primary_product.c3d
-            np.copyto(self.shared_array, self.primary_product.c3d)
-            # self.shared_array[:len(self.primary_product.c3d.flatten())] = self.primary_product.c3d.flatten()
-            tasks = []
-            # processes = []
-            # for chunk_range in self.chunk_ranges:
-            #     # p = multiprocessing.Process(target=self.decomposition_intrinsic, args=(chunk_range,
-            #     #                                                                        self.comb_indexes,
-            #     #                                                                        self.buffer_size * len(self.comb_indexes),
-            #     #                                                                        self.aggregated_ind,
-            #     #                                                                        self.cur_case))
-            #     p = multiprocessing.Process(target=self.decomposition_intrinsic, args=(self.primary_product.c3d.shape, self.shm,
-            #                                                                            chunk_range,
-            #                                                                            self.comb_indexes,
-            #                                                                            self.buffer_size * len(self.comb_indexes),
-            #                                                                            self.aggregated_ind,
-            #                                                                            self.cur_case))
-            #     processes.append(p)
-            #     p.start()
-            #
-            # for p in processes:
-            #     p.join()
+            np.copyto(self.shared_array_p, self.primary_product.c3d)
 
             # Dynamically feed new arguments to workers for this iteration
             for chunk_range in self.chunk_ranges:
-                # args = (self.primary_product.c3d.shape, self.shm, chunk_range, self.comb_indexes,
-                #         self.buffer_size * len(self.comb_indexes), self.aggregated_ind, self.cur_case)
-                args = (self.primary_product.c3d.shape, self.shm, chunk_range, self.comb_indexes, self.buffer_size * len(self.comb_indexes),
-                        self.aggregated_ind, self.cur_case.dissolution_probabilities, self.utils)
+                args = (self.primary_product.c3d.shape, self.shm_p, chunk_range, self.comb_indexes, self.buffer_size * len(self.comb_indexes),
+                        self.aggregated_ind, self.cur_case.dissolution_probabilities, self.utils, CellularAutomata.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP)
                 self.input_queue.put(args)
 
             # Collect results for this iteration
@@ -2131,14 +2144,7 @@ class CellularAutomata:
                 result = self.output_queue.get()
                 results.append(result)
 
-            # for chunk_range in self.chunk_ranges:
-            #     tasks.append((chunk_range, self.comb_indexes, self.buffer_size * len(self.comb_indexes),
-            #                   self.aggregated_ind))
-                # tasks.append((self.primary_product.c3d.shape, self.shm, self.shm))
-
-            # results = self.pool.map(self.decomposition_intrinsic, tasks, self.shm)
-
-            to_dissolve = np.array(np.concatenate(results, axis=1), dtype=np.short)
+            to_dissolve = np.array(np.concatenate(results, axis=1), dtype=np.ushort)
             if len(to_dissolve[0]) > 0:
                 just_decrease_counts(self.primary_product.c3d, to_dissolve)
                 self.primary_product.full_c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = False
@@ -2148,7 +2154,6 @@ class CellularAutomata:
                 new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
                 new_dirs -= 1
                 self.primary_oxidant.dirs = np.concatenate((self.primary_oxidant.dirs, new_dirs), axis=1)
-
 
     def dissolution_test(self):
 
@@ -2311,6 +2316,34 @@ class CellularAutomata:
                         # oxidant_cells = oxidant_cells[temp_ind]
                         # ______________________________________________________________________________________
                         self.check_intersection(oxidant_cells)
+    @staticmethod
+    def precip_step_standard_MP(shape_p, shape_p_b, shape_p_full, shape_a, shape_o, shm_p, shm_p_b, shm_p_FULL, shm_a, shm_o, ind, nucleation_probabilities,
+                                utils_inst, fetch_ind, go_around_func_ref, fix_full_cells, callback):
+        array_3D = np.ndarray(shape_o, dtype=np.ubyte, buffer=shm_o.buf)
+        full_3d = np.ndarray(shape_p_full, dtype=np.ubyte, buffer=shm_p_FULL.buf)
+
+        for plane_index in reversed(ind):
+            for fetch_ind in fetch_ind:
+                oxidant_cells = array_3D[fetch_ind[0], fetch_ind[1], plane_index]
+                oxidant_cells = fetch_ind[:, np.nonzero(oxidant_cells)[0]]
+
+                if len(oxidant_cells[0]) != 0:
+                    oxidant_cells = np.vstack((oxidant_cells, np.full(len(oxidant_cells[0]), plane_index,
+                                                                      dtype=np.short)))
+                    oxidant_cells = oxidant_cells.transpose()
+
+                    exists = check_at_coord(full_3d, oxidant_cells)  # precip on place of oxidant!
+                    temp_ind = np.where(exists)[0]
+                    oxidant_cells = np.delete(oxidant_cells, temp_ind, 0)
+
+                    if len(oxidant_cells) > 0:
+                        # activate if microstructure ___________________________________________________________
+                        # in_gb = [self.microstructure[point[0], point[1], point[2]] for point in oxidant_cells]
+                        # temp_ind = np.where(in_gb)[0]
+                        # oxidant_cells = oxidant_cells[temp_ind]
+                        # ______________________________________________________________________________________
+                        callback(oxidant_cells, shape_p, shape_p_b, shape_p_full, shape_a, shape_o, shm_p, shm_p_b, shm_p_FULL, shm_a, shm_o, ind, nucleation_probabilities,
+                                utils_inst, go_around_func_ref, fix_full_cells)
 
     def precip_step_two_products(self):
         for plane_index in reversed(self.comb_indexes):
@@ -2377,15 +2410,20 @@ class CellularAutomata:
 
     def ci_single(self, seeds):
         all_arounds = self.utils.calc_sur_ind_formation(seeds, self.cur_case.active.c3d.shape[2] - 1)
-        neighbours = go_around_bool(self.cur_case.active.c3d, all_arounds)
+
+        neighbours = go_around_bool(self.cur_case.active.c3d, all_arounds[:, :-2])
         arr_len_out = np.array([np.sum(item) for item in neighbours], dtype=np.ushort)
+
         temp_ind = np.where(arr_len_out >= self.threshold_outward)[0]
 
         if len(temp_ind) > 0:
             seeds = seeds[temp_ind]
             neighbours = neighbours[temp_ind]
             all_arounds = all_arounds[temp_ind]
-            flat_arounds = all_arounds[:, 0:self.cur_case.product.lind_flat_arr]
+
+            # flat_arounds = all_arounds[:, 0:self.cur_case.product.lind_flat_arr]
+            flat_arounds = np.concatenate((all_arounds[:, 0:self.cur_case.product.lind_flat_arr-2], all_arounds[:, -2:]), axis=1)
+
             arr_len_in_flat = self.cur_case.go_around_func_ref(flat_arounds)
             homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
             needed_prob = self.cases.first.nucleation_probabilities.get_probabilities(arr_len_in_flat, seeds[0][2])
@@ -2419,6 +2457,63 @@ class CellularAutomata:
                 # mark the x-plane where the precipitate has happened, so the index of this plane can be called in the
                 # dissolution function
                 self.product_x_nzs[seeds[2][0]] = True
+
+    @staticmethod
+    def ci_single_MP(seeds, shape_p, shape_p_b, shape_p_full, shape_a, shape_o, shm_p, shm_p_b, shm_p_FULL, shm_a, shm_o, nucleation_probabilities,
+                                utils_inst, go_around_func_ref, fix_full_cells):
+        oxidant = np.ndarray(shape_o, dtype=np.ubyte, buffer=shm_o.buf)
+        active = np.ndarray(shape_a, dtype=np.ubyte, buffer=shm_a.buf)
+        product = np.ndarray(shape_p, dtype=np.ubyte, buffer=shm_p.buf)
+        product_b = np.ndarray(shape_p_b, dtype=np.ubyte, buffer=shm_p_b.buf)
+        full_3d = np.ndarray(shape_p_full, dtype=np.ubyte, buffer=shm_p_FULL.buf)
+
+        all_arounds = utils_inst.calc_sur_ind_formation(seeds, shape_a[2] - 1)
+
+        neighbours = go_around_bool(active, all_arounds[:, :-2])
+        arr_len_out = np.array([np.sum(item) for item in neighbours], dtype=np.ushort)
+
+        temp_ind = np.where(arr_len_out >= 1)[0]
+
+        if len(temp_ind) > 0:
+            seeds = seeds[temp_ind]
+            neighbours = neighbours[temp_ind]
+            all_arounds = all_arounds[temp_ind]
+            flat_arounds = np.concatenate((all_arounds[:, 0:5], all_arounds[:, -2:]), axis=1)
+
+            arr_len_in_flat = go_around_func_ref(flat_arounds)
+            homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
+            needed_prob = nucleation_probabilities.get_probabilities(arr_len_in_flat, seeds[0][2])
+            needed_prob[homogeneous_ind] = nucleation_probabilities.nucl_prob.values_pp[seeds[0][2]]  # seeds[0][2] - current plane index
+            randomise = np.array(np.random.random_sample(arr_len_in_flat.size), dtype=np.float64)
+            temp_ind = np.where(randomise < needed_prob)[0]
+
+            if len(temp_ind) > 0:
+                seeds = seeds[temp_ind]
+                neighbours = neighbours[temp_ind]
+                all_arounds = all_arounds[temp_ind]
+
+                out_to_del = [np.array(np.nonzero(item)[0]) for item in neighbours]
+                to_del = [np.random.choice(item, 1, replace=False) for item in out_to_del]
+                coord = np.array([all_arounds[seed_ind][point_ind] for seed_ind, point_ind in enumerate(to_del)],
+                                 dtype=np.short)
+
+                coord = np.reshape(coord, (len(coord) * 1, 3))
+                coord = coord.transpose()
+                seeds = seeds.transpose()
+
+                active[coord[0], coord[1], coord[2]] -= 1
+                oxidant[seeds[0], seeds[1], seeds[2]] -= 1
+
+                # self.objs[self.case]["product"].c3d[coord[0], coord[1], coord[2]] += 1  # precip on place of active!
+                product[seeds[0], seeds[1], seeds[2]] += 1  # precip on place of oxidant!
+
+                # self.objs[self.case]["product"].fix_full_cells(coord)  # precip on place of active!
+                # self.cur_case.product.fix_full_cells(seeds)  # precip on place of oxidant!
+                fix_full_cells(seeds)
+
+                # mark the x-plane where the precipitate has happened, so the index of this plane can be called in the
+                # dissolution function
+                # self.product_x_nzs[seeds[2][0]] = True
 
     def ci_multi(self, seeds):
         """
