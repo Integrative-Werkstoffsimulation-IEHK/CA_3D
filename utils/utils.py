@@ -11,7 +11,7 @@ import random
 class Utils:
     def __init__(self):
         self.param = 0
-        self.db = None
+        # self.db = None
         self.n_cells_per_axis = Config.N_CELLS_PER_AXIS
         self.neigh_range = Config.NEIGH_RANGE
 
@@ -54,8 +54,8 @@ class Utils:
                                 (1, 0, 0): [[0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1], [1, 0, 0]],
                                 (-1, 0, 0): [[0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1], [-1, 0, 0]]}
 
-    def create_database(self):
-        self.db = Database()
+    # def create_database(self):
+    #     self.db = Database()
 
     def generate_param(self):
         Config.GENERATED_VALUES.TAU = Config.SIM_TIME / Config.N_ITERATIONS

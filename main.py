@@ -39,7 +39,8 @@ if __name__ == '__main__':
     finally:
         try:
             if not Config.SAVE_WHOLE:
-                eng.save_results()
+                # eng.save_results()
+                print()
 
         except (Exception,):
             eng.save_results()
@@ -53,7 +54,6 @@ if __name__ == '__main__':
             for row in data:
                 f.write(" ".join(map(str, row)) + "\n")
 
-
         data = np.column_stack(
             (iterations, eng.cumul_prod1.get_buffer(), eng.growth_rate1.get_buffer()))
         output_file_path = "C:/test_runs_data/" + Config.GENERATED_VALUES.DB_ID + "1" + "_kinetics2.txt"
@@ -61,8 +61,8 @@ if __name__ == '__main__':
             for row in data:
                 f.write(" ".join(map(str, row)) + "\n")
 
-        eng.insert_last_it()
-        eng.utils.db.conn.commit()
+        # eng.insert_last_it()
+        # eng.utils.db.conn.commit()
         print()
         print("____________________________________________________________")
         print("Simulation was closed at Iteration: ", eng.iteration)

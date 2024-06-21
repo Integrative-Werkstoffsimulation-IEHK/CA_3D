@@ -1,8 +1,6 @@
 import sys
 import utils
-import progressbar
 from elements import *
-import time
 import multiprocessing
 from multiprocessing import shared_memory
 
@@ -11,7 +9,6 @@ class CellularAutomata:
     def __init__(self):
         self.utils = utils.Utils()
         self.utils.generate_param()
-        # self.utils.create_database()
         self.elapsed_time = 0
 
         # simulated space parameters
@@ -130,52 +127,54 @@ class CellularAutomata:
                     self.cases.first.precip_3d_init = np.full(
                         (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1), 0, dtype=np.ubyte)
 
-                # # Create shared memory array
-                # Create shared memory array with the correct dtype using Manager
-                # self.manager = multiprocessing.Manager()
-                # X_shape = (16, 1000000)
-                # data = np.random.randn(*X_shape)
-                # shared_array_base = multiprocessing.RawArray('d',  X_shape[0] * X_shape[1])
+                if Config.MULTIPROCESSING:
+                    # # Create shared memory array
+                    # Create shared memory array with the correct dtype using Manager
+                    # self.manager = multiprocessing.Manager()
+                    # X_shape = (16, 1000000)
+                    # data = np.random.randn(*X_shape)
+                    # shared_array_base = multiprocessing.RawArray('d',  X_shape[0] * X_shape[1])
 
-                # self.shared_array_base = multiprocessing.RawArray(ctypes.c_ubyte, self.primary_product.c3d.size)
-                # self.shared_array = np.frombuffer(self.shared_array_base.get_obj()).reshape(self.primary_product.c3d.shape)
-                # self.shared_array = np.frombuffer(self.shared_array_base, dtype=ctypes.c_ubyte).reshape(self.primary_product.c3d.shape)
-                # self.shared_array = np.frombuffer(shared_array_base).reshape(X_shape)
-                # np.copyto(self.shared_array, data)
-                # self.shared_array = self.manager.Array(ctypes.c_ubyte, self.primary_product.c3d.size, lock=False)
-                num_cores = multiprocessing.cpu_count()
-                self.shm = shared_memory.SharedMemory(create=True, size=self.primary_product.c3d.size)
-                self.shared_array = np.ndarray(self.primary_product.c3d.shape, dtype=np.ubyte, buffer=self.shm.buf)
+                    # self.shared_array_base = multiprocessing.RawArray(ctypes.c_ubyte, self.primary_product.c3d.size)
+                    # self.shared_array = np.frombuffer(self.shared_array_base.get_obj()).reshape(self.primary_product.c3d.shape)
+                    # self.shared_array = np.frombuffer(self.shared_array_base, dtype=ctypes.c_ubyte).reshape(self.primary_product.c3d.shape)
+                    # self.shared_array = np.frombuffer(shared_array_base).reshape(X_shape)
+                    # np.copyto(self.shared_array, data)
+                    # self.shared_array = self.manager.Array(ctypes.c_ubyte, self.primary_product.c3d.size, lock=False)
 
-                self.numb_of_proc = 3
+                    self.shm = shared_memory.SharedMemory(create=True, size=self.primary_product.c3d.size)
+                    self.shared_array = np.ndarray(self.primary_product.c3d.shape, dtype=np.ubyte, buffer=self.shm.buf)
+                    self.numb_of_proc = Config.NUMBER_OF_PROCESSES
 
-                if self.cells_per_axis % self.numb_of_proc == 0:
-                    chunk_size = int((self.cells_per_axis / self.numb_of_proc - 1))
-                else:
-                    chunk_size = int((self.cells_per_axis / (self.numb_of_proc)))
+                    if self.cells_per_axis % self.numb_of_proc == 0:
+                        chunk_size = int(self.cells_per_axis / self.numb_of_proc)
+                    else:
+                        chunk_size = int((self.cells_per_axis - 1) // (self.numb_of_proc - 1))
 
-                self.chunk_ranges = np.zeros((self.numb_of_proc, 2), dtype=int)
-                some = np.arange(0, self.cells_per_axis - chunk_size, chunk_size)
-                for pos, item in enumerate(np.arange(0, self.cells_per_axis - chunk_size, chunk_size)):
-                    self.chunk_ranges[pos] = [item, item+chunk_size]
-                self.chunk_ranges[-1, -1] = self.cells_per_axis
-                self.chunk_ranges[-1, -2] = self.cells_per_axis - chunk_size
+                    self.chunk_ranges = np.zeros((self.numb_of_proc, 2), dtype=int)
+                    self.chunk_ranges[0] = [0, chunk_size]
 
-                # self.pool = multiprocessing.Pool(processes=self.numb_of_proc, initializer=init_worker,
-                #                                  initargs=(self.shared_array_base, self.primary_product.c3d.shape))
+                    for pos in range(1, self.numb_of_proc):
+                        # self.chunk_ranges[pos] = [item, item+chunk_size]
+                        self.chunk_ranges[pos, 0] = self.chunk_ranges[pos-1, 1]
+                        self.chunk_ranges[pos, 1] = self.chunk_ranges[pos, 0] + chunk_size
+                    self.chunk_ranges[-1, 1] = self.cells_per_axis
+                    # self.chunk_ranges[-1, 0] = self.chunk_ranges[-2, 1]
 
-                # self.pool = multiprocessing.Pool(processes=self.numb_of_proc)
+                    # self.pool = multiprocessing.Pool(processes=self.numb_of_proc, initializer=init_worker,
+                    #                                  initargs=(self.shared_array_base, self.primary_product.c3d.shape))
+                    # self.pool = multiprocessing.Pool(processes=self.numb_of_proc)
 
-                self.input_queue = multiprocessing.Queue()
-                self.output_queue = multiprocessing.Queue()
-                self.workers = []
-                # Initialize and start worker processes
-                for _ in range(self.numb_of_proc):
-                    p = multiprocessing.Process(target=self.worker, args=(self.input_queue, self.output_queue))
-                    p.start()
-                    self.workers.append(p)
+                    self.input_queue = multiprocessing.Queue()
+                    self.output_queue = multiprocessing.Queue()
+                    self.workers = []
+                    # Initialize and start worker processes
+                    for _ in range(self.numb_of_proc):
+                        p = multiprocessing.Process(target=self.worker, args=(self.input_queue, self.output_queue))
+                        p.start()
+                        self.workers.append(p)
 
-                self.buffer_size = Config.PRODUCTS.PRIMARY.OXIDATION_NUMBER * self.cells_per_axis * chunk_size
+                    self.buffer_size = Config.PRODUCTS.PRIMARY.OXIDATION_NUMBER * self.cells_per_axis * chunk_size
 
             self.threshold_inward = Config.THRESHOLD_INWARD
             self.threshold_outward = Config.THRESHOLD_OUTWARD
@@ -246,6 +245,7 @@ class CellularAutomata:
             # self.primary_product.c3d[:, :, :50] = self.primary_oxid_numb
             # self.primary_product.full_c3d[:, :, :50] = True
 
+
             self.aggregated_ind = np.array([[7, 0, 1, 2, 19, 16, 14],
                                    [6, 0, 1, 5, 18, 15, 14],
                                    [8, 0, 4, 5, 20, 15, 17],
@@ -276,6 +276,15 @@ class CellularAutomata:
 
             self.save_flag = False
             self.product_x_nzs = np.full(self.cells_per_axis, False, dtype=bool)
+
+
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            self.primary_product.c3d[10:100, 10:100, 10:100] = self.primary_oxid_numb
+            self.primary_product.full_c3d[10:100, 10:100, 10:100] = True
+            self.product_x_nzs[:] = True
+
+
+
             self.product_x_not_stab = np.full(self.cells_per_axis, True, dtype=bool)
             # self.TdDATA = TdDATA()
             # self.TdDATA.fetch_look_up_from_file()
@@ -301,7 +310,7 @@ class CellularAutomata:
             adj_lamd[neg_ind] = 0
             self.active_times = adj_lamd ** 2 / Config.GENERATED_VALUES.KINETIC_KONST ** 2
 
-        self.begin = time.time()
+        # self.begin = time.time()
 
     @staticmethod
     def worker(input_queue, output_queue):
@@ -312,23 +321,23 @@ class CellularAutomata:
             result = CellularAutomata.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(*args)
             output_queue.put(result)
 
-    def simulation(self):
-        for self.iteration in progressbar.progressbar(range(self.n_iter)):
+    # def simulation(self):
+    #     for self.iteration in progressbar.progressbar(range(self.n_iter)):
             # if self.iteration % self.precipitation_stride == 0:
-            self.precip_func()
-            self.decomposition()
+            # self.precip_func()
+            # self.decomposition()
                 # self.calc_precipitation_front_only_cells()
             # self.precip_func()
             # self.decomposition()
-            self.diffusion_inward()
-            self.diffusion_outward()
+            # self.diffusion_inward()
+            # self.diffusion_outward()
             # self.diffusion_outward_with_mult_srtide()
             # self.save_results()
 
-        end = time.time()
-        self.elapsed_time = (end - self.begin)
-        self.utils.db.insert_time(self.elapsed_time)
-        self.utils.db.conn.commit()
+        # end = time.time()
+        # self.elapsed_time = (end - self.begin)
+        # self.utils.db.insert_time(self.elapsed_time)
+        # self.utils.db.conn.commit()
 
     def dissolution_zhou_wei_original(self):
         """Implementation of original not adapted Zhou and Wei approach. Only two probabilities p for block and pn
@@ -2940,47 +2949,6 @@ class CellularAutomata:
                 self.utils.db.insert_precipitation_front(sqr_time, position, "p")
                 break
 
-    def save_results(self):
-        if Config.STRIDE > Config.N_ITERATIONS:
-            self.primary_active.transform_to_descards()
-            if Config.ACTIVES.SECONDARY_EXISTENCE:
-                self.secondary_active.transform_to_descards()
-        if Config.INWARD_DIFFUSION:
-            self.utils.db.insert_particle_data("primary_oxidant", self.iteration, self.primary_oxidant.cells)
-            if Config.OXIDANTS.SECONDARY_EXISTENCE:
-                self.utils.db.insert_particle_data("secondary_oxidant", self.iteration, self.secondary_oxidant.cells)
-        if Config.OUTWARD_DIFFUSION:
-            self.utils.db.insert_particle_data("primary_active", self.iteration, self.primary_active.cells)
-            if Config.ACTIVES.SECONDARY_EXISTENCE:
-                self.utils.db.insert_particle_data("secondary_active", self.iteration, self.secondary_active.cells)
-        if Config.COMPUTE_PRECIPITATION:
-            self.utils.db.insert_particle_data("primary_product", self.iteration, self.primary_product.transform_c3d())
-            if Config.ACTIVES.SECONDARY_EXISTENCE and Config.OXIDANTS.SECONDARY_EXISTENCE:
-                self.utils.db.insert_particle_data("secondary_product", self.iteration,
-                                                   self.secondary_product.transform_c3d())
-                self.utils.db.insert_particle_data("ternary_product", self.iteration,
-                                                   self.ternary_product.transform_c3d())
-                self.utils.db.insert_particle_data("quaternary_product", self.iteration,
-                                                   self.quaternary_product.transform_c3d())
-            elif Config.ACTIVES.SECONDARY_EXISTENCE and not Config.OXIDANTS.SECONDARY_EXISTENCE:
-                self.utils.db.insert_particle_data("secondary_product", self.iteration, self.secondary_product.transform_c3d())
-        if Config.STRIDE > Config.N_ITERATIONS:
-            self.primary_active.transform_to_3d(self.curr_max_furthest)
-            if Config.ACTIVES.SECONDARY_EXISTENCE:
-                self.secondary_active.transform_to_3d(self.curr_max_furthest)
-
-    def save_results_only_prod(self):
-        self.utils.db.insert_particle_data("primary_product", self.iteration,
-                                           self.primary_product.transform_c3d())
-
-    def save_results_prod_and_inw(self):
-        self.utils.db.insert_particle_data("primary_product", self.iteration,
-                                           self.primary_product.transform_c3d())
-        self.utils.db.insert_particle_data("primary_oxidant", self.iteration, self.primary_oxidant.cells)
-
-    def save_results_only_inw(self):
-        self.utils.db.insert_particle_data("primary_oxidant", self.iteration, self.primary_oxidant.cells)
-
     def fix_init_precip_bool(self, u_bound, l_bound=0):
         if u_bound == self.cells_per_axis - 1:
             u_bound = self.cells_per_axis - 2
@@ -3077,7 +3045,4 @@ class CellularAutomata:
             print("Number of Cells per Axis must be divisible by ", size, "!!!")
             print("______________________________________________________________")
             sys.exit()
-
-    def insert_last_it(self):
-        self.utils.db.insert_last_iteration(self.iteration)
 

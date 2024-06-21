@@ -70,6 +70,11 @@ class Config:
     FULL_CELLS = False
     SAVE_PATH = 'C:/test_runs_data/'
     SAVE_POST_PROCESSED_INPUT = True
+
+    # Execution___________________________________________________________________
+    MULTIPROCESSING = True
+    NUMBER_OF_PROCESSES = 22
+
     # PROBABILITIES_______________________________________________________________
     PROBABILITIES = ElementGroups()
     PROBABILITIES.PRIMARY = ConfigProbabilities()
