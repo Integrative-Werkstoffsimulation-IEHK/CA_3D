@@ -2,6 +2,7 @@ from microstructure import voronoi
 from utils.numba_functions import *
 from configuration import Config
 import random
+from multiprocessing import shared_memory
 
 
 class ActiveElem:
@@ -19,15 +20,19 @@ class ActiveElem:
         # self.precip_transform_depth = int(self.cells_per_axis)  # min self.neigh_range !!!
         self.precip_transform_depth = int(Config.PRECIP_TRANSFORM_DEPTH)  # min self.neigh_range !!!
 
-        self.extended_axis = self.cells_per_axis + self.neigh_range
-        self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
+        extended_axis = self.cells_per_axis + self.neigh_range
+        self.extended_shape = (self.cells_per_axis, self.cells_per_axis, extended_axis)
 
         self.diffuse = None  # must be defined elsewhere
         self.scale = None
 
         self.i_descards = None
         self.i_ind = None
-        self.c3d = np.full(self.extended_shape, 0, dtype=np.ubyte)
+
+        temp = np.full(self.extended_shape, 0, dtype=np.ubyte)
+
+        self.c3d_shared = shared_memory.SharedMemory(create=True, size=temp.size)
+        self.c3d = np.ndarray(self.extended_shape, dtype=np.ubyte, buffer=self.c3d_shared.buf)
 
         self.in_3D_flag = False
 
@@ -288,10 +293,14 @@ class OxidantElem:
 
         self.extended_axis = self.cells_per_axis + self.neigh_range
         self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
-        self.c3d = np.full(self.extended_shape, 0, dtype=np.ubyte)
+
+        # self.c3d = np.full(self.extended_shape, 0, dtype=np.ubyte)
+        temp = np.full(self.extended_shape, 0, dtype=np.ubyte)
+        self.c3d_shared = shared_memory.SharedMemory(create=True, size=temp.size)
+        self.c3d = np.ndarray(self.extended_shape, dtype=np.ubyte, buffer=self.c3d_shared.buf)
+
         self.scale = None
         self.diffuse = None
-
 
         # UNDO THIS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         self.utils = None
@@ -630,7 +639,7 @@ class Product:
     def __init__(self, settings):
         self.constitution = settings.CONSTITUTION
         cells_per_axis = Config.N_CELLS_PER_AXIS
-        shape = (cells_per_axis, cells_per_axis, cells_per_axis + 1)
+        self.shape = (cells_per_axis, cells_per_axis, cells_per_axis + 1)
         self.oxidation_number = settings.OXIDATION_NUMBER
         self.lind_flat_arr = settings.LIND_FLAT_ARRAY
 
@@ -641,8 +650,15 @@ class Product:
             self.fix_full_cells = self.fix_full_cells_ox_numb_mult
             self.transform_c3d = self.transform_c3d_mult
 
-        self.c3d = np.full(shape, 0, dtype=np.ubyte)
-        self.full_c3d = np.full((shape[0], shape[1], shape[2] - 1), False)
+        # self.c3d = np.full(shape, 0, dtype=np.ubyte)
+        temp = np.full(self.shape, 0, dtype=np.ubyte)
+        self.c3d_shared = shared_memory.SharedMemory(create=True, size=temp.size)
+        self.c3d = np.ndarray(self.shape, dtype=np.ubyte, buffer=self.c3d_shared.buf)
+
+        # self.full_c3d = np.full((shape[0], shape[1], shape[2] - 1), False)
+        temp = np.full((self.shape[0], self.shape[1], self.shape[2] - 1), 0, dtype=bool)
+        self.full_c3d_shared = shared_memory.SharedMemory(create=True, size=temp.size)
+        self.full_c3d = np.ndarray((self.shape[0], self.shape[1], self.shape[2] - 1), dtype=bool, buffer=self.full_c3d_shared.buf)
 
     def fix_full_cells_ox_numb_single(self, new_precip):
         self.full_c3d[new_precip[0], new_precip[1], new_precip[2]] = True

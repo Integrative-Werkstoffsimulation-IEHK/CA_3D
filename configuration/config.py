@@ -42,7 +42,7 @@ class Config:
 
     TEMPERATURE = 1100  # °C
     N_CELLS_PER_AXIS = 110  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
-    N_ITERATIONS = 300000  # must be >= n_cells_per_axis
+    N_ITERATIONS = 10000000  # must be >= n_cells_per_axis
     STRIDE = 40  # n_iterations / stride = n_iterations for outward diffusion
     STRIDE_MULTIPLIER = 1
     PRECIP_TRANSFORM_DEPTH = 41
@@ -73,7 +73,7 @@ class Config:
 
     # Execution___________________________________________________________________
     MULTIPROCESSING = True
-    NUMBER_OF_PROCESSES = 2
+    NUMBER_OF_PROCESSES = 6
 
     # PROBABILITIES_______________________________________________________________
     PROBABILITIES = ElementGroups()

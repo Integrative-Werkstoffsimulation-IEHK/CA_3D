@@ -24,7 +24,7 @@ class SimulationConfigurator:
         self.ca.decomposition_intrinsic = self.ca.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP
 
         self.ca.cur_case = self.ca.cases.first
-        self.ca.cases.first.go_around_func_ref = self.ca.go_around_mult_oxid_n_also_partial_neigh_aip
+        self.ca.cases.first.go_around_func_ref = self.ca.go_around_mult_oxid_n_also_partial_neigh_aip_MP
 
         self.ca.cur_case.nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY,
                                                                                   Config.PRODUCTS.PRIMARY)
@@ -38,7 +38,7 @@ class SimulationConfigurator:
         self.ca.precip_func = self.ca.precipitation_first_case
         self.ca.get_combi_ind = self.ca.get_combi_ind_standard
         self.ca.precip_step = self.ca.precip_step_standard
-        self.ca.check_intersection = self.ca.ci_single
+        self.ca.check_intersection = self.ca.ci_single_no_growth
 
         # self.ca.decomposition = self.ca.dissolution_atomic_with_kinetic_MP
         # self.ca.decomposition_intrinsic = self.ca.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP
