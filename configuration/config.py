@@ -73,7 +73,7 @@ class Config:
 
     # Execution___________________________________________________________________
     MULTIPROCESSING = True
-    NUMBER_OF_PROCESSES = 20
+    NUMBER_OF_PROCESSES = 24
 
     # PROBABILITIES_______________________________________________________________
     PROBABILITIES = ElementGroups()
