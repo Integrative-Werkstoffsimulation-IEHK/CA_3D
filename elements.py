@@ -4,7 +4,6 @@ from configuration import Config
 import random
 from multiprocessing import shared_memory
 
-
 class ActiveElem:
     def __init__(self, settings):
         self.cells_per_axis = Config.N_CELLS_PER_AXIS
@@ -30,9 +29,14 @@ class ActiveElem:
         self.i_ind = None
 
         temp = np.full(self.extended_shape, 0, dtype=np.ubyte)
-
         self.c3d_shared = shared_memory.SharedMemory(create=True, size=temp.size)
         self.c3d = np.ndarray(self.extended_shape, dtype=np.ubyte, buffer=self.c3d_shared.buf)
+
+        self.shm_mdata = SharedMetaData(self.c3d_shared.name, self.extended_shape, np.ubyte)
+
+        # self.c3d_shared_name = self.c3d_shared.name
+        # self.shared_shape = (self.cells_per_axis, self.cells_per_axis, extended_axis)
+        # self.shared_type = np.ubyte
 
         self.in_3D_flag = False
 
@@ -298,6 +302,12 @@ class OxidantElem:
         temp = np.full(self.extended_shape, 0, dtype=np.ubyte)
         self.c3d_shared = shared_memory.SharedMemory(create=True, size=temp.size)
         self.c3d = np.ndarray(self.extended_shape, dtype=np.ubyte, buffer=self.c3d_shared.buf)
+
+        # self.c3d_shared_name = self.c3d_shared.name
+        # self.shared_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
+        # self.shared_type = np.ubyte
+
+        self.shm_mdata = SharedMetaData(self.c3d_shared.name, self.extended_shape, np.ubyte)
 
         self.scale = None
         self.diffuse = None
@@ -655,10 +665,22 @@ class Product:
         self.c3d_shared = shared_memory.SharedMemory(create=True, size=temp.size)
         self.c3d = np.ndarray(self.shape, dtype=np.ubyte, buffer=self.c3d_shared.buf)
 
+        # self.c3d_shared_name = self.c3d_shared.name
+        # self.shared_shape = (cells_per_axis, cells_per_axis, cells_per_axis + 1)
+        # self.shared_type = np.ubyte
+
+        self.shm_mdata = SharedMetaData(self.c3d_shared.name, self.shape, np.ubyte)
+
         # self.full_c3d = np.full((shape[0], shape[1], shape[2] - 1), False)
         temp = np.full((self.shape[0], self.shape[1], self.shape[2] - 1), 0, dtype=bool)
         self.full_c3d_shared = shared_memory.SharedMemory(create=True, size=temp.size)
         self.full_c3d = np.ndarray((self.shape[0], self.shape[1], self.shape[2] - 1), dtype=bool, buffer=self.full_c3d_shared.buf)
+
+        # self.full_c3d_shared_name = self.full_c3d_shared.name
+        full_c3d_shared_shape = (self.shape[0], self.shape[1], self.shape[2] - 1)
+        # self.full_shared_type = bool
+
+        self.full_shm_mdata = SharedMetaData(self.full_c3d_shared.name, full_c3d_shared_shape, bool)
 
     def fix_full_cells_ox_numb_single(self, new_precip):
         self.full_c3d[new_precip[0], new_precip[1], new_precip[2]] = True
@@ -676,3 +698,10 @@ class Product:
         precipitations = np.array(np.nonzero(self.c3d), dtype=np.short)
         counts = self.c3d[precipitations[0], precipitations[1], precipitations[2]]
         return np.array(np.repeat(precipitations, counts, axis=1), dtype=np.short)
+
+
+class SharedMetaData:
+    def __init__(self, shm_name, shape, dtype):
+        self.name = shm_name
+        self.shape = shape
+        self.dtype = dtype
