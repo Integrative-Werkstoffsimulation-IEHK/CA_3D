@@ -965,22 +965,34 @@ class CellularAutomata:
                 self.primary_oxidant.dirs = np.concatenate((self.primary_oxidant.dirs, new_dirs), axis=1)
 
     @staticmethod
-    def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(shm_mdata, chunk_range, comb_ind, buffer_size, aggregated_ind, dissol_p, utils_inst):
-        to_dissolve = to_dissolve = np.array([[], [], []], dtype=np.ushort)
+    def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(shm_mdata, chunk_range, comb_ind, aggregated_ind, dissol_p, utils_inst):
+        to_dissolve = np.array([[], [], []], dtype=np.ushort)
 
         shm = shared_memory.SharedMemory(name=shm_mdata.name)
         array_3D = np.ndarray(shm_mdata.shape, dtype=shm_mdata.dtype, buffer=shm.buf)
 
-        coord_buffer = utils.MyBufferCoords(buffer_size)
-        to_dissol_pn_buffer = utils.MyBufferCoords(buffer_size)
+        to_dissol_pn_buffer = np.array([[], [], []], dtype=np.ushort)
+
+        # coord_buffer = utils.MyBufferCoords(buffer_size)
+        # to_dissol_pn_buffer = utils.MyBufferCoords(buffer_size)
 
         nz_ind = np.array(np.nonzero(array_3D[chunk_range[0]:chunk_range[1], :, comb_ind]))
         nz_ind[0] += chunk_range[0]
-        coord_buffer.copy_to_buffer(nz_ind)
-        coord_buffer.update_buffer_at_axis(comb_ind[nz_ind[2]], axis=2)
+        # coord_buffer.copy_to_buffer(nz_ind)
+        coord_buffer = nz_ind
 
-        if coord_buffer.last_in_buffer > 0:
-            flat_arounds = utils_inst.calc_sur_ind_decompose_flat_with_zero(coord_buffer.get_buffer())
+        new_data = comb_ind[nz_ind[2]]
+        coord_buffer[2, :] = new_data
+
+        # coord_buffer.update_buffer_at_axis(comb_ind[nz_ind[2]], axis=2)
+
+        # def update_buffer_at_axis(self, new_data, axis=2):
+        #     self.buffer[axis, :self.last_in_buffer] = new_data
+
+        if len(coord_buffer[0]) > 0:
+            # flat_arounds = utils_inst.calc_sur_ind_decompose_flat_with_zero(coord_buffer.get_buffer())
+            flat_arounds = utils_inst.calc_sur_ind_decompose_flat_with_zero(coord_buffer)
+
             all_neigh = go_around_int(array_3D, flat_arounds)
             all_neigh[:, 6] -= 1
 
@@ -990,10 +1002,13 @@ class CellularAutomata:
             numb_in_prod_no_block = np.array([], dtype=int)
 
             where_not_null = np.unique(np.where(all_neigh[:, :6] > 0)[0])
-            to_dissol_no_neigh = np.array(coord_buffer.get_elem_instead_ind(where_not_null), dtype=np.short)
-            coord_buffer.copy_to_buffer(coord_buffer.get_elem_at_ind(where_not_null))
+            # to_dissol_no_neigh = np.array(coord_buffer.get_elem_instead_ind(where_not_null), dtype=np.short)
+            to_dissol_no_neigh = np.array(np.delete(coord_buffer, where_not_null, axis=1), dtype=np.short)
 
-            if coord_buffer.last_in_buffer > 0:
+            # coord_buffer.copy_to_buffer(coord_buffer.get_elem_at_ind(where_not_null))
+            coord_buffer = coord_buffer[:, where_not_null]
+
+            if len(coord_buffer[0]) > 0:
                 all_neigh = all_neigh[where_not_null]
                 numb_in_prod = all_neigh[:, -1]
 
@@ -1002,37 +1017,45 @@ class CellularAutomata:
                 arr_len_flat = np.sum(all_neigh_bool, axis=1)
 
                 index_outside = np.where((arr_len_flat < 6))[0]
-                coord_buffer.copy_to_buffer(coord_buffer.get_elem_at_ind(index_outside))
+                # coord_buffer.copy_to_buffer(coord_buffer.get_elem_at_ind(index_outside))
+                coord_buffer = coord_buffer[:, index_outside]
 
                 all_neigh_bool = all_neigh_bool[index_outside]
                 arr_len_flat = arr_len_flat[index_outside]
                 numb_in_prod = numb_in_prod[index_outside]
 
-                non_flat_arounds = utils_inst.calc_sur_ind_decompose_no_flat(coord_buffer.get_buffer())
+                # non_flat_arounds = utils_inst.calc_sur_ind_decompose_no_flat(coord_buffer.get_buffer())
+                non_flat_arounds = utils_inst.calc_sur_ind_decompose_no_flat(coord_buffer)
                 non_flat_neigh = go_around_bool(array_3D, non_flat_arounds)
                 all_neigh_bool = np.concatenate((all_neigh_bool, non_flat_neigh), axis=1)
 
                 ind_where_blocks = aggregate(aggregated_ind, all_neigh_bool)
 
                 if len(ind_where_blocks) > 0:
-                    to_dissol_pn_buffer.copy_to_buffer(coord_buffer.get_elem_instead_ind(ind_where_blocks))
+                    # to_dissol_pn_buffer.copy_to_buffer(coord_buffer.get_elem_instead_ind(ind_where_blocks))
+                    to_dissol_pn_buffer = np.array(np.delete(coord_buffer, ind_where_blocks, axis=1), dtype=np.short)
+
                     all_neigh_no_block = np.delete(arr_len_flat, ind_where_blocks)
                     numb_in_prod_no_block = np.delete(numb_in_prod, ind_where_blocks, axis=0)
 
-                    coord_buffer.copy_to_buffer(coord_buffer.get_elem_at_ind(ind_where_blocks))
+                    # coord_buffer.copy_to_buffer(coord_buffer.get_elem_at_ind(ind_where_blocks))
+                    coord_buffer = coord_buffer[:, ind_where_blocks]
                     all_neigh_block = arr_len_flat[ind_where_blocks]
 
                     numb_in_prod_block = numb_in_prod[ind_where_blocks]
                 else:
-                    to_dissol_pn_buffer.copy_to_buffer(coord_buffer.get_buffer())
+                    # to_dissol_pn_buffer.copy_to_buffer(coord_buffer.get_buffer())
+                    to_dissol_pn_buffer = coord_buffer
                     all_neigh_no_block = arr_len_flat
                     numb_in_prod_no_block = numb_in_prod
 
-                    coord_buffer.reset_buffer()
+                    # coord_buffer.reset_buffer()
+                    coord_buffer = np.array([[], [], []], dtype=np.ushort)
                     all_neigh_block = np.array([])
                     numb_in_prod_block = np.array([], dtype=int)
 
-            to_dissolve_no_block = to_dissol_pn_buffer.get_buffer()
+            # to_dissolve_no_block = to_dissol_pn_buffer.get_buffer()
+            to_dissolve_no_block = to_dissol_pn_buffer
             probs_no_block = dissol_p.get_probabilities(all_neigh_no_block, to_dissolve_no_block[2])
 
             non_z_ind = np.where(numb_in_prod_no_block != 0)[0]
@@ -1044,7 +1067,8 @@ class CellularAutomata:
             temp_ind = np.where(randomise < probs_no_block)[0]
             to_dissolve_no_block = to_dissolve_no_block[:, temp_ind]
 
-            to_dissolve_block = coord_buffer.get_buffer()
+            # to_dissolve_block = coord_buffer.get_buffer()
+            to_dissolve_block = coord_buffer
             probs_block = dissol_p.get_probabilities_block(all_neigh_block, to_dissolve_block[2])
 
             non_z_ind = np.where(numb_in_prod_block != 0)[0]
@@ -2192,8 +2216,9 @@ class CellularAutomata:
         if len(self.comb_indexes) > 0:
             # Dynamically feed new arguments to workers for this iteration
             for chunk_range in self.chunk_ranges:
-                args = (self.primary_product.shm_mdata, chunk_range, self.comb_indexes, self.buffer_size * len(self.comb_indexes),
-                        self.aggregated_ind, self.cur_case.dissolution_probabilities, self.utils, CellularAutomata.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP)
+                args = (self.primary_product.shm_mdata, chunk_range, self.comb_indexes, self.aggregated_ind,
+                        self.cur_case.dissolution_probabilities, self.utils,
+                        CellularAutomata.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP)
                 self.input_queue.put(args)
 
             # Collect results for this iteration
