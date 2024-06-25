@@ -1089,6 +1089,7 @@ class CellularAutomata:
             to_dissol_no_neigh = to_dissol_no_neigh[:, temp_ind]
 
             to_dissolve = np.concatenate((to_dissolve_no_block, to_dissol_no_neigh, to_dissolve_block), axis=1)
+        shm.close()
         return to_dissolve
 
     def dissolution_zhou_wei_no_bsf(self):
@@ -2204,9 +2205,9 @@ class CellularAutomata:
         whole_moles = matrix_moles + oxidant_moles + active_moles + product_moles
         product_c = product_moles / whole_moles
 
-        if self.iteration % Config.STRIDE == 0:
-            self.cumul_prod.set_at_ind(self.product_indexes, product_c)
-            self.growth_rate.set_at_ind(soll_prod)
+        # if self.iteration % Config.STRIDE == 0:
+        #     self.cumul_prod.set_at_ind(self.product_indexes, product_c)
+        #     self.growth_rate.set_at_ind(soll_prod)
 
 
         soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[self.product_indexes]) ** 1.1
@@ -2408,29 +2409,30 @@ class CellularAutomata:
                         # ______________________________________________________________________________________
                         self.check_intersection(oxidant_cells)
     @staticmethod
-    def precip_step_standard_MP(product_x_nzs_mdata, shm_mdata_product, shm_mdata_full_product, shm_mdata_product_init, shm_mdata_active, shm_mdata_oxidant,
-                                plane_index, nucleation_probabilities,
+    def precip_step_standard_MP(product_x_nzs_mdata, shm_mdata_product, shm_mdata_full_product, shm_mdata_product_init,
+                                shm_mdata_active, shm_mdata_oxidant, plane_index, nucleation_probabilities,
                                 utils_inst, fetch_indexes, callback):
+
         shm_o = shared_memory.SharedMemory(name=shm_mdata_oxidant.name)
         oxidant = np.ndarray(shm_mdata_oxidant.shape, dtype=shm_mdata_oxidant.dtype, buffer=shm_o.buf)
 
         shm_p_FULL = shared_memory.SharedMemory(name=shm_mdata_full_product.name)
         full_3d = np.ndarray(shm_mdata_full_product.shape, dtype=shm_mdata_full_product.dtype, buffer=shm_p_FULL.buf)
 
-        shm_p = shared_memory.SharedMemory(name=shm_mdata_product.name)
-        product = np.ndarray(shm_mdata_product.shape, dtype=shm_mdata_product.dtype, buffer=shm_p.buf)
-
-        shm_a = shared_memory.SharedMemory(name=shm_mdata_active.name)
-        active = np.ndarray(shm_mdata_active.shape, dtype=shm_mdata_active.dtype, buffer=shm_a.buf)
-
-        shm_product_init = shared_memory.SharedMemory(name=shm_mdata_product_init.name)
-        product_init = np.ndarray(shm_mdata_product_init.shape, dtype=shm_mdata_product_init.dtype, buffer=shm_product_init.buf)
-
-        shm_o_product_x_nzs = shared_memory.SharedMemory(name=product_x_nzs_mdata.name)
-        product_x_nzs = np.ndarray(product_x_nzs_mdata.shape, dtype=product_x_nzs_mdata.dtype, buffer=shm_o_product_x_nzs.buf)
+        # shm_p = shared_memory.SharedMemory(name=shm_mdata_product.name)
+        # product = np.ndarray(shm_mdata_product.shape, dtype=shm_mdata_product.dtype, buffer=shm_p.buf)
+        #
+        # shm_a = shared_memory.SharedMemory(name=shm_mdata_active.name)
+        # active = np.ndarray(shm_mdata_active.shape, dtype=shm_mdata_active.dtype, buffer=shm_a.buf)
+        #
+        # shm_product_init = shared_memory.SharedMemory(name=shm_mdata_product_init.name)
+        # product_init = np.ndarray(shm_mdata_product_init.shape, dtype=shm_mdata_product_init.dtype, buffer=shm_product_init.buf)
+        #
+        # shm_o_product_x_nzs = shared_memory.SharedMemory(name=product_x_nzs_mdata.name)
+        # product_x_nzs = np.ndarray(product_x_nzs_mdata.shape, dtype=product_x_nzs_mdata.dtype, buffer=shm_o_product_x_nzs.buf)
 
         for fetch_ind in fetch_indexes:
-            oxidant_cells = oxidant[fetch_ind[0], fetch_ind[1], plane_index]
+            oxidant_cells = np.array(oxidant[fetch_ind[0], fetch_ind[1], plane_index], dtype=np.short)
             oxidant_cells = fetch_ind[:, np.nonzero(oxidant_cells)[0]]
 
             if len(oxidant_cells[0]) != 0:
@@ -2448,7 +2450,11 @@ class CellularAutomata:
                     # temp_ind = np.where(in_gb)[0]
                     # oxidant_cells = oxidant_cells[temp_ind]
                     # ______________________________________________________________________________________
-                    callback(oxidant_cells, oxidant, full_3d, product, active, product_init, nucleation_probabilities, utils_inst, product_x_nzs)
+                    callback(oxidant_cells, oxidant, full_3d, shm_mdata_product, shm_mdata_active, shm_mdata_product_init,
+                             nucleation_probabilities, utils_inst, product_x_nzs_mdata)
+
+        shm_o.close()
+        shm_p_FULL.close()
 
     def precip_step_two_products(self):
         for plane_index in reversed(self.comb_indexes):
@@ -2564,7 +2570,8 @@ class CellularAutomata:
                 self.product_x_nzs[seeds[2][0]] = True
 
     @staticmethod
-    def ci_single_MP(seeds, oxidant, full_3d, product, active, product_init, nucleation_probabilities, utils_inst, product_x_nzs):
+    def ci_single_MP(seeds, oxidant, full_3d, shm_mdata_product, shm_mdata_active, shm_mdata_product_init,
+                     nucleation_probabilities, utils_inst, product_x_nzs_mdata):
         # seeds, shape_p, shape_p_b, shape_p_full, shape_a, shape_o, shm_p, shm_p_b, shm_p_FULL, shm_a, shm_o, nucleation_probabilities,
         # utils_inst
         # oxidant_cells, oxidant, full_3d, product, active, product_init, nucleation_probabilities, utils_inst
@@ -2574,6 +2581,20 @@ class CellularAutomata:
         # product = np.ndarray(shape_p, dtype=np.ubyte, buffer=shm_p.buf)
         # product_b = np.ndarray(shape_p_b, dtype=np.ubyte, buffer=shm_p_b.buf)
         # full_3d = np.ndarray(shape_p_full, dtype=np.ubyte, buffer=shm_p_FULL.buf)
+
+        shm_p = shared_memory.SharedMemory(name=shm_mdata_product.name)
+        product = np.ndarray(shm_mdata_product.shape, dtype=shm_mdata_product.dtype, buffer=shm_p.buf)
+
+        shm_a = shared_memory.SharedMemory(name=shm_mdata_active.name)
+        active = np.ndarray(shm_mdata_active.shape, dtype=shm_mdata_active.dtype, buffer=shm_a.buf)
+
+        shm_product_init = shared_memory.SharedMemory(name=shm_mdata_product_init.name)
+        product_init = np.ndarray(shm_mdata_product_init.shape, dtype=shm_mdata_product_init.dtype,
+                                  buffer=shm_product_init.buf)
+
+        shm_o_product_x_nzs = shared_memory.SharedMemory(name=product_x_nzs_mdata.name)
+        product_x_nzs = np.ndarray(product_x_nzs_mdata.shape, dtype=product_x_nzs_mdata.dtype,
+                                   buffer=shm_o_product_x_nzs.buf)
 
         all_arounds = utils_inst.calc_sur_ind_formation(seeds, active.shape[2] - 1)
 
@@ -2622,6 +2643,11 @@ class CellularAutomata:
                 # mark the x-plane where the precipitate has happened, so the index of this plane can be called in the
                 # dissolution function
                 product_x_nzs[seeds[2][0]] = True
+
+        shm_p.close()
+        shm_a.close()
+        shm_product_init.close()
+        shm_o_product_x_nzs.close()
 
     def ci_multi(self, seeds):
         """
