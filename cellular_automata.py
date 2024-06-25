@@ -1,3 +1,4 @@
+import configparser
 import ctypes
 import sys
 import utils
@@ -198,7 +199,7 @@ class CellularAutomata:
                         p.start()
                         self.workers.append(p)
 
-                    self.buffer_size = Config.PRODUCTS.PRIMARY.OXIDATION_NUMBER * self.cells_per_axis * chunk_size
+                    # self.buffer_size = Config.PRODUCTS.PRIMARY.OXIDATION_NUMBER * self.cells_per_axis * chunk_size
 
             self.threshold_inward = Config.THRESHOLD_INWARD
             self.threshold_outward = Config.THRESHOLD_OUTWARD
@@ -315,11 +316,13 @@ class CellularAutomata:
 
             self.precipitation_stride = Config.STRIDE * Config.STRIDE_MULTIPLIER
 
-            self.cumul_prod = utils.my_data_structs.MyBufferSingle(self.n_iter, dtype=float)
-            self.growth_rate = utils.my_data_structs.MyBufferSingle(self.n_iter, dtype=float)
-
-            self.cumul_prod1 = utils.my_data_structs.MyBufferSingle(self.n_iter, dtype=float)
-            self.growth_rate1 = utils.my_data_structs.MyBufferSingle(self.n_iter, dtype=float)
+            save_rate = self.n_iter // Config.STRIDE
+            self.cumul_prod = utils.my_data_structs.MyBufferSingle((self.cells_per_axis, save_rate), dtype=float)
+            self.cumul_prod.use_whole_buffer()
+            self.growth_rate = utils.my_data_structs.MyBufferSingle((self.cells_per_axis, save_rate), dtype=float)
+            self.growth_rate.use_whole_buffer()
+            # self.cumul_prod1 = utils.my_data_structs.MyBufferSingle(self.n_iter, dtype=float)
+            # self.growth_rate1 = utils.my_data_structs.MyBufferSingle(self.n_iter, dtype=float)
 
             # self.soll_prod = 0
             self.diffs = None
@@ -1539,15 +1542,15 @@ class CellularAutomata:
         soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[:ioz_bound + 1])**1.1
         self.diffs = product_c - soll_prod
 
-        self.cumul_prod.append(product_c[0])
-        self.growth_rate.append(soll_prod[0])
-
-        if ioz_bound >= 10:
-            self.cumul_prod1.append(product_c[10])
-            self.growth_rate1.append(soll_prod[10])
-        else:
-            self.cumul_prod1.append(0)
-            self.growth_rate1.append(0)
+        # self.cumul_prod.append(product_c[0])
+        # self.growth_rate.append(soll_prod[0])
+        #
+        # if ioz_bound >= 10:
+        #     self.cumul_prod1.append(product_c[10])
+        #     self.growth_rate1.append(soll_prod[10])
+        # else:
+        #     self.cumul_prod1.append(0)
+        #     self.growth_rate1.append(0)
 
         self.product_indexes = np.where((product_c <= Config.PHASE_FRACTION_LIMIT) & (self.diffs <= 0))[0]
 
@@ -2200,6 +2203,11 @@ class CellularAutomata:
         matrix_moles = self.matrix_moles_per_page - outward_eq_mat_moles - product_eq_mat_moles
         whole_moles = matrix_moles + oxidant_moles + active_moles + product_moles
         product_c = product_moles / whole_moles
+
+        if self.iteration % Config.STRIDE == 0:
+            self.cumul_prod.set_at_ind(self.product_indexes, product_c)
+            self.growth_rate.set_at_ind(soll_prod)
+
 
         soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[self.product_indexes]) ** 1.1
         # soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[self.product_indexes])

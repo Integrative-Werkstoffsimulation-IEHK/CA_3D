@@ -3,7 +3,7 @@ import numpy as np
 
 class MyBufferCoords:
     def __init__(self, reserve, dtype=np.short):
-        self.buffer = np.empty((3, reserve), dtype=dtype)
+        self.buffer = np.zeros((3, reserve), dtype=dtype)
         self.last_in_buffer = 0
 
     def append_to_buffer(self, data_array):
@@ -32,7 +32,7 @@ class MyBufferCoords:
 
 class MyBufferSingle:
     def __init__(self, reserve, dtype=np.uint32):
-        self.buffer = np.empty(reserve, dtype=dtype)
+        self.buffer = np.zeros(reserve, dtype=dtype)
         self.last_in_buffer = 0
 
     def copy_to_buffer(self, data_array):
@@ -42,6 +42,9 @@ class MyBufferSingle:
     def update_buffer(self, new_data):
         self.buffer[:new_data.shape] = new_data
         self.last_in_buffer = new_data.shape
+
+    def set_at_ind(self, val, pos):
+        self.buffer[pos] = val
 
     def append(self, value):
         self.buffer[self.last_in_buffer] = value
@@ -56,3 +59,6 @@ class MyBufferSingle:
 
     def reset_buffer(self):
         self.last_in_buffer = 0
+
+    def use_whole_buffer(self):
+        self.last_in_buffer = self.buffer.size - 1
