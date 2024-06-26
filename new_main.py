@@ -9,7 +9,7 @@ if __name__ == '__main__':
     Go along the kinetic growth line! Check the kinetic file as well!!!
 """
     new_system = SimulationConfigurator()
-    new_system.configurate_functions2()
+    new_system.configurate_functions()
 
     try:
         new_system.run_simulation()
@@ -26,16 +26,37 @@ if __name__ == '__main__':
         new_system.save_results()
         new_system.terminate_workers()
 
-        # iterations = np.arange(new_system.ca.cumul_prod.last_in_buffer) * new_system.ca.precipitation_stride
-        #
+
+
+        cumul_prod = new_system.ca.cumul_prod.get_buffer()
+        growth_rate = new_system.ca.growth_rate.get_buffer()
+
+        # Transpose the arrays to switch rows and columns
+        cumul_prod_transposed = cumul_prod.T
+        growth_rate_transposed = growth_rate.T
+
+        # Interleave the columns
+        interleaved_array = np.empty((new_system.ca.cumul_prod.last_in_buffer, 2 * new_system.ca.cells_per_axis), dtype=float)
+        interleaved_array[:, 0::2] = cumul_prod_transposed
+        interleaved_array[:, 1::2] = growth_rate_transposed
+
+        iterations = np.arange(new_system.ca.cumul_prod.last_in_buffer) * Config.STRIDE
+
+        data = np.column_stack((iterations.T, interleaved_array))
+
+        output_file_path = Config.SAVE_PATH + Config.GENERATED_VALUES.DB_ID + "_kinetics.txt"
+        with open(output_file_path, "w", encoding='utf-8') as f:
+            for row in data:
+                f.write(" ".join(map(str, row)) + "\n")
+
         # data = np.column_stack(
         #     (iterations, new_system.ca.cumul_prod.get_buffer(), new_system.ca.growth_rate.get_buffer()))
         # output_file_path = Config.SAVE_PATH + Config.GENERATED_VALUES.DB_ID + "_kinetics.txt"
         # with open(output_file_path, "w") as f:
         #     for row in data:
         #         f.write(" ".join(map(str, row)) + "\n")
-        #
-        # data = np.column_stack(
+
+        #       data = np.column_stack(
         #     (iterations, new_system.ca.cumul_prod1.get_buffer(), new_system.ca.growth_rate1.get_buffer()))
         # output_file_path = Config.SAVE_PATH + Config.GENERATED_VALUES.DB_ID + "1" + "_kinetics2.txt"
         # with open(output_file_path, "w") as f:

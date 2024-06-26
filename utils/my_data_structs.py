@@ -31,8 +31,8 @@ class MyBufferCoords:
 
 
 class MyBufferSingle:
-    def __init__(self, reserve, dtype=np.uint32):
-        self.buffer = np.zeros(reserve, dtype=dtype)
+    def __init__(self, shape, dtype=np.uint32):
+        self.buffer = np.zeros(shape, dtype=dtype)
         self.last_in_buffer = 0
 
     def copy_to_buffer(self, data_array):
@@ -43,8 +43,9 @@ class MyBufferSingle:
         self.buffer[:new_data.shape] = new_data
         self.last_in_buffer = new_data.shape
 
-    def set_at_ind(self, val, pos):
-        self.buffer[pos] = val
+    def set_at_ind(self, pos, val):
+        self.buffer[pos[0], pos[1]] = val
+        self.last_in_buffer = pos[1][0] + 1
 
     def append(self, value):
         self.buffer[self.last_in_buffer] = value
@@ -55,7 +56,7 @@ class MyBufferSingle:
         self.update_buffer(data)
 
     def get_buffer(self):
-        return self.buffer[:self.last_in_buffer]
+        return self.buffer[:, :self.last_in_buffer]
 
     def reset_buffer(self):
         self.last_in_buffer = 0

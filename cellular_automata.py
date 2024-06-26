@@ -316,11 +316,11 @@ class CellularAutomata:
 
             self.precipitation_stride = Config.STRIDE * Config.STRIDE_MULTIPLIER
 
-            save_rate = self.n_iter // Config.STRIDE
-            self.cumul_prod = utils.my_data_structs.MyBufferSingle((self.cells_per_axis, save_rate), dtype=float)
-            self.cumul_prod.use_whole_buffer()
-            self.growth_rate = utils.my_data_structs.MyBufferSingle((self.cells_per_axis, save_rate), dtype=float)
-            self.growth_rate.use_whole_buffer()
+            self.save_rate = self.n_iter // Config.STRIDE
+            self.cumul_prod = utils.my_data_structs.MyBufferSingle((self.cells_per_axis, self.save_rate), dtype=float)
+            # self.cumul_prod.use_whole_buffer()
+            self.growth_rate = utils.my_data_structs.MyBufferSingle((self.cells_per_axis, self.save_rate), dtype=float)
+            # self.growth_rate.use_whole_buffer()
             # self.cumul_prod1 = utils.my_data_structs.MyBufferSingle(self.n_iter, dtype=float)
             # self.growth_rate1 = utils.my_data_structs.MyBufferSingle(self.n_iter, dtype=float)
 
@@ -342,11 +342,13 @@ class CellularAutomata:
             args = input_queue.get()
             if args is None:  # Check for termination signal
                 break
-            # result = CellularAutomata.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(*args)
-            callback = args[-1]
-            args = args[:-1]
-            result = callback(*args)
-            output_queue.put(result)
+            try:
+                callback = args[-1]
+                args = args[:-1]
+                result = callback(*args)
+                output_queue.put(result)
+            except Exception as e:
+                output_queue.put(e)
 
     # def simulation(self):
     #     for self.iteration in progressbar.progressbar(range(self.n_iter)):
@@ -1857,8 +1859,8 @@ class CellularAutomata:
                 #         self.cur_case.product.fix_full_cells, CellularAutomata.ci_single_MP,
                 #         CellularAutomata.precip_step_standard_MP)
 
-                args = (self.product_x_nzs_mdata, self.primary_product.shm_mdata, self.primary_product.full_shm_mdata, self.precip_3d_init_mdata,
-                        self.primary_active.shm_mdata, self.primary_oxidant.shm_mdata, [ind],
+                args = (self.product_x_nzs_mdata, self.primary_product.shm_mdata, self.primary_product.full_shm_mdata,
+                        self.precip_3d_init_mdata, self.primary_active.shm_mdata, self.primary_oxidant.shm_mdata, [ind],
                         self.cur_case.nucleation_probabilities, self.utils, self.fetch_ind, CellularAutomata.ci_single_MP,
                         CellularAutomata.precip_step_standard_MP)
                 self.input_queue.put(args)
@@ -2205,12 +2207,15 @@ class CellularAutomata:
         whole_moles = matrix_moles + oxidant_moles + active_moles + product_moles
         product_c = product_moles / whole_moles
 
-        # if self.iteration % Config.STRIDE == 0:
-        #     self.cumul_prod.set_at_ind(self.product_indexes, product_c)
-        #     self.growth_rate.set_at_ind(soll_prod)
-
-
         soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[self.product_indexes]) ** 1.1
+
+        if self.iteration % Config.STRIDE == 0:
+            itera = np.full(len(self.product_indexes), self.iteration) // Config.STRIDE
+            indexes = np.stack((self.product_indexes, itera))
+
+            self.cumul_prod.set_at_ind(indexes, product_c)
+            self.growth_rate.set_at_ind(indexes, soll_prod)
+
         # soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[self.product_indexes])
         # temp_ind = np.where(soll_prod < 0)[0]
         # soll_prod[temp_ind] = 0
