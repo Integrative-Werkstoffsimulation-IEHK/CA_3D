@@ -52,7 +52,6 @@ class SimulationConfigurator:
         self.ca.cur_case.dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY,
                                                                                     Config.PRODUCTS.PRIMARY)
 
-
     def configurate_functions2(self):
         self.ca.primary_oxidant.diffuse = self.ca.primary_oxidant.diffuse_with_scale
         self.ca.primary_active.diffuse = self.ca.primary_active.diffuse_with_scale
@@ -62,8 +61,8 @@ class SimulationConfigurator:
         self.ca.precip_step = self.ca.precip_step_standard
         self.ca.check_intersection = self.ca.ci_single
 
-        self.ca.decomposition = self.ca.dissolution_atomic_with_kinetic_MP
-        self.ca.decomposition_intrinsic = self.ca.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP
+        self.ca.decomposition = self.ca.dissolution_atomic_with_kinetic_and_KP
+        self.ca.decomposition_intrinsic = self.ca.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL
 
         self.ca.cur_case = self.ca.cases.first
         self.ca.cases.first.go_around_func_ref = self.ca.go_around_mult_oxid_n_also_partial_neigh_aip

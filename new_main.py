@@ -9,7 +9,7 @@ if __name__ == '__main__':
     Go along the kinetic growth line! Check the kinetic file as well!!!
 """
     new_system = SimulationConfigurator()
-    new_system.configurate_functions()
+    new_system.configurate_functions2()
 
     try:
         new_system.run_simulation()
