@@ -1,13 +1,10 @@
 import numpy as np
 from configuration import Config
-from utils import NucleationProbabilities, DissolutionProbabilities
 
 
 neigh_range = Config.NEIGH_RANGE
 n_cells_per_axis = Config.N_CELLS_PER_AXIS
 
-# nucleation_probabilities = NucleationProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
-# dissolution_probabilities = DissolutionProbabilities(Config.PROBABILITIES.PRIMARY, Config.PRODUCTS.PRIMARY)
 
 def generate_neigh_indexes_flat():
     size = 3 + (neigh_range - 1) * 2

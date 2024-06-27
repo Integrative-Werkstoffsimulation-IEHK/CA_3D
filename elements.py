@@ -1,8 +1,8 @@
 # from microstructure import voronoi
 from utils.numba_functions import *
 from configuration import Config
-import random
 from multiprocessing import shared_memory
+
 
 class ActiveElem:
     def __init__(self, settings):
@@ -33,11 +33,6 @@ class ActiveElem:
         self.c3d = np.ndarray(self.extended_shape, dtype=np.ubyte, buffer=self.c3d_shared.buf)
 
         self.shm_mdata = SharedMetaData(self.c3d_shared.name, self.extended_shape, np.ubyte)
-
-        # self.c3d_shared_name = self.c3d_shared.name
-        # self.shared_shape = (self.cells_per_axis, self.cells_per_axis, extended_axis)
-        # self.shared_type = np.ubyte
-
         self.in_3D_flag = False
 
         # exact concentration space fill
@@ -664,11 +659,6 @@ class Product:
         temp = np.full(self.shape, 0, dtype=np.ubyte)
         self.c3d_shared = shared_memory.SharedMemory(create=True, size=temp.size)
         self.c3d = np.ndarray(self.shape, dtype=np.ubyte, buffer=self.c3d_shared.buf)
-
-        # self.c3d_shared_name = self.c3d_shared.name
-        # self.shared_shape = (cells_per_axis, cells_per_axis, cells_per_axis + 1)
-        # self.shared_type = np.ubyte
-
         self.shm_mdata = SharedMetaData(self.c3d_shared.name, self.shape, np.ubyte)
 
         # self.full_c3d = np.full((shape[0], shape[1], shape[2] - 1), False)
@@ -678,8 +668,6 @@ class Product:
 
         # self.full_c3d_shared_name = self.full_c3d_shared.name
         full_c3d_shared_shape = (self.shape[0], self.shape[1], self.shape[2] - 1)
-        # self.full_shared_type = bool
-
         self.full_shm_mdata = SharedMetaData(self.full_c3d_shared.name, full_c3d_shared_shape, bool)
 
     def fix_full_cells_ox_numb_single(self, new_precip):

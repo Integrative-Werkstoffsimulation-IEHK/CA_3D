@@ -142,12 +142,6 @@ class CellularAutomata:
                         (self.cells_per_axis, self.cells_per_axis, self.cells_per_axis + 1), 0, dtype=np.ubyte)
 
                 if Config.MULTIPROCESSING:
-                    # self.shm_p = shared_memory.SharedMemory(create=True, size=self.primary_product.c3d.size)
-                    # self.shared_array_p = np.ndarray(self.primary_product.c3d.shape, dtype=np.ubyte, buffer=self.shm_p.buf)
-                    #
-                    # # self.shm_p = multiprocessing.RawArray(ctypes.c_ubyte, self.primary_product.c3d.size)
-                    # # self.shared_array_p = np.frombuffer(self.shm_p, dtype=np.ubyte).reshape(self.primary_product.c3d.shape)
-                    #
                     self.precip_3d_init_shm = shared_memory.SharedMemory(create=True, size=self.cases.first.precip_3d_init.size)
 
                     self.precip_3d_init = np.ndarray(self.cases.first.precip_3d_init.shape,
@@ -160,21 +154,11 @@ class CellularAutomata:
 
                     product_x_nzs = np.full(self.cells_per_axis, False, dtype=bool)
                     self.product_x_nzs_shm = shared_memory.SharedMemory(create=True, size=product_x_nzs.size)
-                    self.product_x_nzs = np.ndarray(product_x_nzs.shape, dtype=product_x_nzs.dtype, buffer=self.product_x_nzs_shm.buf)
+                    self.product_x_nzs = np.ndarray(product_x_nzs.shape, dtype=product_x_nzs.dtype,
+                                                    buffer=self.product_x_nzs_shm.buf)
 
-                    self.product_x_nzs_mdata = SharedMetaData(self.product_x_nzs_shm.name, product_x_nzs.shape, product_x_nzs.dtype)
-                    #
-                    # self.shm_p_FULL = shared_memory.SharedMemory(create=True, size=self.primary_product.full_c3d.size)
-                    # self.shared_array_p_FULL = np.ndarray(self.primary_product.full_c3d.shape, dtype=bool,
-                    #                                    buffer=self.shm_p_FULL.buf)
-                    #
-                    # self.shm_a = shared_memory.SharedMemory(create=True, size=self.primary_active.c3d.size)
-                    # self.shared_array_a = np.ndarray(self.primary_active.c3d.shape, dtype=np.ubyte,
-                    #                                  buffer=self.shm_a.buf)
-                    #
-                    # self.shm_o = shared_memory.SharedMemory(create=True, size=self.primary_oxidant.c3d.size)
-                    # self.shared_array_o = np.ndarray(self.primary_oxidant.c3d.shape, dtype=np.ubyte,
-                    #                                  buffer=self.shm_o.buf)
+                    self.product_x_nzs_mdata = SharedMetaData(self.product_x_nzs_shm.name, product_x_nzs.shape,
+                                                              product_x_nzs.dtype)
 
                     self.numb_of_proc = Config.NUMBER_OF_PROCESSES
                     if self.cells_per_axis % self.numb_of_proc == 0:
@@ -343,13 +327,10 @@ class CellularAutomata:
             args = input_queue.get()
             if args is None:  # Check for termination signal
                 break
-            try:
-                callback = args[-1]
-                args = args[:-1]
-                result = callback(*args)
-                output_queue.put(result)
-            except Exception as e:
-                output_queue.put(e)
+            callback = args[-1]
+            args = args[:-1]
+            result = callback(*args)
+            output_queue.put(result)
 
     # def simulation(self):
     #     for self.iteration in progressbar.progressbar(range(self.n_iter)):
@@ -1858,46 +1839,18 @@ class CellularAutomata:
 
             # Dynamically feed new arguments to workers for this iteration
             for ind in self.comb_indexes:
-                # args = (self.primary_product.c3d.shape, self.primary_product.full_c3d.shape, self.primary_product.full_c3d.shape,
-                #         self.primary_active.c3d.shape, self.primary_oxidant.c3d.shape,
-
-                #         self.shm_p, self.shm_p_b, self.shm_p_FULL, self.shm_a, self.shm_o, self.comb_indexes,
-                #         self.cur_case.nucleation_probabilities, self.utils, self.fetch_ind, self.cases.first.go_around_func_ref,
-                #         self.cur_case.product.fix_full_cells, CellularAutomata.ci_single_MP,
-                #         CellularAutomata.precip_step_standard_MP)
-
-                # args = (self.primary_product.c3d.shape, self.primary_product.full_c3d.shape,
-                #         self.cases.first.precip_3d_init.shape,
-                #         self.primary_active.c3d.shape, self.primary_oxidant.c3d.shape,
-                #         self.shm_p, self.shm_p_b, self.shm_p_FULL, self.shm_a, self.shm_o, self.comb_indexes,
-                #         self.cur_case.nucleation_probabilities, self.utils, self.fetch_ind,
-                #         self.cases.first.go_around_func_ref,
-                #         self.cur_case.product.fix_full_cells, CellularAutomata.ci_single_MP,
-                #         CellularAutomata.precip_step_standard_MP)
-                # args = (self.primary_product.c3d.shape, self.primary_product.full_c3d.shape,
-                #         self.cases.first.precip_3d_init.shape,
-                #         self.primary_active.c3d.shape, self.primary_oxidant.c3d.shape,
-                #         self.primary_product.c3d_shared, self.shm_p_b, self.primary_product.full_c3d_shared,
-                #         self.primary_active.c3d_shared, self.primary_oxidant.c3d_shared, [ind],
-                #         self.cur_case.nucleation_probabilities, self.utils, self.fetch_ind,
-                #         self.cases.first.go_around_func_ref,
-                #         self.cur_case.product.fix_full_cells, CellularAutomata.ci_single_MP,
-
-                #         CellularAutomata.precip_step_standard_MP)
-
                 args = (product_x_nzs_mdata, primary_product_mdata, full_shm_mdata,
                         precip_3d_init_mdata, primary_active, primary_oxidant, [ind],
-                        new_fetch_ind, nucleation_probabilities, CellularAutomata.ci_single_MP, CellularAutomata.precip_step_standard_MP)
+                        new_fetch_ind, nucleation_probabilities, CellularAutomata.ci_single_MP,
+                        CellularAutomata.precip_step_standard_MP)
                 self.input_queue.put(args)
 
             # Collect results for this iteration
-            # results = []
+            results = []
             for _ in self.comb_indexes:
-                self.output_queue.get()
-                # results.append(result)
-
-            # self.cases.first.fix_init_precip_func_ref(self.furthest_index)
-            # self.precip_step()
+                # self.output_queue.get()
+                result = self.output_queue.get()
+                results.append(result)
 
         self.primary_oxidant.transform_to_descards()
 
@@ -2483,6 +2436,7 @@ class CellularAutomata:
 
         shm_o.close()
         shm_p_FULL.close()
+        return 0
 
     def precip_step_two_products(self):
         for plane_index in reversed(self.comb_indexes):
