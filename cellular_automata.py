@@ -7,6 +7,7 @@ import multiprocessing
 from multiprocessing import shared_memory
 import nes_for_mp
 import gc
+from memory_profiler import profile
 
 
 def fix_full_cells(array_3d, full_array_3d, new_precip):
@@ -175,15 +176,17 @@ class CellularAutomata:
                         self.chunk_ranges[pos, 1] = self.chunk_ranges[pos, 0] + chunk_size
                     self.chunk_ranges[-1, 1] = self.cells_per_axis
 
-                    self.input_queue = multiprocessing.Queue()
-                    self.output_queue = multiprocessing.Queue()
+                    # self.input_queue = multiprocessing.Queue()
+                    # self.output_queue = multiprocessing.Queue()
 
-                    self.workers = []
-                    # Initialize and start worker processes
-                    for _ in range(self.numb_of_proc):
-                        p = multiprocessing.Process(target=self.worker, args=(self.input_queue, self.output_queue))
-                        p.start()
-                        self.workers.append(p)
+                    # self.workers = []
+                    # # Initialize and start worker processes
+                    # for _ in range(self.numb_of_proc):
+                    #     p = multiprocessing.Process(target=self.worker, args=(self.input_queue, self.output_queue))
+                    #     p.start()
+                    #     self.workers.append(p)
+
+                    self.pool = multiprocessing.Pool(processes=self.numb_of_proc)
 
                     # self.buffer_size = Config.PRODUCTS.PRIMARY.OXIDATION_NUMBER * self.cells_per_axis * chunk_size
 
@@ -304,13 +307,8 @@ class CellularAutomata:
 
             self.save_rate = self.n_iter // Config.STRIDE
             self.cumul_prod = utils.my_data_structs.MyBufferSingle((self.cells_per_axis, self.save_rate), dtype=float)
-            # self.cumul_prod.use_whole_buffer()
             self.growth_rate = utils.my_data_structs.MyBufferSingle((self.cells_per_axis, self.save_rate), dtype=float)
-            # self.growth_rate.use_whole_buffer()
-            # self.cumul_prod1 = utils.my_data_structs.MyBufferSingle(self.n_iter, dtype=float)
-            # self.growth_rate1 = utils.my_data_structs.MyBufferSingle(self.n_iter, dtype=float)
 
-            # self.soll_prod = 0
             self.diffs = None
             self.curr_time = 0
 
@@ -320,40 +318,30 @@ class CellularAutomata:
             adj_lamd[neg_ind] = 0
             self.active_times = adj_lamd ** 2 / Config.GENERATED_VALUES.KINETIC_KONST ** 2
 
-        # self.begin = time.time()
+    # @staticmethod
+    # def worker(input_queue, output_queue):
+    #     while True:
+    #         args = input_queue.get()
+    #         if args is None:  # Check for termination signal
+    #             break
+    #         if args == "GC":
+    #             result = gc.collect()
+    #         else:
+    #             callback = args[-1]
+    #             args = args[:-1]
+    #             result = callback(*args)
+    #
+    #         output_queue.put(result)
 
     @staticmethod
-    def worker(input_queue, output_queue):
-        while True:
-            args = input_queue.get()
-            if args is None:  # Check for termination signal
-                break
-            if args == "GC":
-                result = gc.collect()
-            else:
-                callback = args[-1]
-                args = args[:-1]
-                result = callback(*args)
-
-            output_queue.put(result)
-
-    # def simulation(self):
-    #     for self.iteration in progressbar.progressbar(range(self.n_iter)):
-            # if self.iteration % self.precipitation_stride == 0:
-            # self.precip_func()
-            # self.decomposition()
-                # self.calc_precipitation_front_only_cells()
-            # self.precip_func()
-            # self.decomposition()
-            # self.diffusion_inward()
-            # self.diffusion_outward()
-            # self.diffusion_outward_with_mult_srtide()
-            # self.save_results()
-
-        # end = time.time()
-        # self.elapsed_time = (end - self.begin)
-        # self.utils.db.insert_time(self.elapsed_time)
-        # self.utils.db.conn.commit()
+    def worker(args):
+        if args == "GC":
+            result = gc.collect()
+        else:
+            callback = args[-1]
+            args = args[:-1]
+            result = callback(*args)
+        return result
 
     def dissolution_zhou_wei_original(self):
         """Implementation of original not adapted Zhou and Wei approach. Only two probabilities p for block and pn
@@ -1807,19 +1795,9 @@ class CellularAutomata:
         self.get_combi_ind()
 
         if len(self.comb_indexes) > 0:
-            # if len(self.comb_indexes) > 5:
-            #     print()
-            # np.copyto(self.shared_array_a, self.primary_active.c3d)
-            # np.copyto(self.shared_array_o, self.primary_oxidant.c3d)
-
-            # self.shared_array_p_b[:, :, 0:self.furthest_index + 2] = 0
-            # self.shared_array_p_b[:, :, 0:self.furthest_index + 2] = self.cur_case.product.c3d[:, :, 0:self.furthest_index + 2]
-
             self.precip_3d_init[:, :, 0:self.furthest_index + 2] = 0
             self.precip_3d_init[:, :, 0:self.furthest_index + 2] = self.cur_case.product.c3d[:, :, 0:self.furthest_index + 2]
 
-            # np.copyto(self.shared_array_p_b, self.shared_array_p)
-            # np.copyto(self.shared_array_p_FULL, self.primary_product.full_c3d)
             new_fetch_ind = np.array(self.fetch_ind)
 
             primary_product_mdata = SharedMetaData(self.primary_product.shm_mdata.name,
@@ -1845,19 +1823,25 @@ class CellularAutomata:
                                                                      Config.PRODUCTS.PRIMARY)
 
             # Dynamically feed new arguments to workers for this iteration
-            for ind in self.comb_indexes:
-                args = (product_x_nzs_mdata, primary_product_mdata, full_shm_mdata,
+            # args = []
+            # for ind in self.comb_indexes:
+            #     args.append((product_x_nzs_mdata, primary_product_mdata, full_shm_mdata,
+            #             precip_3d_init_mdata, primary_active, primary_oxidant, [ind],
+            #             new_fetch_ind, nucleation_probabilities, CellularAutomata.ci_single_MP,
+            #             CellularAutomata.precip_step_standard_MP))
+            tasks = [(product_x_nzs_mdata, primary_product_mdata, full_shm_mdata,
                         precip_3d_init_mdata, primary_active, primary_oxidant, [ind],
                         new_fetch_ind, nucleation_probabilities, CellularAutomata.ci_single_MP,
-                        CellularAutomata.precip_step_standard_MP)
-                self.input_queue.put(args)
-
-            # Collect results for this iteration
-            results = []
-            for _ in self.comb_indexes:
-                # self.output_queue.get()
-                result = self.output_queue.get()
-                results.append(result)
+                        CellularAutomata.precip_step_standard_MP) for ind in self.comb_indexes]
+            #     self.input_queue.put(args)
+            #
+            # # Collect results for this iteration
+            # results = []
+            # for _ in self.comb_indexes:
+            #     # self.output_queue.get()
+            #     result = self.output_queue.get()
+            #     results.append(result)
+            results = self.pool.map(CellularAutomata.worker, tasks)
 
         self.primary_oxidant.transform_to_descards()
 
@@ -2223,17 +2207,23 @@ class CellularAutomata:
                                            self.primary_product.shm_mdata.dtype)
             
             # Dynamically feed new arguments to workers for this iteration
-            for chunk_range in self.chunk_ranges:
+            # for chunk_range in self.chunk_ranges:
+            #
+            #     args = (new_shm_mdata, chunk_range, new_comb_indexes, new_aggregated_ind, dissolution_probabilities,
+            #             CellularAutomata.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP)
+            #     self.input_queue.put(args)
+            #
+            # # Collect results for this iteration
+            # results = []
+            # for _ in self.chunk_ranges:
+            #     result = self.output_queue.get()
+            #     results.append(result)
 
-                args = (new_shm_mdata, chunk_range, new_comb_indexes, new_aggregated_ind, dissolution_probabilities,
-                        CellularAutomata.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP)
-                self.input_queue.put(args)
+            tasks = [(new_shm_mdata, chunk_range, new_comb_indexes, new_aggregated_ind, dissolution_probabilities,
+                        CellularAutomata.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP) for chunk_range in
+                     self.chunk_ranges]
 
-            # Collect results for this iteration
-            results = []
-            for _ in self.chunk_ranges:
-                result = self.output_queue.get()
-                results.append(result)
+            results = self.pool.map(CellularAutomata.worker, tasks)
 
             to_dissolve = np.array(np.concatenate(results, axis=1), dtype=np.ushort)
             if len(to_dissolve[0]) > 0:

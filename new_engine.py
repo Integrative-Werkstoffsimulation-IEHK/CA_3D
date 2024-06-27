@@ -128,13 +128,16 @@ class SimulationConfigurator:
                 self.ca.secondary_active.transform_to_3d(self.ca.curr_max_furthest)
 
     def terminate_workers(self):
-        # Signal workers to terminate
-        for _ in self.ca.workers:
-            self.ca.input_queue.put(None)
+        # # Signal workers to terminate
+        # for _ in self.ca.workers:
+        #     self.ca.input_queue.put(None)
+        #
+        # # Wait for all workers to terminate
+        # for worker in self.ca.workers:
+        #     worker.join()
 
-        # Wait for all workers to terminate
-        for worker in self.ca.workers:
-            worker.join()
+        self.ca.pool.close()
+        self.ca.pool.join()
 
         self.ca.precip_3d_init_shm.close()
         self.ca.precip_3d_init_shm.unlink()
@@ -172,14 +175,16 @@ class SimulationConfigurator:
         self.db.insert_last_iteration(self.ca.iteration)
 
     def enforce_gc(self):
-        for _ in self.ca.workers:
-            args = "GC"
-            self.ca.input_queue.put(args)
+        # for _ in self.ca.workers:
+        #     args = "GC"
+        #     self.ca.input_queue.put(args)
+        #
+        # results = []
+        # for _ in self.ca.workers:
+        #     result = self.ca.output_queue.get()
+        #     results.append(result)
 
-        results = []
-        for _ in self.ca.workers:
-            result = self.ca.output_queue.get()
-            results.append(result)
-
+        args = [("GC") for _ in range(self.ca.numb_of_proc)]
+        results = self.ca.pool.map(CellularAutomata.worker, args)
         gc.collect()
         print("Done GC. Results after: ", results)

@@ -1,10 +1,95 @@
 import multiprocessing
-import time
 import gc
+import numpy as np
+from memory_profiler import profile
 
-some = gc.collect()
 
-print()
+class CellularAutomata:
+    @staticmethod
+    @profile
+    def worker(input_queue, output_queue):
+        while True:
+            try:
+                args = input_queue.get()
+                if args is None:  # Check for termination signal
+                    break
+                if args == "GC":
+                    result = gc.collect()
+                else:
+                    callback = args[-1]
+                    args = args[:-1]
+                    result = callback(*args)
+
+                output_queue.put(result)
+            except Exception as e:
+                print(f"Error in worker: {e}")
+                output_queue.put(None)  # or handle the error appropriately
+
+    def run_simulation(self):
+        # Setup queues
+        self.input_queue = multiprocessing.Queue()
+        self.output_queue = multiprocessing.Queue()
+
+        # Start worker processes
+        self.processes = []
+        for _ in range(4):  # Adjust the number of worker processes as needed
+            p = multiprocessing.Process(target=CellularAutomata.worker, args=(self.input_queue, self.output_queue))
+            self.processes.append(p)
+            p.start()
+
+        # Dynamically feed new arguments to workers for this iteration
+        for ind in self.comb_indexes:
+            args = (self.product_x_nzs_mdata, self.primary_product_mdata, self.full_shm_mdata,
+                    self.precip_3d_init_mdata, self.primary_active, self.primary_oxidant, [ind],
+                    self.new_fetch_ind, self.nucleation_probabilities, CellularAutomata.ci_single_MP,
+                    CellularAutomata.precip_step_standard_MP)
+            self.input_queue.put(args)
+
+        # Optionally, insert GC calls at appropriate intervals
+        self.input_queue.put("GC")
+
+        # Collect results for this iteration
+        results = []
+        for _ in self.comb_indexes:
+            result = self.output_queue.get()
+            if result is not None:
+                results.append(result)
+
+        # Signal workers to exit
+        for _ in self.processes:
+            self.input_queue.put(None)
+
+        # Wait for all workers to finish
+        for p in self.processes:
+            p.join()
+
+        return results
+
+    # Example placeholders for class variables and methods
+    comb_indexes = range(10)
+    product_x_nzs_mdata = np.zeros((100, 100))  # Example data
+    primary_product_mdata = np.zeros((100, 100))  # Example data
+    full_shm_mdata = np.zeros((100, 100))  # Example data
+    precip_3d_init_mdata = np.zeros((100, 100))  # Example data
+    primary_active = np.zeros((100, 100))  # Example data
+    primary_oxidant = np.zeros((100, 100))  # Example data
+    new_fetch_ind = np.zeros((100, 100))  # Example data
+    nucleation_probabilities = np.zeros((100, 100))  # Example data
+
+    @staticmethod
+    def ci_single_MP(*args):
+        # Placeholder for the actual implementation
+        return args
+
+    @staticmethod
+    def precip_step_standard_MP(*args):
+        # Placeholder for the actual implementation
+        return args
+
+if __name__ == '__main__':
+    ca = CellularAutomata()
+    results = ca.run_simulation()
+    print("Simulation results:", results)
 
 # class DynamicProcessManager:
 #     def __init__(self, num_workers):
