@@ -60,7 +60,7 @@ class Config:
     PROD_INCR_CONST = 1 * 10 ** -5
     PROD_ERROR = 1 * 10 ** -3
     ZETTA_ZERO = 1 * (10 ** -6)  # [m]
-    ZETTA_FINAL = 50 * (10 ** -6)  # [m]
+    ZETTA_FINAL = 10000 * (10 ** -6)  # [m]
 
     INWARD_DIFFUSION = True
     OUTWARD_DIFFUSION = True
@@ -68,12 +68,12 @@ class Config:
     SAVE_WHOLE = False
     DECOMPOSE_PRECIPITATIONS = True
     FULL_CELLS = False
-    SAVE_PATH = 'W:/SIMCA/test_runs_data/'
+    SAVE_PATH = 'C:/Users/alexe/PycharmProjects/test_runs_data/'
     SAVE_POST_PROCESSED_INPUT = True
 
     # Execution___________________________________________________________________
     MULTIPROCESSING = True
-    NUMBER_OF_PROCESSES = 1
+    NUMBER_OF_PROCESSES = 7
 
     # PROBABILITIES_______________________________________________________________
     PROBABILITIES = ElementGroups()

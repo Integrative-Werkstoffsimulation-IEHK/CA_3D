@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import time
 import datetime
-from .data_base import *
+from configuration import Config
 
 
 class Utils:
@@ -606,9 +606,9 @@ class Utils:
         coord = coord.transpose()
 
         coord = np.concatenate((self.ind_decompose_flat_z, coord))
-        addittional = coord[[2, 5]]
+        additional = coord[[2, 5]]
         coord = np.delete(coord, [2, 5], axis=0)
-        coord = np.concatenate((coord, addittional))
+        coord = np.concatenate((coord, additional))
 
         return np.array(coord, dtype=np.byte)
 

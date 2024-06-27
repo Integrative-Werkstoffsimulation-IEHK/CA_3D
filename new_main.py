@@ -8,6 +8,7 @@ if __name__ == '__main__':
     Nucleation and dissolution throughout the whole simulation (both schemes applied). Also with kinetic coefficient!!!
     Go along the kinetic growth line! Check the kinetic file as well!!!
 """
+
     new_system = SimulationConfigurator()
     new_system.configurate_functions()
 
