@@ -14,9 +14,10 @@ if __name__ == '__main__':
 
     try:
         new_system.run_simulation()
+    # except (Exception,):
+    #     new_system.terminate_workers()
     finally:
         try:
-
             if not Config.SAVE_WHOLE:
                 # new_system.save_results()
                 print()
@@ -26,7 +27,6 @@ if __name__ == '__main__':
 
         new_system.save_results()
         new_system.terminate_workers()
-
 
         cumul_prod = new_system.ca.cumul_prod.get_buffer()
         growth_rate = new_system.ca.growth_rate.get_buffer()

@@ -60,7 +60,7 @@ class Config:
     PROD_INCR_CONST = 1 * 10 ** -5
     PROD_ERROR = 1 * 10 ** -3
     ZETTA_ZERO = 1 * (10 ** -6)  # [m]
-    ZETTA_FINAL = 10000 * (10 ** -6)  # [m]
+    ZETTA_FINAL = 50 * (10 ** -6)  # [m]
 
     INWARD_DIFFUSION = True
     OUTWARD_DIFFUSION = True
@@ -73,7 +73,7 @@ class Config:
 
     # Execution___________________________________________________________________
     MULTIPROCESSING = True
-    NUMBER_OF_PROCESSES = 7
+    NUMBER_OF_PROCESSES = 10
 
     # PROBABILITIES_______________________________________________________________
     PROBABILITIES = ElementGroups()

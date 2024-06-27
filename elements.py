@@ -2,6 +2,7 @@
 from utils.numba_functions import *
 from configuration import Config
 from multiprocessing import shared_memory
+from memory_profiler import profile
 
 
 class ActiveElem:
@@ -29,7 +30,7 @@ class ActiveElem:
         self.i_ind = None
 
         temp = np.full(self.extended_shape, 0, dtype=np.ubyte)
-        self.c3d_shared = shared_memory.SharedMemory(create=True, size=temp.size)
+        self.c3d_shared = shared_memory.SharedMemory(create=True, size=temp.nbytes)
         self.c3d = np.ndarray(self.extended_shape, dtype=np.ubyte, buffer=self.c3d_shared.buf)
 
         self.shm_mdata = SharedMetaData(self.c3d_shared.name, self.extended_shape, np.ubyte)
@@ -295,7 +296,7 @@ class OxidantElem:
 
         # self.c3d = np.full(self.extended_shape, 0, dtype=np.ubyte)
         temp = np.full(self.extended_shape, 0, dtype=np.ubyte)
-        self.c3d_shared = shared_memory.SharedMemory(create=True, size=temp.size)
+        self.c3d_shared = shared_memory.SharedMemory(create=True, size=temp.nbytes)
         self.c3d = np.ndarray(self.extended_shape, dtype=np.ubyte, buffer=self.c3d_shared.buf)
 
         # self.c3d_shared_name = self.c3d_shared.name
@@ -655,18 +656,15 @@ class Product:
             self.fix_full_cells = self.fix_full_cells_ox_numb_mult
             self.transform_c3d = self.transform_c3d_mult
 
-        # self.c3d = np.full(shape, 0, dtype=np.ubyte)
         temp = np.full(self.shape, 0, dtype=np.ubyte)
-        self.c3d_shared = shared_memory.SharedMemory(create=True, size=temp.size)
+        self.c3d_shared = shared_memory.SharedMemory(create=True, size=temp.nbytes)
         self.c3d = np.ndarray(self.shape, dtype=np.ubyte, buffer=self.c3d_shared.buf)
         self.shm_mdata = SharedMetaData(self.c3d_shared.name, self.shape, np.ubyte)
 
-        # self.full_c3d = np.full((shape[0], shape[1], shape[2] - 1), False)
         temp = np.full((self.shape[0], self.shape[1], self.shape[2] - 1), 0, dtype=bool)
-        self.full_c3d_shared = shared_memory.SharedMemory(create=True, size=temp.size)
+        self.full_c3d_shared = shared_memory.SharedMemory(create=True, size=temp.nbytes)
         self.full_c3d = np.ndarray((self.shape[0], self.shape[1], self.shape[2] - 1), dtype=bool, buffer=self.full_c3d_shared.buf)
 
-        # self.full_c3d_shared_name = self.full_c3d_shared.name
         full_c3d_shared_shape = (self.shape[0], self.shape[1], self.shape[2] - 1)
         self.full_shm_mdata = SharedMetaData(self.full_c3d_shared.name, full_c3d_shared_shape, bool)
 

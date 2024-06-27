@@ -78,8 +78,8 @@ class SimulationConfigurator:
         self.begin = time.time()
 
         for self.ca.iteration in progressbar.progressbar(range(Config.N_ITERATIONS)):
-            if self.ca.iteration % self.ca.precipitation_stride == 0:
-                self.enforce_gc()
+            # if self.ca.iteration % self.ca.precipitation_stride == 0:
+            #     self.enforce_gc()
             # if self.iteration % self.precipitation_stride == 0:
             self.ca.precip_func()
             self.ca.decomposition()
