@@ -28,7 +28,6 @@ if __name__ == '__main__':
         new_system.terminate_workers()
 
 
-
         cumul_prod = new_system.ca.cumul_prod.get_buffer()
         growth_rate = new_system.ca.growth_rate.get_buffer()
 

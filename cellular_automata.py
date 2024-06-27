@@ -328,14 +328,14 @@ class CellularAutomata:
             args = input_queue.get()
             if args is None:  # Check for termination signal
                 break
-            callback = args[-1]
-            args = args[:-1]
-            result = callback(*args)
+            if args == "GC":
+                result = gc.collect()
+            else:
+                callback = args[-1]
+                args = args[:-1]
+                result = callback(*args)
 
-            gc.collect()
-            
             output_queue.put(result)
-
 
     # def simulation(self):
     #     for self.iteration in progressbar.progressbar(range(self.n_iter)):
@@ -965,21 +965,12 @@ class CellularAutomata:
 
         to_dissol_pn_buffer = np.array([[], [], []], dtype=np.ushort)
 
-        # coord_buffer = utils.MyBufferCoords(buffer_size)
-        # to_dissol_pn_buffer = utils.MyBufferCoords(buffer_size)
-
         nz_ind = np.array(np.nonzero(array_3D[chunk_range[0]:chunk_range[1], :, comb_ind]))
         nz_ind[0] += chunk_range[0]
-        # coord_buffer.copy_to_buffer(nz_ind)
         coord_buffer = nz_ind
 
         new_data = comb_ind[nz_ind[2]]
         coord_buffer[2, :] = new_data
-
-        # coord_buffer.update_buffer_at_axis(comb_ind[nz_ind[2]], axis=2)
-
-        # def update_buffer_at_axis(self, new_data, axis=2):
-        #     self.buffer[axis, :self.last_in_buffer] = new_data
 
         if len(coord_buffer[0]) > 0:
             # flat_arounds = utils_inst.calc_sur_ind_decompose_flat_with_zero(coord_buffer.get_buffer())
@@ -999,6 +990,8 @@ class CellularAutomata:
 
             # coord_buffer.copy_to_buffer(coord_buffer.get_elem_at_ind(where_not_null))
             coord_buffer = coord_buffer[:, where_not_null]
+
+            del flat_arounds
 
             if len(coord_buffer[0]) > 0:
                 all_neigh = all_neigh[where_not_null]
@@ -1022,6 +1015,7 @@ class CellularAutomata:
                 all_neigh_bool = np.concatenate((all_neigh_bool, non_flat_neigh), axis=1)
 
                 ind_where_blocks = aggregate(aggregated_ind, all_neigh_bool)
+                del all_neigh_bool, all_neigh
 
                 if len(ind_where_blocks) > 0:
                     # to_dissol_pn_buffer.copy_to_buffer(coord_buffer.get_elem_instead_ind(ind_where_blocks))
@@ -1035,6 +1029,7 @@ class CellularAutomata:
                     all_neigh_block = arr_len_flat[ind_where_blocks]
 
                     numb_in_prod_block = numb_in_prod[ind_where_blocks]
+                    del numb_in_prod, ind_where_blocks, arr_len_flat
                 else:
                     # to_dissol_pn_buffer.copy_to_buffer(coord_buffer.get_buffer())
                     to_dissol_pn_buffer = coord_buffer
@@ -1045,6 +1040,7 @@ class CellularAutomata:
                     coord_buffer = np.array([[], [], []], dtype=np.ushort)
                     all_neigh_block = np.array([])
                     numb_in_prod_block = np.array([], dtype=int)
+                    del numb_in_prod, arr_len_flat
 
             # to_dissolve_no_block = to_dissol_pn_buffer.get_buffer()
             to_dissolve_no_block = to_dissol_pn_buffer
@@ -1078,7 +1074,13 @@ class CellularAutomata:
             to_dissol_no_neigh = to_dissol_no_neigh[:, temp_ind]
 
             to_dissolve = np.concatenate((to_dissolve_no_block, to_dissol_no_neigh, to_dissolve_block), axis=1)
+
+            del all_neigh_block, \
+                all_neigh_no_block, numb_in_prod_block, numb_in_prod_no_block, to_dissol_no_neigh, \
+                to_dissolve_no_block, probs_no_block, non_z_ind, repeated_coords, \
+                randomise, temp_ind, to_dissolve_block, probs_block, repeated_probs, probs_no_neigh
         shm.close()
+        del shm, array_3D, nz_ind, coord_buffer, to_dissol_pn_buffer,
         return to_dissolve
 
     def dissolution_zhou_wei_no_bsf(self):
@@ -2441,6 +2443,9 @@ class CellularAutomata:
 
         shm_o.close()
         shm_p_FULL.close()
+        del oxidant, shm_o, shm_p_FULL, full_3d, oxidant_cells, product_x_nzs_mdata, shm_mdata_product,\
+            shm_mdata_full_product, shm_mdata_product_init, shm_mdata_active, shm_mdata_oxidant,\
+            plane_index, fetch_indexes, nucleation_probabilities, callback, exists, temp_ind
         return 0
 
     def precip_step_two_products(self):
@@ -2557,7 +2562,8 @@ class CellularAutomata:
                 self.product_x_nzs[seeds[2][0]] = True
 
     @staticmethod
-    def ci_single_MP(seeds, oxidant, full_3d, shm_mdata_product, shm_mdata_active, shm_mdata_product_init, nucleation_probabilities,
+    def ci_single_MP(seeds, oxidant, full_3d, shm_mdata_product, shm_mdata_active, shm_mdata_product_init,
+                     nucleation_probabilities,
                      product_x_nzs_mdata):
 
         shm_p = shared_memory.SharedMemory(name=shm_mdata_product.name)
@@ -2594,6 +2600,8 @@ class CellularAutomata:
             randomise = np.array(np.random.random_sample(arr_len_in_flat.size), dtype=np.float64)
             temp_ind = np.where(randomise < needed_prob)[0]
 
+            del arr_len_in_flat, homogeneous_ind, needed_prob, flat_arounds, randomise
+
             if len(temp_ind) > 0:
                 seeds = seeds[temp_ind]
                 neighbours = neighbours[temp_ind]
@@ -2622,10 +2630,15 @@ class CellularAutomata:
                 # dissolution function
                 product_x_nzs[seeds[2][0]] = True
 
+                del out_to_del, to_del, coord
+
         shm_p.close()
         shm_a.close()
         shm_product_init.close()
         shm_o_product_x_nzs.close()
+        del seeds, oxidant, full_3d, shm_mdata_product, shm_mdata_active, shm_mdata_product_init, nucleation_probabilities,\
+            product_x_nzs_mdata, shm_p, product, shm_a, active, shm_product_init, product_init, shm_o_product_x_nzs,\
+            product_x_nzs, all_arounds, neighbours, arr_len_out, temp_ind
 
     def ci_multi(self, seeds):
         """

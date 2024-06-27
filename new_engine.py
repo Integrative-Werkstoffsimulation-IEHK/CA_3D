@@ -1,3 +1,5 @@
+import gc
+
 from cellular_automata import *
 from utils import data_base
 import progressbar
@@ -76,6 +78,8 @@ class SimulationConfigurator:
         self.begin = time.time()
 
         for self.ca.iteration in progressbar.progressbar(range(Config.N_ITERATIONS)):
+            if self.ca.iteration % self.ca.precipitation_stride == 0:
+                self.enforce_gc()
             # if self.iteration % self.precipitation_stride == 0:
             self.ca.precip_func()
             self.ca.decomposition()
@@ -132,6 +136,26 @@ class SimulationConfigurator:
         for worker in self.ca.workers:
             worker.join()
 
+        self.ca.precip_3d_init_shm.close()
+        self.ca.precip_3d_init_shm.unlink()
+
+        self.ca.product_x_nzs_shm.close()
+        self.ca.product_x_nzs_shm.unlink()
+
+        self.ca.primary_active.c3d_shared.close()
+        self.ca.primary_active.c3d_shared.unlink()
+
+        self.ca.primary_oxidant.c3d_shared.close()
+        self.ca.primary_oxidant.c3d_shared.unlink()
+
+        self.ca.primary_product.c3d_shared.close()
+        self.ca.primary_product.c3d_shared.unlink()
+
+        self.ca.primary_product.full_c3d_shared.close()
+        self.ca.primary_product.full_c3d_shared.unlink()
+
+        print("TERMINATED AND UNLINKED PROPERLY!")
+
     def save_results_only_prod(self):
         self.db.insert_particle_data("primary_product", self.ca.iteration,
                                            self.ca.primary_product.transform_c3d())
@@ -146,3 +170,16 @@ class SimulationConfigurator:
 
     def insert_last_it(self):
         self.db.insert_last_iteration(self.ca.iteration)
+
+    def enforce_gc(self):
+        for _ in self.ca.workers:
+            args = "GC"
+            self.ca.input_queue.put(args)
+
+        results = []
+        for _ in self.ca.workers:
+            result = self.ca.output_queue.get()
+            results.append(result)
+
+        gc.collect()
+        print("Done GC. Results after: ", results)

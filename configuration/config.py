@@ -44,7 +44,7 @@ class Config:
     N_CELLS_PER_AXIS = 110  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
     N_ITERATIONS = 10000000  # must be >= n_cells_per_axis
     STRIDE = 40  # n_iterations / stride = n_iterations for outward diffusion
-    STRIDE_MULTIPLIER = 1
+    STRIDE_MULTIPLIER = 50
     PRECIP_TRANSFORM_DEPTH = 41
     SIM_TIME = 72000  # [sek]
     SIZE = 100 * (10 ** -6)  # [m]
