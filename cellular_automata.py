@@ -6,6 +6,7 @@ from elements import *
 import multiprocessing
 from multiprocessing import shared_memory
 import nes_for_mp
+import gc
 
 
 def fix_full_cells(array_3d, full_array_3d, new_precip):
@@ -330,7 +331,11 @@ class CellularAutomata:
             callback = args[-1]
             args = args[:-1]
             result = callback(*args)
+
+            gc.collect()
+            
             output_queue.put(result)
+
 
     # def simulation(self):
     #     for self.iteration in progressbar.progressbar(range(self.n_iter)):
