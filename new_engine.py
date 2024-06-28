@@ -1,5 +1,3 @@
-import gc
-
 from cellular_automata import *
 from utils import data_base
 import progressbar
@@ -19,11 +17,11 @@ class SimulationConfigurator:
 
         self.ca.precip_func = self.ca.precipitation_first_case_MP
         self.ca.get_combi_ind = self.ca.get_combi_ind_atomic_with_kinetic_and_KP
-        self.ca.precip_step = self.ca.precip_step_standard_MP
-        self.ca.check_intersection = self.ca.ci_single_MP
+        # self.ca.precip_step = self.ca.precip_step_standard_MP
+        # self.ca.check_intersection = self.ca.ci_single_MP
 
         self.ca.decomposition = self.ca.dissolution_atomic_with_kinetic_MP
-        self.ca.decomposition_intrinsic = self.ca.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP
+        # self.ca.decomposition_intrinsic = self.ca.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP
 
         self.ca.cur_case = self.ca.cases.first
         # self.ca.cases.first.go_around_func_ref = self.ca.go_around_mult_oxid_n_also_partial_neigh_aip_MP
@@ -43,7 +41,7 @@ class SimulationConfigurator:
         self.ca.check_intersection = self.ca.ci_single
 
         self.ca.decomposition = self.ca.dissolution_atomic_with_kinetic_MP
-        self.ca.decomposition_intrinsic = self.ca.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP
+        # self.ca.decomposition_intrinsic = self.ca.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP
 
         self.ca.cur_case = self.ca.cases.first
         # self.ca.cases.first.go_around_func_ref = self.ca.go_around_mult_oxid_n_also_partial_neigh_aip
@@ -128,16 +126,16 @@ class SimulationConfigurator:
                 self.ca.secondary_active.transform_to_3d(self.ca.curr_max_furthest)
 
     def terminate_workers(self):
-        # # Signal workers to terminate
-        # for _ in self.ca.workers:
-        #     self.ca.input_queue.put(None)
-        #
-        # # Wait for all workers to terminate
-        # for worker in self.ca.workers:
-        #     worker.join()
+        # Signal workers to terminate
+        for _ in self.ca.workers:
+            self.ca.input_queue.put(None)
 
-        self.ca.pool.close()
-        self.ca.pool.join()
+        # Wait for all workers to terminate
+        for wrkr in self.ca.workers:
+            wrkr.join()
+
+        # self.ca.pool.close()
+        # self.ca.pool.join()
 
         self.ca.precip_3d_init_shm.close()
         self.ca.precip_3d_init_shm.unlink()
@@ -157,6 +155,14 @@ class SimulationConfigurator:
         self.ca.primary_product.full_c3d_shared.close()
         self.ca.primary_product.full_c3d_shared.unlink()
 
+        self.ca.fetch_ind_shm.close()
+        self.ca.fetch_ind_shm.unlink()
+
+        self.ca.aggregated_ind_shm.close()
+        self.ca.aggregated_ind_shm.unlink()
+
+        # self.ca.smm.shutdown()
+
         print("TERMINATED AND UNLINKED PROPERLY!")
 
     def save_results_only_prod(self):
@@ -174,17 +180,17 @@ class SimulationConfigurator:
     def insert_last_it(self):
         self.db.insert_last_iteration(self.ca.iteration)
 
-    def enforce_gc(self):
-        # for _ in self.ca.workers:
-        #     args = "GC"
-        #     self.ca.input_queue.put(args)
-        #
-        # results = []
-        # for _ in self.ca.workers:
-        #     result = self.ca.output_queue.get()
-        #     results.append(result)
-
-        args = [("GC") for _ in range(self.ca.numb_of_proc)]
-        results = self.ca.pool.map(CellularAutomata.worker, args)
-        gc.collect()
-        print("Done GC. Results after: ", results)
+    # def enforce_gc(self):
+    #     # for _ in self.ca.workers:
+    #     #     args = "GC"
+    #     #     self.ca.input_queue.put(args)
+    #     #
+    #     # results = []
+    #     # for _ in self.ca.workers:
+    #     #     result = self.ca.output_queue.get()
+    #     #     results.append(result)
+    #
+    #     args = [("GC") for _ in range(self.ca.numb_of_proc)]
+    #     results = self.ca.pool.map(CellularAutomata.worker, args)
+    #     gc.collect()
+    #     print("Done GC. Results after: ", results)

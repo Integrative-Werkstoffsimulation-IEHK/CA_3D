@@ -1,168 +1,112 @@
 import multiprocessing
-import gc
+from multiprocessing import shared_memory
 import numpy as np
-from memory_profiler import profile
+
+import utils
+from configuration import Config
+import numba
+
+SHAPE = (10000, 10000)
+DTYPE = int
+
+N_PROC = 10
+N_TASKS = 10
+N_ITER = 10000
 
 
-class CellularAutomata:
-    @staticmethod
-    @profile
-    def worker(input_queue, output_queue):
-        while True:
-            try:
-                args = input_queue.get()
-                if args is None:  # Check for termination signal
-                    break
-                if args == "GC":
-                    result = gc.collect()
-                else:
-                    callback = args[-1]
-                    args = args[:-1]
-                    result = callback(*args)
+@numba.njit
+def increase_counts(array_2d):
+    for ind_x in range(array_2d.shape[0]):
+        for ind_y in range(array_2d.shape[1]):
+            array_2d[ind_x, ind_y] += 1
 
-                output_queue.put(result)
-            except Exception as e:
-                print(f"Error in worker: {e}")
-                output_queue.put(None)  # or handle the error appropriately
 
-    def run_simulation(self):
-        # Setup queues
-        self.input_queue = multiprocessing.Queue()
-        self.output_queue = multiprocessing.Queue()
+class Other:
+    def __init__(self):
+        some_huge_shit = np.zeros(SHAPE, dtype=DTYPE)
+        self.huge_shit_shm = shared_memory.SharedMemory(create=True, size=some_huge_shit.nbytes)
 
-        # Start worker processes
-        self.processes = []
-        for _ in range(4):  # Adjust the number of worker processes as needed
-            p = multiprocessing.Process(target=CellularAutomata.worker, args=(self.input_queue, self.output_queue))
-            self.processes.append(p)
-            p.start()
+        self.huge_shit = np.ndarray(some_huge_shit.shape, dtype=some_huge_shit.dtype, buffer=self.huge_shit_shm.buf)
+        np.copyto(self.huge_shit, some_huge_shit)
 
-        # Dynamically feed new arguments to workers for this iteration
-        for ind in self.comb_indexes:
-            args = (self.product_x_nzs_mdata, self.primary_product_mdata, self.full_shm_mdata,
-                    self.precip_3d_init_mdata, self.primary_active, self.primary_oxidant, [ind],
-                    self.new_fetch_ind, self.nucleation_probabilities, CellularAutomata.ci_single_MP,
-                    CellularAutomata.precip_step_standard_MP)
-            self.input_queue.put(args)
+        self.huge_shit_mdata = SharedMetaData(self.huge_shit_shm.name, self.huge_shit.shape, self.huge_shit.dtype)
 
-        # Optionally, insert GC calls at appropriate intervals
-        self.input_queue.put("GC")
+    def do_in_parent(self):
+        increase_counts(self.huge_shit)
+        print("Done In Parent")
 
-        # Collect results for this iteration
-        results = []
-        for _ in self.comb_indexes:
-            result = self.output_queue.get()
-            if result is not None:
-                results.append(result)
 
-        # Signal workers to exit
-        for _ in self.processes:
-            self.input_queue.put(None)
+class SharedMetaData:
+    def __init__(self, shm_name, shape, dtype):
+        self.name = shm_name
+        self.shape = shape
+        self.dtype = dtype
 
-        # Wait for all workers to finish
-        for p in self.processes:
-            p.join()
 
-        return results
+def worker(args):
+    callback = args[-1]
+    args = args[:-1]
+    result = callback(*args)
+    return result
 
-    # Example placeholders for class variables and methods
-    comb_indexes = range(10)
-    product_x_nzs_mdata = np.zeros((100, 100))  # Example data
-    primary_product_mdata = np.zeros((100, 100))  # Example data
-    full_shm_mdata = np.zeros((100, 100))  # Example data
-    precip_3d_init_mdata = np.zeros((100, 100))  # Example data
-    primary_active = np.zeros((100, 100))  # Example data
-    primary_oxidant = np.zeros((100, 100))  # Example data
-    new_fetch_ind = np.zeros((100, 100))  # Example data
-    nucleation_probabilities = np.zeros((100, 100))  # Example data
 
-    @staticmethod
-    def ci_single_MP(*args):
-        # Placeholder for the actual implementation
-        return args
+def heavy_work(shm_mdata, huge_shit_mdata, probs, conf):
+    probab = probs
+    cfeg = conf
 
-    @staticmethod
-    def precip_step_standard_MP(*args):
-        # Placeholder for the actual implementation
-        return args
+    shm_o = shared_memory.SharedMemory(name=shm_mdata.name)
+    my_array = np.ndarray(shm_mdata.shape, dtype=shm_mdata.dtype, buffer=shm_o.buf)
+
+    shm_other = shared_memory.SharedMemory(name=huge_shit_mdata.name)
+    other_array = np.ndarray(huge_shit_mdata.shape, dtype=huge_shit_mdata.dtype, buffer=shm_other.buf)
+
+    increase_counts(my_array)
+    increase_counts(other_array)
+
+    shm_o.close()
+    shm_other.close()
+    return 0
+
+
+class MyPool:
+    def __init__(self):
+        self.pool = multiprocessing.Pool(processes=N_PROC)
+
+        some_huge_shit = np.zeros(SHAPE, dtype=DTYPE)
+        self.huge_shit_shm = shared_memory.SharedMemory(create=True, size=some_huge_shit.nbytes)
+
+        huge_shit = np.ndarray(some_huge_shit.shape, dtype=some_huge_shit.dtype, buffer=self.huge_shit_shm.buf)
+        np.copyto(huge_shit, some_huge_shit)
+
+        self.huge_shit_mdata = SharedMetaData(self.huge_shit_shm.name, huge_shit.shape, huge_shit.dtype)
+
+        self.config = Config()
+
+        self.other = Other()
+
+    def start_pool(self):
+        probs = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY,
+                                                                 Config.PRODUCTS.PRIMARY)
+        tasks = [(self.huge_shit_mdata, self.other.huge_shit_mdata, self.config, probs, heavy_work) for _ in range(N_TASKS)]
+        self.pool.map(worker, tasks)
+
+    def terminate_workers(self):
+        self.pool.close()
+        self.pool.join()
+
+        self.huge_shit_shm.close()
+        self.huge_shit_shm.unlink()
+
 
 if __name__ == '__main__':
-    ca = CellularAutomata()
-    results = ca.run_simulation()
-    print("Simulation results:", results)
+    new_utils = utils.Utils()
+    new_utils.generate_param()
 
-# class DynamicProcessManager:
-#     def __init__(self, num_workers):
-#         self.num_workers = num_workers
-#         self.input_queue = multiprocessing.Queue()
-#         self.output_queue = multiprocessing.Queue()
-#         self.workers = []
-#         self._initialize_workers()
-#
-#     def _initialize_workers(self):
-#         for _ in range(self.num_workers):
-#             p = multiprocessing.Process(target=self.worker, args=(self.input_queue, self.output_queue))
-#             p.start()
-#             self.workers.append(p)
-#
-#     @staticmethod
-#     def worker(input_queue, output_queue):
-#         while True:
-#             args = input_queue.get()
-#             if args is None:  # Check for termination signal
-#                 break
-#             result = DynamicProcessManager.decomposition_intrinsic(*args)
-#             output_queue.put(result)
-#
-#     @staticmethod
-#     def decomposition_intrinsic(shape, shm):
-#         # Your function implementation here
-#         # This is just a placeholder for the actual work
-#         time.sleep(1)  # Simulate work
-#         return shape, shm
-#
-#     def process_iteration(self, chunk_ranges):
-#         # Dynamically feed new arguments to workers for this iteration
-#         for chunk_range in chunk_ranges:
-#             args = (chunk_range['shape'], chunk_range['shm'])  # Replace with actual values for this iteration
-#             self.input_queue.put(args)
-#
-#         # Collect results for this iteration
-#         results = []
-#         for _ in chunk_ranges:
-#             result = self.output_queue.get()
-#             results.append(result)
-#
-#         return results
-#
-#     def run_iterations(self, n_iterations, chunk_ranges_list):
-#         for iteration in range(n_iterations):
-#             print(f"Iteration {iteration + 1}")
-#             chunk_ranges = chunk_ranges_list[iteration]
-#
-#             results = self.process_iteration(chunk_ranges)
-#             print(f"Results for iteration {iteration + 1}: {results}")
-#
-#         self.terminate_workers()
-#
-#     def terminate_workers(self):
-#         # Signal workers to terminate
-#         for _ in self.workers:
-#             self.input_queue.put(None)
-#
-#         # Wait for all workers to terminate
-#         for worker in self.workers:
-#             worker.join()
-#
-#         print("All iterations completed.")
-#
-# if __name__ == '__main__':
-#     num_workers = 4  # Adjust based on your requirements
-#     manager = DynamicProcessManager(num_workers)
-#
-#     n_iterations = 10  # Number of iterations
-#     chunk_ranges_list = [
-#         [{'shape': (i, i+1), 'shm': f'shm_{i}'} for i in range(5)] for _ in range(n_iterations)
-#     ]  # Replace with actual chunk_ranges for each iteration
-#
-#     manager.run_iterations(n_iterations, chunk_ranges_list)
+
+
+    new_pool = MyPool()
+
+    for iteration in range(N_ITER):
+        print(iteration)
+        new_pool.start_pool()
+        new_pool.other.do_in_parent()

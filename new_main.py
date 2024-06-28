@@ -14,8 +14,6 @@ if __name__ == '__main__':
 
     try:
         new_system.run_simulation()
-    # except (Exception,):
-    #     new_system.terminate_workers()
     finally:
         try:
             if not Config.SAVE_WHOLE:
@@ -70,4 +68,4 @@ if __name__ == '__main__':
         print("Simulation was closed at Iteration: ", new_system.ca.iteration)
         print("____________________________________________________________")
         print()
-        traceback.print_exc()
+        # traceback.print_exc()

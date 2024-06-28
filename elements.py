@@ -2,7 +2,6 @@
 from utils.numba_functions import *
 from configuration import Config
 from multiprocessing import shared_memory
-from memory_profiler import profile
 
 
 class ActiveElem:

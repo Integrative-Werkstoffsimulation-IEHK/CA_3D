@@ -1,8 +1,10 @@
 import numba
 import numpy as np
 
+# @numba.njit(nopython=True)
 
-@numba.njit(nopython=True)
+
+@numba.njit
 def go_around_bool(array_3d, arounds):
     all_neighbours = []
     # trick to initialize an empty list with known type
@@ -15,7 +17,7 @@ def go_around_bool(array_3d, arounds):
     return np.array(all_neighbours, dtype=np.bool_)
 
 
-@numba.njit(nopython=True)
+@numba.njit
 def go_around_int(array_3d, arounds):
     all_neighbours = []
     # trick to initialize an empty list with known type
@@ -28,7 +30,7 @@ def go_around_int(array_3d, arounds):
     return np.array(all_neighbours, dtype=np.ubyte)
 
 
-@numba.njit(nopython=True)
+@numba.njit
 def go_around_bool_dissol(array_3d, arounds):
     all_neigh = []
     # trick to initialize an empty list with known type
@@ -41,7 +43,7 @@ def go_around_bool_dissol(array_3d, arounds):
     return np.array(all_neigh, dtype=np.bool_)
 
 
-@numba.njit(nopython=True)
+@numba.njit
 def check_at_coord_dissol(array_3d, coords):
     # trick to initialize an empty list with known type
     result_coords = [np.uint32(x) for x in range(0)]
@@ -51,7 +53,7 @@ def check_at_coord_dissol(array_3d, coords):
     return np.array(result_coords, dtype=np.uint32)
 
 
-@numba.njit(nopython=True)
+@numba.njit
 def check_at_coord(array_3d, coordinates):
     # trick to initialize an empty list with known type
     result_coords = [np.bool_(x) for x in range(0)]
@@ -60,7 +62,7 @@ def check_at_coord(array_3d, coordinates):
     return np.array(result_coords, dtype=np.bool_)
 
 
-@numba.njit(nopython=True)
+@numba.njit
 def check_at_coord_new(array_3d, coordinates):
     # trick to initialize an empty list with known type
     result_ind = [np.uint32(x) for x in range(0)]
@@ -73,13 +75,13 @@ def check_at_coord_new(array_3d, coordinates):
     return np.array(result_ind, dtype=np.uint32), np.array(counts, dtype=np.ubyte)
 
 
-@numba.njit(nopython=True)
+@numba.njit
 def insert_counts(array_3d, points):
     for point in points.transpose():
         array_3d[point[0], point[1], point[2]] += 1
 
 
-@numba.njit(nopython=True)
+@numba.njit
 def decrease_counts(array_3d, points):
     zero_positions = []
     for ind, point in enumerate(points.transpose()):
@@ -90,13 +92,13 @@ def decrease_counts(array_3d, points):
     return zero_positions
 
 
-@numba.njit(nopython=True)
+@numba.njit
 def just_decrease_counts(array_3d, points):
     for point in points.transpose():
         array_3d[point[0], point[1], point[2]] -= 1
 
 
-@numba.njit(nopython=True)
+@numba.njit
 def check_in_scale(scale, cells, dirs):
     # trick to initialize an empty list with known type
     out_scale = [np.uint32(x) for x in range(0)]
@@ -108,7 +110,7 @@ def check_in_scale(scale, cells, dirs):
     return np.array(out_scale, dtype=np.uint32)
 
 
-@numba.njit(nopython=True)
+@numba.njit
 def separate_in_gb(bool_arr):
     # trick to initialize an empty list with known type
     out_gb = [np.uint32(x) for x in range(0)]
@@ -121,7 +123,7 @@ def separate_in_gb(bool_arr):
     return np.array(in_gb, dtype=np.uint32), np.array(out_gb, dtype=np.uint32)
 
 
-@numba.njit(nopython=True)
+@numba.njit
 def aggregate(aggregated_ind, all_neigh_bool):
     # trick to initialize an empty list with known type
     where_blocks = [np.uint32(x) for x in range(0)]
@@ -133,7 +135,7 @@ def aggregate(aggregated_ind, all_neigh_bool):
     return np.array(where_blocks, dtype=np.uint32)
 
 
-@numba.njit(nopython=True)
+@numba.njit
 def aggregate_and_count(aggregated_ind, all_neigh_bool):
     # trick to initialize an empty list with known type
     block_counts = [np.uint32(x) for x in range(0)]
@@ -146,7 +148,7 @@ def aggregate_and_count(aggregated_ind, all_neigh_bool):
     return np.array(block_counts, dtype=np.uint32)
 
 
-@numba.njit(nopython=True)
+@numba.njit
 def diff_single(directions, probs, random_numbs):
     for index, direction in enumerate(directions.transpose()):
         rand_numb = random_numbs.random()
@@ -165,7 +167,7 @@ def diff_single(directions, probs, random_numbs):
         directions[:, index] = new_direction
 
 
-@numba.njit(nopython=True)
+@numba.njit
 def complete_diff_step(cells, directions, probs, random_numbs):
     for index, direction in enumerate(directions.transpose()):
         rand_numb = random_numbs.random()
