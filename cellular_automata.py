@@ -61,10 +61,10 @@ def precip_step_standard_MP(huge_shit_mdata, product_x_nzs_mdata, shm_mdata_prod
     shm_fetch_ind.close()
     shm_huge_shit.close()
 
-    # shm_o.unlink()
-    # shm_p_FULL.unlink()
-    # shm_fetch_ind.unlink()
-    # shm_huge_shit.unlink()
+    shm_o.unlink()
+    shm_p_FULL.unlink()
+    shm_fetch_ind.unlink()
+    shm_huge_shit.unlink()
     return 0
 
 
@@ -138,10 +138,10 @@ def ci_single_MP(seeds, oxidant, full_3d, shm_mdata_product, shm_mdata_active, s
     shm_product_init.close()
     shm_product_x_nzs.close()
 
-    # shm_p.unlink()
-    # shm_a.unlink()
-    # shm_product_init.unlink()
-    # shm_product_x_nzs.unlink()
+    shm_p.unlink()
+    shm_a.unlink()
+    shm_product_init.unlink()
+    shm_product_x_nzs.unlink()
 
 
 def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(shm_mdata, chunk_range, comb_ind, aggregated_ind_mdata,
@@ -265,8 +265,8 @@ def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(shm_mdata, chunk_range, co
     shm.close()
     shm_aggregated_ind.close()
 
-    # shm.unlink()
-    # shm_aggregated_ind.unlink()
+    shm.unlink()
+    shm_aggregated_ind.unlink()
 
     return to_dissolve
 
