@@ -19,7 +19,7 @@ def go_around_mult_oxid_n_also_partial_neigh_aip_MP(array_3d, around_coords):
     return np.sum(go_around_int(array_3d, around_coords), axis=1)
 
 
-def precip_step_standard_MP(huge_shit_mdata, product_x_nzs_mdata, shm_mdata_product, shm_mdata_full_product, shm_mdata_product_init,
+def precip_step_standard_MP(product_x_nzs_mdata, shm_mdata_product, shm_mdata_full_product, shm_mdata_product_init,
                             shm_mdata_active, shm_mdata_oxidant, plane_index, fetch_ind_mdata, nucleation_probabilities,
                             callback):
     shm_o = shared_memory.SharedMemory(name=shm_mdata_oxidant.name)
@@ -30,9 +30,6 @@ def precip_step_standard_MP(huge_shit_mdata, product_x_nzs_mdata, shm_mdata_prod
 
     shm_fetch_ind = shared_memory.SharedMemory(name=fetch_ind_mdata.name)
     fetch_indexes = np.ndarray(fetch_ind_mdata.shape, dtype=fetch_ind_mdata.dtype, buffer=shm_fetch_ind.buf)
-
-    shm_huge_shit = shared_memory.SharedMemory(name=huge_shit_mdata.name)
-    huge_shit = np.ndarray(huge_shit_mdata.shape, dtype=huge_shit_mdata.dtype, buffer=shm_huge_shit.buf)
 
     for fetch_ind in fetch_indexes:
         oxidant_cells = oxidant[fetch_ind[0], fetch_ind[1], plane_index]
@@ -59,13 +56,10 @@ def precip_step_standard_MP(huge_shit_mdata, product_x_nzs_mdata, shm_mdata_prod
     shm_o.close()
     shm_p_FULL.close()
     shm_fetch_ind.close()
-    shm_huge_shit.close()
 
-    shm_o.unlink()
-    shm_p_FULL.unlink()
-    shm_fetch_ind.unlink()
-    shm_huge_shit.unlink()
-    return 0
+    # shm_o.unlink()
+    # shm_p_FULL.unlink()
+    # shm_fetch_ind.unlink()
 
 
 def ci_single_MP(seeds, oxidant, full_3d, shm_mdata_product, shm_mdata_active, shm_mdata_product_init,
@@ -137,11 +131,11 @@ def ci_single_MP(seeds, oxidant, full_3d, shm_mdata_product, shm_mdata_active, s
     shm_a.close()
     shm_product_init.close()
     shm_product_x_nzs.close()
-
-    shm_p.unlink()
-    shm_a.unlink()
-    shm_product_init.unlink()
-    shm_product_x_nzs.unlink()
+    #
+    # shm_p.unlink()
+    # shm_a.unlink()
+    # shm_product_init.unlink()
+    # shm_product_x_nzs.unlink()
 
 
 def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(shm_mdata, chunk_range, comb_ind, aggregated_ind_mdata,
@@ -265,27 +259,27 @@ def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(shm_mdata, chunk_range, co
     shm.close()
     shm_aggregated_ind.close()
 
-    shm.unlink()
-    shm_aggregated_ind.unlink()
-
+    # shm.unlink()
+    # shm_aggregated_ind.unlink()
     return to_dissolve
 
-# def worker(args):
-#     callback = args[-1]
-#     args = args[:-1]
-#     result = callback(*args)
-#     return result
+
+def worker(args):
+    callback = args[-1]
+    args = args[:-1]
+    result = callback(*args)
+    return result
 
 
-def worker(input_queue, output_queue):
-    while True:
-        args = input_queue.get()
-        if args is None:
-            break
-        callback = args[-1]
-        args = args[:-1]
-        result = callback(*args)
-        output_queue.put(result)
+# def worker(input_queue, output_queue):
+#     while True:
+#         args = input_queue.get()
+#         if args is None:
+#             break
+#         callback = args[-1]
+#         args = args[:-1]
+#         result = callback(*args)
+#         output_queue.put(result)
 
 
 class CellularAutomata:
@@ -460,13 +454,13 @@ class CellularAutomata:
                                                       self.aggregated_ind.dtype)
 
 
-                some_huge_shit = np.zeros((30000, 10000), dtype=int)
-                self.huge_shit_shm = shared_memory.SharedMemory(create=True, size=some_huge_shit.nbytes)
-                huge_shit = np.ndarray(some_huge_shit.shape, dtype=some_huge_shit.dtype,
-                                            buffer=self.huge_shit_shm.buf)
-                np.copyto(huge_shit, some_huge_shit)
-                self.huge_shit_mdata = SharedMetaData(self.huge_shit_shm.name, huge_shit.shape,
-                                                           huge_shit.dtype)
+                # some_huge_shit = np.zeros((30000, 10000), dtype=int)
+                # self.huge_shit_shm = shared_memory.SharedMemory(create=True, size=some_huge_shit.nbytes)
+                # huge_shit = np.ndarray(some_huge_shit.shape, dtype=some_huge_shit.dtype,
+                #                             buffer=self.huge_shit_shm.buf)
+                # np.copyto(huge_shit, some_huge_shit)
+                # self.huge_shit_mdata = SharedMetaData(self.huge_shit_shm.name, huge_shit.shape,
+                #                                            huge_shit.dtype)
 
 
                 self.numb_of_proc = Config.NUMBER_OF_PROCESSES
@@ -486,16 +480,14 @@ class CellularAutomata:
                 self.input_queue = multiprocessing.Queue()
                 self.output_queue = multiprocessing.Queue()
 
-                self.workers = []
+                # self.workers = []
                 # Initialize and start worker processes
-                for _ in range(self.numb_of_proc):
-                    p = multiprocessing.Process(target=worker, args=(self.input_queue, self.output_queue))
-                    p.start()
-                    self.workers.append(p)
+                # for _ in range(self.numb_of_proc):
+                #     p = multiprocessing.Process(target=worker, args=(self.input_queue, self.output_queue))
+                #     p.start()
+                #     self.workers.append(p)
 
-
-
-                # self.pool = multiprocessing.Pool(processes=self.numb_of_proc)
+                self.pool = multiprocessing.Pool(processes=self.numb_of_proc, maxtasksperchild=10000)
 
                 # self.buffer_size = Config.PRODUCTS.PRIMARY.OXIDATION_NUMBER * self.cells_per_axis * chunk_size
 
@@ -2068,43 +2060,38 @@ class CellularAutomata:
                                              self.fetch_ind_mdata.shape,
                                              self.fetch_ind_mdata.dtype)
 
-            huge_shit_mdata = SharedMetaData(self.huge_shit_mdata.name,
-                                             self.huge_shit_mdata.shape,
-                                             self.huge_shit_mdata.dtype)
+            # huge_shit_mdata = SharedMetaData(self.huge_shit_mdata.name,
+            #                                  self.huge_shit_mdata.shape,
+            #                                  self.huge_shit_mdata.dtype)
 
             nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY,
                                                                      Config.PRODUCTS.PRIMARY)
             # Dynamically feed new arguments to workers for this iteration
             # args = []
-            for ind in self.comb_indexes:
+            # for ind in self.comb_indexes:
                 # args.append((product_x_nzs_mdata, primary_product_mdata, full_shm_mdata,
                 #         precip_3d_init_mdata, primary_active, primary_oxidant, [ind],
                 #         new_fetch_ind, nucleation_probabilities, CellularAutomata.ci_single_MP,
                 #         CellularAutomata.precip_step_standard_MP))
 
-            # tasks = [(product_x_nzs_mdata, primary_product_mdata, full_shm_mdata,
-            #             precip_3d_init_mdata, primary_active, primary_oxidant, [ind],
-            #             new_fetch_ind, nucleation_probabilities, CellularAutomata.ci_single_MP,
-            #             CellularAutomata.precip_step_standard_MP) for ind in self.comb_indexes]
+            tasks = [(product_x_nzs_mdata, primary_product_mdata, full_shm_mdata,
+                    precip_3d_init_mdata, primary_active, primary_oxidant, [ind],
+                    fetch_ind_mdata, nucleation_probabilities, ci_single_MP, precip_step_standard_MP) for ind in self.comb_indexes]
 
-                self.input_queue.put((huge_shit_mdata, product_x_nzs_mdata, primary_product_mdata, full_shm_mdata,
-                        precip_3d_init_mdata, primary_active, primary_oxidant, [ind],
-                        fetch_ind_mdata, nucleation_probabilities, ci_single_MP, precip_step_standard_MP))
+                # self.input_queue.put((huge_shit_mdata, product_x_nzs_mdata, primary_product_mdata, full_shm_mdata,
+                #         precip_3d_init_mdata, primary_active, primary_oxidant, [ind],
+                #         fetch_ind_mdata, nucleation_probabilities, ci_single_MP, precip_step_standard_MP))
 
             # Collect results for this iteration
-            results = []
-            for _ in self.comb_indexes:
-                # self.output_queue.get()
-                result = self.output_queue.get()
-                results.append(result)
+            # results = []
+            # for _ in self.comb_indexes:
+            #     # self.output_queue.get()
+            #     result = self.output_queue.get()
+            #     results.append(result)
 
-            # results = self.pool.map(worker, tasks)
-            # self.pool.close()
-            # with closing(multiprocessing.Pool(len(self.comb_indexes))) as p:
-            #     res = p.map(CellularAutomata.worker, tasks)
-
-            # with multiprocessing.Pool(processes=Config.NUMBER_OF_PROCESSES) as pool:
-            #     pool.map(worker, tasks)
+            self.pool.map(worker, tasks)
+            # for result in self.pool.imap(worker, tasks):
+            #     continue
 
         self.primary_oxidant.transform_to_descards()
 
@@ -2467,28 +2454,30 @@ class CellularAutomata:
                                                   self.aggregated_ind_mdata.dtype)
 
             # Dynamically feed new arguments to workers for this iteration
-            for chunk_range in self.chunk_ranges:
-                args = (new_shm_mdata, chunk_range, new_comb_indexes, aggregated_ind_mdata, dissolution_probabilities,
-                        dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP)
-                self.input_queue.put(args)
+            # for chunk_range in self.chunk_ranges:
+            #     args = (new_shm_mdata, chunk_range, new_comb_indexes, aggregated_ind_mdata, dissolution_probabilities,
+            #             dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP)
+            #     self.input_queue.put(args)
+            #
+            # # Collect results for this iteration
+            # results = []
+            # for _ in self.chunk_ranges:
+            #     result = self.output_queue.get()
+            #     results.append(result)
 
-            # Collect results for this iteration
-            results = []
-            for _ in self.chunk_ranges:
-                result = self.output_queue.get()
-                results.append(result)
+            tasks = [(new_shm_mdata, chunk_range, new_comb_indexes, aggregated_ind_mdata, dissolution_probabilities,
+                        dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP) for chunk_range in
+                     self.chunk_ranges]
 
-            # tasks = [(new_shm_mdata, chunk_range, new_comb_indexes, new_aggregated_ind, dissolution_probabilities,
-            #             CellularAutomata.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP) for chunk_range in
-            #          self.chunk_ranges]
+            results = self.pool.map(worker, tasks)
 
-            # results = self.pool.map(worker, tasks)
-            # self.pool.close()
+            # results = []
+            # for result in self.pool.imap(worker, tasks):
 
-            # with multiprocessing.Pool(processes=Config.NUMBER_OF_PROCESSES) as pool:
-            #     results = pool.map(worker, tasks)
-
+            # results.append(result)
             to_dissolve = np.array(np.concatenate(results, axis=1), dtype=np.ushort)
+            # to_dissolve = np.array([[], [], []], dtype=np.ushort)
+            # to_dissolve = np.array(result, dtype=np.ushort)
             if len(to_dissolve[0]) > 0:
                 just_decrease_counts(self.primary_product.c3d, to_dissolve)
                 self.primary_product.full_c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = False
