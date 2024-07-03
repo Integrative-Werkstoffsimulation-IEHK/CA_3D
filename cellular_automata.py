@@ -20,7 +20,7 @@ def go_around_mult_oxid_n_also_partial_neigh_aip_MP(array_3d, around_coords):
 
 
 def precip_step_standard_MP(product_x_nzs_mdata, shm_mdata_product, shm_mdata_full_product, shm_mdata_product_init,
-                            shm_mdata_active, shm_mdata_oxidant, plane_index, fetch_ind_mdata, nucleation_probabilities,
+                            shm_mdata_active, shm_mdata_oxidant, plane_index, fetch_indexes, nucleation_probabilities,
                             callback):
     shm_o = shared_memory.SharedMemory(name=shm_mdata_oxidant.name)
     oxidant = np.ndarray(shm_mdata_oxidant.shape, dtype=shm_mdata_oxidant.dtype, buffer=shm_o.buf)
@@ -28,8 +28,8 @@ def precip_step_standard_MP(product_x_nzs_mdata, shm_mdata_product, shm_mdata_fu
     shm_p_FULL = shared_memory.SharedMemory(name=shm_mdata_full_product.name)
     full_3d = np.ndarray(shm_mdata_full_product.shape, dtype=shm_mdata_full_product.dtype, buffer=shm_p_FULL.buf)
 
-    shm_fetch_ind = shared_memory.SharedMemory(name=fetch_ind_mdata.name)
-    fetch_indexes = np.ndarray(fetch_ind_mdata.shape, dtype=fetch_ind_mdata.dtype, buffer=shm_fetch_ind.buf)
+    # shm_fetch_ind = shared_memory.SharedMemory(name=fetch_ind_mdata.name)
+    # fetch_indexes = np.ndarray(fetch_ind_mdata.shape, dtype=fetch_ind_mdata.dtype, buffer=shm_fetch_ind.buf)
 
     for fetch_ind in fetch_indexes:
         oxidant_cells = oxidant[fetch_ind[0], fetch_ind[1], plane_index]
@@ -55,7 +55,7 @@ def precip_step_standard_MP(product_x_nzs_mdata, shm_mdata_product, shm_mdata_fu
 
     shm_o.close()
     shm_p_FULL.close()
-    shm_fetch_ind.close()
+    # shm_fetch_ind.close()
 
     # shm_o.unlink()
     # shm_p_FULL.unlink()
@@ -131,23 +131,18 @@ def ci_single_MP(seeds, oxidant, full_3d, shm_mdata_product, shm_mdata_active, s
     shm_a.close()
     shm_product_init.close()
     shm_product_x_nzs.close()
-    #
-    # shm_p.unlink()
-    # shm_a.unlink()
-    # shm_product_init.unlink()
-    # shm_product_x_nzs.unlink()
 
 
-def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(shm_mdata, chunk_range, comb_ind, aggregated_ind_mdata,
+def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(shm_mdata, chunk_range, comb_ind, aggregated_ind,
                                                       dissolution_probabilities):
     to_dissolve = np.array([[], [], []], dtype=np.ushort)
 
     shm = shared_memory.SharedMemory(name=shm_mdata.name)
     array_3D = np.ndarray(shm_mdata.shape, dtype=shm_mdata.dtype, buffer=shm.buf)
 
-    shm_aggregated_ind = shared_memory.SharedMemory(name=aggregated_ind_mdata.name)
-    aggregated_ind = np.ndarray(aggregated_ind_mdata.shape, dtype=aggregated_ind_mdata.dtype,
-                                buffer=shm_aggregated_ind.buf)
+    # shm_aggregated_ind = shared_memory.SharedMemory(name=aggregated_ind_mdata.name)
+    # aggregated_ind = np.ndarray(aggregated_ind_mdata.shape, dtype=aggregated_ind_mdata.dtype,
+    #                             buffer=shm_aggregated_ind.buf)
 
     to_dissol_pn_buffer = np.array([[], [], []], dtype=np.ushort)
 
@@ -257,10 +252,8 @@ def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(shm_mdata, chunk_range, co
         to_dissolve = np.concatenate((to_dissolve_no_block, to_dissol_no_neigh, to_dissolve_block), axis=1)
 
     shm.close()
-    shm_aggregated_ind.close()
+    # shm_aggregated_ind.close()
 
-    # shm.unlink()
-    # shm_aggregated_ind.unlink()
     return to_dissolve
 
 
@@ -416,9 +409,6 @@ class CellularAutomata:
                                             [13, 3, 4, 2, 21, 24, 25]], dtype=np.int64)
 
             if Config.MULTIPROCESSING:
-                # self.smm = managers.SharedMemoryManager()
-                # self.smm.start()
-
                 self.precip_3d_init_shm = shared_memory.SharedMemory(create=True,
                                                                      size=self.cases.first.precip_3d_init.nbytes)
                 self.precip_3d_init = np.ndarray(self.cases.first.precip_3d_init.shape,
@@ -439,29 +429,18 @@ class CellularAutomata:
                 self.product_x_nzs_mdata = SharedMetaData(self.product_x_nzs_shm.name, product_x_nzs.shape,
                                                           product_x_nzs.dtype)
 
-
-                self.fetch_ind_shm = shared_memory.SharedMemory(create=True, size=self.fetch_ind.nbytes)
-                fetch_ind = np.ndarray(self.fetch_ind.shape, dtype=self.fetch_ind.dtype, buffer=self.fetch_ind_shm.buf)
-                np.copyto(fetch_ind, self.fetch_ind)
-                self.fetch_ind_mdata = SharedMetaData(self.fetch_ind_shm.name, self.fetch_ind.shape, self.fetch_ind.dtype)
-
-
-                self.aggregated_ind_shm = shared_memory.SharedMemory(create=True, size=self.aggregated_ind.nbytes)
-                aggregated_ind = np.ndarray(self.aggregated_ind.shape, dtype=self.aggregated_ind.dtype,
-                                       buffer=self.aggregated_ind_shm.buf)
-                np.copyto(aggregated_ind, self.aggregated_ind)
-                self.aggregated_ind_mdata = SharedMetaData(self.aggregated_ind_shm.name, self.aggregated_ind.shape,
-                                                      self.aggregated_ind.dtype)
+                # self.fetch_ind_shm = shared_memory.SharedMemory(create=True, size=self.fetch_ind.nbytes)
+                # fetch_ind = np.ndarray(self.fetch_ind.shape, dtype=self.fetch_ind.dtype, buffer=self.fetch_ind_shm.buf)
+                # np.copyto(fetch_ind, self.fetch_ind)
+                # self.fetch_ind_mdata = SharedMetaData(self.fetch_ind_shm.name, self.fetch_ind.shape, self.fetch_ind.dtype)
 
 
-                # some_huge_shit = np.zeros((30000, 10000), dtype=int)
-                # self.huge_shit_shm = shared_memory.SharedMemory(create=True, size=some_huge_shit.nbytes)
-                # huge_shit = np.ndarray(some_huge_shit.shape, dtype=some_huge_shit.dtype,
-                #                             buffer=self.huge_shit_shm.buf)
-                # np.copyto(huge_shit, some_huge_shit)
-                # self.huge_shit_mdata = SharedMetaData(self.huge_shit_shm.name, huge_shit.shape,
-                #                                            huge_shit.dtype)
-
+                # self.aggregated_ind_shm = shared_memory.SharedMemory(create=True, size=self.aggregated_ind.nbytes)
+                # aggregated_ind = np.ndarray(self.aggregated_ind.shape, dtype=self.aggregated_ind.dtype,
+                #                        buffer=self.aggregated_ind_shm.buf)
+                # np.copyto(aggregated_ind, self.aggregated_ind)
+                # self.aggregated_ind_mdata = SharedMetaData(self.aggregated_ind_shm.name, self.aggregated_ind.shape,
+                #                                       self.aggregated_ind.dtype)
 
                 self.numb_of_proc = Config.NUMBER_OF_PROCESSES
                 if self.cells_per_axis % self.numb_of_proc == 0:
@@ -477,85 +456,10 @@ class CellularAutomata:
                     self.chunk_ranges[pos, 1] = self.chunk_ranges[pos, 0] + chunk_size
                 self.chunk_ranges[-1, 1] = self.cells_per_axis
 
-                self.input_queue = multiprocessing.Queue()
-                self.output_queue = multiprocessing.Queue()
-
-                # self.workers = []
-                # Initialize and start worker processes
-                # for _ in range(self.numb_of_proc):
-                #     p = multiprocessing.Process(target=worker, args=(self.input_queue, self.output_queue))
-                #     p.start()
-                #     self.workers.append(p)
-
-                self.pool = multiprocessing.Pool(processes=self.numb_of_proc, maxtasksperchild=10000)
-
-                # self.buffer_size = Config.PRODUCTS.PRIMARY.OXIDATION_NUMBER * self.cells_per_axis * chunk_size
+                self.pool = multiprocessing.Pool(processes=self.numb_of_proc, maxtasksperchild=100000)
 
             self.threshold_inward = Config.THRESHOLD_INWARD
             self.threshold_outward = Config.THRESHOLD_OUTWARD
-
-            # self.primary_product.c3d[1, 1, 50] = self.primary_oxid_numb
-            # self.primary_product.full_c3d[1, 1, 50] = True
-            #
-            # self.primary_product.c3d[1, 1, 49] = self.primary_oxid_numb
-            # self.primary_product.full_c3d[1, 1, 49] = True
-            #
-            # self.primary_product.c3d[1, 2, 49] = self.primary_oxid_numb
-            # self.primary_product.full_c3d[1, 2, 49] = True
-            #
-            # self.primary_product.c3d[1, 2, 50] = self.primary_oxid_numb
-            # self.primary_product.full_c3d[1, 2, 50] = True
-            #
-            # self.primary_product.c3d[1, 3, 49] = self.primary_oxid_numb
-            # self.primary_product.full_c3d[1, 3, 49] = True
-            #
-            #
-            # self.primary_product.c3d[2, 1, 50] = self.primary_oxid_numb
-            # self.primary_product.full_c3d[2, 1, 50] = True
-            #
-            # self.primary_product.c3d[2, 1, 49] = self.primary_oxid_numb
-            # self.primary_product.full_c3d[2, 1, 49] = True
-            #
-            # self.primary_product.c3d[2, 2, 49] = self.primary_oxid_numb
-            # self.primary_product.full_c3d[2, 2, 49] = True
-            #
-            # self.primary_product.c3d[2, 2, 50] = self.primary_oxid_numb
-            # self.primary_product.full_c3d[2, 2, 50] = True
-            #
-            #
-            # self.primary_product.c3d[2, 0, 50] = self.primary_oxid_numb
-            # self.primary_product.full_c3d[2, 0, 50] = True
-            #
-            # self.primary_product.c3d[2, 1, 51] = self.primary_oxid_numb
-            # self.primary_product.full_c3d[2, 1, 51] = True
-            #
-            # self.primary_product.c3d[3, 1, 50] = self.primary_oxid_numb
-            # self.primary_product.full_c3d[3, 1, 50] = True
-            #
-            #
-            # self.primary_product.c3d[3, 3, 50] = 2
-            # self.primary_product.c3d[10, 3, 50] = 2
-            # self.primary_product.c3d[35, 3, 50] = 2
-            #
-            #
-            # self.primary_product.c3d[1, 10, 50] = 2
-            # self.primary_product.c3d[1, 11, 50] = 2
-            # self.primary_product.c3d[1, 9, 50] = 2
-            # self.primary_product.c3d[1, 10, 49] = 2
-            #
-            # self.primary_product.c3d[45, 3, 50] = self.primary_oxid_numb
-            # self.primary_product.full_c3d[45, 3, 50] = True
-
-            # self.primary_product.full_c3d[minus:plus, minus:plus, minus:plus] = True
-            # self.primary_product.full_c3d[1, 1, 50] = True
-            # shift = 0
-            # self.precipitations3d[minus + shift:plus + shift, minus + shift:plus + shift, minus + shift:plus + shift] = True
-            # self.precipitations = np.array(np.nonzero(self.precipitations), dtype=int)
-            # self.precipitations3d = np.full(self.single_page_shape, False)
-            # self.precipitations3d_sec = np.full(self.single_page_shape, False)
-
-            # self.primary_product.c3d[:, :, :50] = self.primary_oxid_numb
-            # self.primary_product.full_c3d[:, :, :50] = True
 
             self.cases.first.nucleation_probabilities = None  # must be defined elsewhere
             self.cases.first.dissolution_probabilities = None  # must be defined elsewhere
@@ -601,31 +505,6 @@ class CellularAutomata:
             self.active_times = adj_lamd ** 2 / Config.GENERATED_VALUES.KINETIC_KONST ** 2
 
             self.prev_len = 0
-
-    # @staticmethod
-    # def worker(input_queue, output_queue):
-    #     while True:
-    #         args = input_queue.get()
-    #         if args is None:  # Check for termination signal
-    #             break
-    #         if args == "GC":
-    #             result = gc.collect()
-    #         else:
-    #             callback = args[-1]
-    #             args = args[:-1]
-    #             result = callback(*args)
-    #
-    #         output_queue.put(result)
-
-    # @staticmethod
-    # def worker(args):
-    #     if args == "GC":
-    #         result = gc.collect()
-    #     else:
-    #         callback = args[-1]
-    #         args = args[:-1]
-    #         result = callback(*args)
-    #     return result
 
     def dissolution_zhou_wei_original(self):
         """Implementation of original not adapted Zhou and Wei approach. Only two probabilities p for block and pn
@@ -1754,17 +1633,8 @@ class CellularAutomata:
         soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[:ioz_bound + 1])**1.1
         self.diffs = product_c - soll_prod
 
-        # self.cumul_prod.append(product_c[0])
-        # self.growth_rate.append(soll_prod[0])
-        #
-        # if ioz_bound >= 10:
-        #     self.cumul_prod1.append(product_c[10])
-        #     self.growth_rate1.append(soll_prod[10])
-        # else:
-        #     self.cumul_prod1.append(0)
-        #     self.growth_rate1.append(0)
-
-        self.product_indexes = np.where((product_c <= Config.PHASE_FRACTION_LIMIT) & (self.diffs <= 0))[0]
+        # self.product_indexes = np.where((product_c <= Config.PHASE_FRACTION_LIMIT) & (self.diffs <= 0))[0]
+        self.product_indexes = np.where(self.diffs <= 0)[0]
 
         self.comb_indexes = self.get_active_oxidant_mutual_indexes(oxidant, active)
         self.comb_indexes = np.intersect1d(self.comb_indexes, self.product_indexes)
@@ -2037,28 +1907,28 @@ class CellularAutomata:
 
             # new_fetch_ind = np.array(self.fetch_ind)
 
-            primary_product_mdata = SharedMetaData(self.primary_product.shm_mdata.name,
-                                           self.primary_product.shm_mdata.shape,
-                                           self.primary_product.shm_mdata.dtype)
-            product_x_nzs_mdata = SharedMetaData(self.product_x_nzs_mdata.name,
-                                                   self.product_x_nzs_mdata.shape,
-                                                   self.product_x_nzs_mdata.dtype)
-            full_shm_mdata = SharedMetaData(self.primary_product.full_shm_mdata.name,
-                                           self.primary_product.full_shm_mdata.shape,
-                                           self.primary_product.full_shm_mdata.dtype)
-            precip_3d_init_mdata = SharedMetaData(self.precip_3d_init_mdata.name,
-                                                   self.precip_3d_init_mdata.shape,
-                                                   self.precip_3d_init_mdata.dtype)
-            primary_active = SharedMetaData(self.primary_active.shm_mdata.name,
-                                                   self.primary_active.shm_mdata.shape,
-                                                   self.primary_active.shm_mdata.dtype)
-            primary_oxidant = SharedMetaData(self.primary_oxidant.shm_mdata.name,
-                                            self.primary_oxidant.shm_mdata.shape,
-                                            self.primary_oxidant.shm_mdata.dtype)
+            # primary_product_mdata = SharedMetaData(self.primary_product.shm_mdata.name,
+            #                                self.primary_product.shm_mdata.shape,
+            #                                self.primary_product.shm_mdata.dtype)
+            # product_x_nzs_mdata = SharedMetaData(self.product_x_nzs_mdata.name,
+            #                                        self.product_x_nzs_mdata.shape,
+            #                                        self.product_x_nzs_mdata.dtype)
+            # full_shm_mdata = SharedMetaData(self.primary_product.full_shm_mdata.name,
+            #                                self.primary_product.full_shm_mdata.shape,
+            #                                self.primary_product.full_shm_mdata.dtype)
+            # precip_3d_init_mdata = SharedMetaData(self.precip_3d_init_mdata.name,
+            #                                        self.precip_3d_init_mdata.shape,
+            #                                        self.precip_3d_init_mdata.dtype)
+            # primary_active = SharedMetaData(self.primary_active.shm_mdata.name,
+            #                                        self.primary_active.shm_mdata.shape,
+            #                                        self.primary_active.shm_mdata.dtype)
+            # primary_oxidant = SharedMetaData(self.primary_oxidant.shm_mdata.name,
+            #                                 self.primary_oxidant.shm_mdata.shape,
+            #                                 self.primary_oxidant.shm_mdata.dtype)
 
-            fetch_ind_mdata = SharedMetaData(self.fetch_ind_mdata.name,
-                                             self.fetch_ind_mdata.shape,
-                                             self.fetch_ind_mdata.dtype)
+            # fetch_ind_mdata = SharedMetaData(self.fetch_ind_mdata.name,
+            #                                  self.fetch_ind_mdata.shape,
+            #                                  self.fetch_ind_mdata.dtype)
 
             # huge_shit_mdata = SharedMetaData(self.huge_shit_mdata.name,
             #                                  self.huge_shit_mdata.shape,
@@ -2074,9 +1944,9 @@ class CellularAutomata:
                 #         new_fetch_ind, nucleation_probabilities, CellularAutomata.ci_single_MP,
                 #         CellularAutomata.precip_step_standard_MP))
 
-            tasks = [(product_x_nzs_mdata, primary_product_mdata, full_shm_mdata,
-                    precip_3d_init_mdata, primary_active, primary_oxidant, [ind],
-                    fetch_ind_mdata, nucleation_probabilities, ci_single_MP, precip_step_standard_MP) for ind in self.comb_indexes]
+            tasks = [(self.product_x_nzs_mdata, self.primary_product.shm_mdata, self.primary_product.full_shm_mdata,
+                    self.precip_3d_init_mdata, self.primary_active.shm_mdata, self.primary_oxidant.shm_mdata, [ind],
+                    self.fetch_ind, nucleation_probabilities, ci_single_MP, precip_step_standard_MP) for ind in self.comb_indexes]
 
                 # self.input_queue.put((huge_shit_mdata, product_x_nzs_mdata, primary_product_mdata, full_shm_mdata,
                 #         precip_3d_init_mdata, primary_active, primary_oxidant, [ind],
@@ -2090,8 +1960,6 @@ class CellularAutomata:
             #     results.append(result)
 
             self.pool.map(worker, tasks)
-            # for result in self.pool.imap(worker, tasks):
-            #     continue
 
         self.primary_oxidant.transform_to_descards()
 
@@ -2244,6 +2112,97 @@ class CellularAutomata:
 
         if len(self.comb_indexes) > 0:
             self.decomposition_intrinsic()
+
+    def dissolution_atomic_stop_if_stable_MP(self):
+        self.product_indexes = np.where(self.product_x_nzs)[0]
+
+        where_not_stab = np.where(self.product_x_not_stab)[0]
+        self.product_indexes = np.intersect1d(self.product_indexes, where_not_stab)
+
+        new_stab_count = np.count_nonzero(~self.product_x_not_stab)
+        if new_stab_count > self.prev_stab_count:
+            self.prev_stab_count = new_stab_count
+            print("stable now at: ", np.nonzero(~self.product_x_not_stab)[0])
+
+        self.primary_oxidant.transform_to_3d()
+        oxidant = np.array([np.sum(self.primary_oxidant.c3d[:, :, plane_ind]) for plane_ind
+                            in self.product_indexes], dtype=np.uint32)
+        oxidant_moles = oxidant * Config.OXIDANTS.PRIMARY.MOLES_PER_CELL
+        self.primary_oxidant.transform_to_descards()
+
+        active = np.array([np.sum(self.primary_active.c3d[:, :, plane_ind]) for plane_ind
+                           in self.product_indexes], dtype=np.uint32)
+        active_moles = active * Config.ACTIVES.PRIMARY.MOLES_PER_CELL
+        outward_eq_mat_moles = active * Config.ACTIVES.PRIMARY.EQ_MATRIX_MOLES_PER_CELL
+
+        product = np.array([np.sum(self.primary_product.c3d[:, :, plane_ind]) for plane_ind
+                            in self.product_indexes], dtype=np.uint32)
+        product_moles = product * Config.PRODUCTS.PRIMARY.MOLES_PER_CELL
+        product_eq_mat_moles = product * Config.ACTIVES.PRIMARY.EQ_MATRIX_MOLES_PER_CELL
+
+        matrix_moles = self.matrix_moles_per_page - outward_eq_mat_moles - product_eq_mat_moles
+        whole_moles = matrix_moles + oxidant_moles + active_moles + product_moles
+        product_c = product_moles / whole_moles
+
+
+        soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[self.product_indexes]) ** 1.1
+        if self.iteration % Config.STRIDE == 0:
+            itera = np.full(len(self.product_indexes), self.iteration) // Config.STRIDE
+            indexes = np.stack((self.product_indexes, itera))
+
+            self.cumul_prod.set_at_ind(indexes, product_c)
+            self.growth_rate.set_at_ind(indexes, soll_prod)
+
+
+        temp_ind = np.where(product == 0)[0]
+        self.product_x_nzs[self.product_indexes[temp_ind]] = False
+
+        product_c = np.delete(product_c, temp_ind)
+        self.comb_indexes = np.delete(self.product_indexes, temp_ind)
+
+        temp_ind = np.where(product_c > Config.PHASE_FRACTION_LIMIT)[0]
+        self.product_x_not_stab[self.comb_indexes[temp_ind]] = False
+
+
+        product_c = np.delete(product_c, temp_ind)
+        self.comb_indexes = np.delete(self.comb_indexes, temp_ind)
+
+        soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[self.comb_indexes]) ** 1.1
+
+        self.diffs = product_c - soll_prod
+
+        temp = np.where(self.diffs > 0)[0]
+        self.comb_indexes = self.comb_indexes[temp]
+
+
+        if len(self.comb_indexes) > 0:
+            dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY,
+                                                                       Config.PRODUCTS.PRIMARY)
+
+            # new_shm_mdata = SharedMetaData(self.primary_product.shm_mdata.name,
+            #                                self.primary_product.shm_mdata.shape,
+            #                                self.primary_product.shm_mdata.dtype)
+
+            # aggregated_ind_mdata = SharedMetaData(self.aggregated_ind_mdata.name,
+            #                                       self.aggregated_ind_mdata.shape,
+            #                                       self.aggregated_ind_mdata.dtype)
+
+            tasks = [(self.primary_product.shm_mdata, chunk_range, self.comb_indexes, self.aggregated_ind,
+                      dissolution_probabilities, dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP) for chunk_range in
+                     self.chunk_ranges]
+
+            results = self.pool.map(worker, tasks)
+
+            to_dissolve = np.array(np.concatenate(results, axis=1), dtype=np.ushort)
+            if len(to_dissolve[0]) > 0:
+                just_decrease_counts(self.primary_product.c3d, to_dissolve)
+                self.primary_product.full_c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = False
+                insert_counts(self.primary_active.c3d, to_dissolve)
+                self.primary_oxidant.cells = np.concatenate((self.primary_oxidant.cells, to_dissolve), axis=1)
+                new_dirs = np.random.choice([22, 4, 16, 10, 14, 12], len(to_dissolve[0]))
+                new_dirs = np.array(np.unravel_index(new_dirs, (3, 3, 3)), dtype=np.byte)
+                new_dirs -= 1
+                self.primary_oxidant.dirs = np.concatenate((self.primary_oxidant.dirs, new_dirs), axis=1)
 
     def dissolution_atomic_if_stable_higer_p(self):
         self.comb_indexes = np.where(self.product_x_nzs)[0]
@@ -2442,42 +2401,23 @@ class CellularAutomata:
         if len(self.comb_indexes) > 0:
             dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY,
                                                                        Config.PRODUCTS.PRIMARY)
-            # new_aggregated_ind = np.array(self.aggregated_ind)
-            new_comb_indexes = np.array(self.comb_indexes)
+            # new_comb_indexes = np.array(self.comb_indexes)
 
-            new_shm_mdata = SharedMetaData(self.primary_product.shm_mdata.name,
-                                           self.primary_product.shm_mdata.shape,
-                                           self.primary_product.shm_mdata.dtype)
+            # new_shm_mdata = SharedMetaData(self.primary_product.shm_mdata.name,
+            #                                self.primary_product.shm_mdata.shape,
+            #                                self.primary_product.shm_mdata.dtype)
 
-            aggregated_ind_mdata = SharedMetaData(self.aggregated_ind_mdata.name,
-                                                  self.aggregated_ind_mdata.shape,
-                                                  self.aggregated_ind_mdata.dtype)
+            # aggregated_ind_mdata = SharedMetaData(self.aggregated_ind_mdata.name,
+            #                                       self.aggregated_ind_mdata.shape,
+            #                                       self.aggregated_ind_mdata.dtype)
 
-            # Dynamically feed new arguments to workers for this iteration
-            # for chunk_range in self.chunk_ranges:
-            #     args = (new_shm_mdata, chunk_range, new_comb_indexes, aggregated_ind_mdata, dissolution_probabilities,
-            #             dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP)
-            #     self.input_queue.put(args)
-            #
-            # # Collect results for this iteration
-            # results = []
-            # for _ in self.chunk_ranges:
-            #     result = self.output_queue.get()
-            #     results.append(result)
-
-            tasks = [(new_shm_mdata, chunk_range, new_comb_indexes, aggregated_ind_mdata, dissolution_probabilities,
-                        dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP) for chunk_range in
+            tasks = [(self.primary_product.shm_mdata, chunk_range, self.comb_indexes, self.aggregated_ind,
+                      dissolution_probabilities, dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP) for chunk_range in
                      self.chunk_ranges]
 
             results = self.pool.map(worker, tasks)
 
-            # results = []
-            # for result in self.pool.imap(worker, tasks):
-
-            # results.append(result)
             to_dissolve = np.array(np.concatenate(results, axis=1), dtype=np.ushort)
-            # to_dissolve = np.array([[], [], []], dtype=np.ushort)
-            # to_dissolve = np.array(result, dtype=np.ushort)
             if len(to_dissolve[0]) > 0:
                 just_decrease_counts(self.primary_product.c3d, to_dissolve)
                 self.primary_product.full_c3d[to_dissolve[0], to_dissolve[1], to_dissolve[2]] = False

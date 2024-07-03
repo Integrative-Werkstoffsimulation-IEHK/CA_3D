@@ -2,6 +2,7 @@ from cellular_automata import *
 from utils import data_base
 import progressbar
 import time
+import keyboard
 
 
 class SimulationConfigurator:
@@ -74,8 +75,9 @@ class SimulationConfigurator:
 
     def run_simulation(self):
         self.begin = time.time()
-
         for self.ca.iteration in progressbar.progressbar(range(Config.N_ITERATIONS)):
+            if keyboard.is_pressed('ctrl+m'):
+                break
             # if self.ca.iteration % self.ca.precipitation_stride == 0:
             #     self.enforce_gc()
             # if self.iteration % self.precipitation_stride == 0:
@@ -93,7 +95,7 @@ class SimulationConfigurator:
         self.db.insert_time(self.elapsed_time)
         self.db.conn.commit()
 
-        self.terminate_workers()
+        # self.terminate_workers()
 
     def save_results(self):
         if Config.STRIDE > Config.N_ITERATIONS:
@@ -137,6 +139,9 @@ class SimulationConfigurator:
         self.ca.pool.close()
         self.ca.pool.join()
 
+        print("TERMINATED PROPERLY!")
+
+    def unlink(self):
         self.ca.precip_3d_init_shm.close()
         self.ca.precip_3d_init_shm.unlink()
 
@@ -155,15 +160,13 @@ class SimulationConfigurator:
         self.ca.primary_product.full_c3d_shared.close()
         self.ca.primary_product.full_c3d_shared.unlink()
 
-        self.ca.fetch_ind_shm.close()
-        self.ca.fetch_ind_shm.unlink()
+        # self.ca.fetch_ind_shm.close()
+        # self.ca.fetch_ind_shm.unlink()
 
-        self.ca.aggregated_ind_shm.close()
-        self.ca.aggregated_ind_shm.unlink()
+        # self.ca.aggregated_ind_shm.close()
+        # self.ca.aggregated_ind_shm.unlink()
 
-        # self.ca.smm.shutdown()
-
-        print("TERMINATED AND UNLINKED PROPERLY!")
+        print("UNLINKED PROPERLY!")
 
     def save_results_only_prod(self):
         self.db.insert_particle_data("primary_product", self.ca.iteration,

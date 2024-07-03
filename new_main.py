@@ -1,8 +1,7 @@
-import traceback
 from new_engine import *
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     Config.COMMENT = """
 
     Nucleation and dissolution throughout the whole simulation (both schemes applied). Also with kinetic coefficient!!!
@@ -17,14 +16,15 @@ if __name__ == '__main__':
     finally:
         try:
             if not Config.SAVE_WHOLE:
-                # new_system.save_results()
-                print()
+                new_system.save_results()
+
         except (Exception,):
             # new_system.save_results()
             print("Not SAVED!")
 
-        new_system.save_results()
+        # new_system.save_results()
         new_system.terminate_workers()
+        new_system.unlink()
 
         cumul_prod = new_system.ca.cumul_prod.get_buffer()
         growth_rate = new_system.ca.growth_rate.get_buffer()
@@ -69,3 +69,5 @@ if __name__ == '__main__':
         print("____________________________________________________________")
         print()
         # traceback.print_exc()
+
+

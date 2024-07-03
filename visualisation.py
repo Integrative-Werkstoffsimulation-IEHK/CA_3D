@@ -11,6 +11,9 @@ from scipy import ndimage
 import pickle
 from configuration import Config
 from configuration import update_class_from_dict
+import pandas as pd
+import tkinter as tk
+from tkinter import filedialog
 
 
 class Visualisation:
@@ -1832,3 +1835,27 @@ ELAPSED TIME: {message}
                 return print("No Data to plot secondary precipitation front!")
         plt.show()
 
+    def plot_kinetics(self, data_to_plot):
+        root = tk.Tk()
+        root.withdraw()
+        file_path = filedialog.askopenfilename()
+        # Read the data into a DataFrame
+        data = pd.read_csv(file_path, sep=" ", header=None)
+
+        plt.figure(figsize=(10, 6))
+
+        x_values = data.iloc[:, 0]
+
+        # Extract the x values (first column)
+        for rows in data_to_plot:
+            index = 2 * rows + 1
+            y_values = data.iloc[:, index]
+            y_values_soll = data.iloc[:, index + 1]
+
+            plt.plot(x_values, y_values, label=f'Layer - {rows}')
+            plt.plot(x_values, y_values_soll, label=f'Layer - {rows} kinetic')
+
+        plt.xlabel("Time [sec]")
+        plt.ylabel('Concentration')
+        plt.legend()
+        plt.show()

@@ -68,12 +68,12 @@ class Config:
     SAVE_WHOLE = False
     DECOMPOSE_PRECIPITATIONS = True
     FULL_CELLS = False
-    SAVE_PATH = 'C:/Users/alexe/PycharmProjects/test_runs_data/'
+    SAVE_PATH = 'C:/test_runs_data/'
     SAVE_POST_PROCESSED_INPUT = True
 
     # Execution___________________________________________________________________
     MULTIPROCESSING = True
-    NUMBER_OF_PROCESSES = 10
+    NUMBER_OF_PROCESSES = 20
 
     # PROBABILITIES_______________________________________________________________
     PROBABILITIES = ElementGroups()
