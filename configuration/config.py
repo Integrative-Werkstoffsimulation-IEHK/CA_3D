@@ -42,7 +42,7 @@ class Config:
 
     TEMPERATURE = 1100  # °C
     N_CELLS_PER_AXIS = 110  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
-    N_ITERATIONS = 10000000  # must be >= n_cells_per_axis
+    N_ITERATIONS = 3000000  # must be >= n_cells_per_axis
     STRIDE = 40  # n_iterations / stride = n_iterations for outward diffusion
     STRIDE_MULTIPLIER = 50
     PRECIP_TRANSFORM_DEPTH = 41
@@ -56,6 +56,7 @@ class Config:
     NEIGH_RANGE = 5   # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
                       #          and           |  |  |  |  |   |   |   |   |   |
                       # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
+    N_BOOST_STEPS = 3
 
     PROD_INCR_CONST = 1 * 10 ** -5
     PROD_ERROR = 1 * 10 ** -3

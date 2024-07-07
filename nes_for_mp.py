@@ -52,6 +52,7 @@ def calc_sur_ind_decompose_flat_with_zero(seeds):
     around_seeds[around_seeds == -1] = Config.N_CELLS_PER_AXIS - 1
     return around_seeds
 
+
 def calc_sur_ind_decompose_no_flat(seeds):
     seeds = seeds.transpose()
     # generating a neighbouring coordinates for each seed (including the position of the seed itself)
@@ -60,6 +61,7 @@ def calc_sur_ind_decompose_no_flat(seeds):
     around_seeds[around_seeds == Config.N_CELLS_PER_AXIS] = 0
     around_seeds[around_seeds == -1] = Config.N_CELLS_PER_AXIS - 1
     return around_seeds
+
 
 def calc_sur_ind_formation(seeds, dummy_ind):
     # generating a neighbouring coordinates for each seed (including the position of the seed itself)

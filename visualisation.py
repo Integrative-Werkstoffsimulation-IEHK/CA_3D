@@ -1835,27 +1835,27 @@ ELAPSED TIME: {message}
                 return print("No Data to plot secondary precipitation front!")
         plt.show()
 
-    def plot_kinetics(self, data_to_plot):
-        root = tk.Tk()
-        root.withdraw()
-        file_path = filedialog.askopenfilename()
-        # Read the data into a DataFrame
-        data = pd.read_csv(file_path, sep=" ", header=None)
+def plot_kinetics(data_to_plot, with_kinetic=False):
+    root = tk.Tk()
+    root.withdraw()
+    file_path = filedialog.askopenfilename()
 
-        plt.figure(figsize=(10, 6))
+    data = pd.read_csv(file_path, sep=" ", header=None)
+    plt.figure(figsize=(10, 6))
+    x_values = data.iloc[:, 0]
 
-        x_values = data.iloc[:, 0]
+    for rows in data_to_plot:
+        index = 2 * rows + 1
+        y_values = data.iloc[:, index]
+        # plt.plot(x_values, y_values, label=f'Layer - {rows}', s=1)
+        plt.plot(x_values, y_values, label=f'Layer - {rows}')
 
-        # Extract the x values (first column)
-        for rows in data_to_plot:
-            index = 2 * rows + 1
-            y_values = data.iloc[:, index]
+        if with_kinetic:
             y_values_soll = data.iloc[:, index + 1]
-
-            plt.plot(x_values, y_values, label=f'Layer - {rows}')
+            # plt.plot(x_values, y_values_soll, label=f'Layer - {rows} kinetic', s=1)
             plt.plot(x_values, y_values_soll, label=f'Layer - {rows} kinetic')
 
-        plt.xlabel("Time [sec]")
-        plt.ylabel('Concentration')
-        plt.legend()
-        plt.show()
+    plt.xlabel("Time [sec]")
+    plt.ylabel('Concentration')
+    plt.legend()
+    plt.show()

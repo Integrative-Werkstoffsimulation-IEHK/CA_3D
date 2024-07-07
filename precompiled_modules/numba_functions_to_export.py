@@ -1,10 +1,12 @@
 from numba.pycc import CC
 import numpy as np
+import numba
 
 cc = CC('precompiled_numba')
 
 
 # go_around_bool signatures ______________________________
+@numba.njit(nopython=True, fastmath=True)
 @cc.export('go_around_bool_b1_i2', 'b1[:, :](b1[:, :, :], i2[:, :, :])')
 def go_around_bool_b1_i2(array_3d, arounds):
     all_neighbours = np.empty((arounds.shape[0], arounds.shape[1]), dtype=np.bool_)
@@ -14,6 +16,7 @@ def go_around_bool_b1_i2(array_3d, arounds):
     return all_neighbours
 
 
+@numba.njit(nopython=True, fastmath=True)
 @cc.export('go_around_bool_u1_i2', 'b1[:, :](u1[:, :, :], i2[:, :, :])')
 def go_around_bool_u1_i2(array_3d, arounds):
     all_neighbours = np.empty((arounds.shape[0], arounds.shape[1]), dtype=np.bool_)
@@ -25,8 +28,9 @@ def go_around_bool_u1_i2(array_3d, arounds):
 
 
 # go_around_int signatures ______________________________
-@cc.export('go_around_int', 'u1[:, :](u1[:, :, :], i2[:, :, :])')
-def go_around_int(array_3d, arounds):
+@numba.njit(nopython=True, fastmath=True)
+@cc.export('go_around_int_c', 'u1[:, :](u1[:, :, :], i2[:, :, :])')
+def go_around_int_c(array_3d, arounds):
     all_neighbours = np.empty((arounds.shape[0], arounds.shape[1]), dtype=np.ubyte)
     for i, seed_arounds in enumerate(arounds):
         for j, point in enumerate(seed_arounds):
@@ -36,6 +40,7 @@ def go_around_int(array_3d, arounds):
 
 
 # go_around_bool_dissol signatures ______________________________
+@numba.njit(nopython=True, fastmath=True)
 @cc.export('go_around_bool_dissol_b1_i2', 'b1[:, :](b1[:, :, :], i2[:, :, :])')
 def go_around_bool_dissol_b1_i2(array_3d, arounds):
     all_neigh = np.empty((arounds.shape[0], arounds.shape[1]), dtype=np.bool_)
@@ -45,6 +50,7 @@ def go_around_bool_dissol_b1_i2(array_3d, arounds):
     return all_neigh
 
 
+@numba.njit(nopython=True, fastmath=True)
 @cc.export('go_around_bool_dissol_u1_i2', 'b1[:, :](u1[:, :, :], i2[:, :, :])')
 def go_around_bool_dissol_u1_i2(array_3d, arounds):
     all_neigh = np.empty((arounds.shape[0], arounds.shape[1]), dtype=np.bool_)
@@ -56,6 +62,7 @@ def go_around_bool_dissol_u1_i2(array_3d, arounds):
 
 
 # check_at_coord_dissol signatures ______________________________
+@numba.njit(nopython=True, fastmath=True)
 @cc.export('check_at_coord_dissol_b1_i2', 'u4[:](b1[:, :, :], i2[:, :])')
 def check_at_coord_dissol_b1_i2(array_3d, coords):
     result_coords = np.empty(coords.shape[1], dtype=np.uint32)
@@ -63,7 +70,7 @@ def check_at_coord_dissol_b1_i2(array_3d, coords):
         result_coords[i] = array_3d[coordinate[0], coordinate[1], coordinate[2]]
     return result_coords
 
-
+@numba.njit(nopython=True, fastmath=True)
 @cc.export('check_at_coord_dissol_u1_i2', 'u4[:](u1[:, :, :], i2[:, :])')
 def check_at_coord_dissol_u1_i2(array_3d, coords):
     result_coords = np.empty(coords.shape[1], dtype=np.uint32)
@@ -74,6 +81,7 @@ def check_at_coord_dissol_u1_i2(array_3d, coords):
 
 
 # check_at_coord signatures ______________________________
+@numba.njit(nopython=True, fastmath=True)
 @cc.export('check_at_coord_b1_i2', 'b1[:](b1[:, :, :], i2[:, :])')
 def check_at_coord_b1_i2(array_3d, coordinates):
     result_coords = np.empty(coordinates.shape[1], dtype=np.bool_)
@@ -85,6 +93,7 @@ def check_at_coord_b1_i2(array_3d, coordinates):
     return result_coords
 
 
+@numba.njit(nopython=True, fastmath=True)
 @cc.export('check_at_coord_u1_i2', 'u1[:](u1[:, :, :], i2[:, :])')
 def check_at_coord_u1_i2(array_3d, coordinates):
     result_coords = np.empty(coordinates.shape[1], dtype=np.ubyte)
@@ -98,16 +107,18 @@ def check_at_coord_u1_i2(array_3d, coordinates):
 
 
 # insert_counts signatures ______________________________
-@cc.export('insert_counts', 'void(u1[:, :, :], i2[:, :])')
-def insert_counts(array_3d, points):
+@numba.njit(nopython=True, fastmath=True)
+@cc.export('insert_counts_c', 'void(u1[:, :, :], i2[:, :])')
+def insert_counts_c(array_3d, points):
     for point in points.T:
         array_3d[point[0], point[1], point[2]] += 1
 # _______________________________________________________________
 
 
 # decrease_counts signatures ______________________________
-@cc.export('decrease_counts', 'i8[:](u1[:, :, :], i2[:, :])')
-def decrease_counts(array_3d, points):
+@numba.njit(nopython=True, fastmath=True)
+@cc.export('decrease_counts_c', 'i8[:](u1[:, :, :], i2[:, :])')
+def decrease_counts_c(array_3d, points):
     zero_positions = np.empty(points.shape[1], dtype=np.int64)
     count = 0
     for ind in range(points.shape[1]):
@@ -124,14 +135,16 @@ def decrease_counts(array_3d, points):
 
 
 # decrease_counts signatures ______________________________
-@cc.export('just_decrease_counts', 'void(u1[:, :, :], i2[:, :])')
-def just_decrease_counts(array_3d, points):
+@numba.njit(nopython=True, fastmath=True)
+@cc.export('just_decrease_counts_c', 'void(u1[:, :, :], i2[:, :])')
+def just_decrease_counts_c(array_3d, points):
     for point in points.T:
         array_3d[point[0], point[1], point[2]] -= 1
 # _______________________________________________________________
 
 
 # check_in_scale signatures ______________________________
+@numba.njit(nopython=True, fastmath=True)
 @cc.export('check_in_scale_b1_i2_i1', 'u4[:](b1[:, :, :], i2[:, :], i1[:, :])')
 def check_in_scale_b1_i2_i1(scale, cells, dirs):
     out_scale = np.empty(cells.shape[1], dtype=np.uint32)
@@ -145,6 +158,7 @@ def check_in_scale_b1_i2_i1(scale, cells, dirs):
     return out_scale[:count]
 
 
+@numba.njit(nopython=True, fastmath=True)
 @cc.export('check_in_scale_u1_i2_i1', 'u4[:](u1[:, :, :], i2[:, :], i1[:, :])')
 def check_in_scale_u1_i2_i1(scale, cells, dirs):
     out_scale = np.empty(cells.shape[1], dtype=np.uint32)
@@ -160,8 +174,9 @@ def check_in_scale_u1_i2_i1(scale, cells, dirs):
 
 
 # separate_in_gb signatures ______________________________
-@cc.export('separate_in_gb', 'Tuple((u4[:], u4[:]))(b1[:])')
-def separate_in_gb(bool_arr):
+@numba.njit(nopython=True, fastmath=True)
+@cc.export('separate_in_gb_c', 'Tuple((u4[:], u4[:]))(b1[:])')
+def separate_in_gb_c(bool_arr):
     in_gb = np.empty(len(bool_arr), dtype=np.uint32)
     out_gb = np.empty(len(bool_arr), dtype=np.uint32)
     in_count = 0
@@ -178,8 +193,9 @@ def separate_in_gb(bool_arr):
 
 
 # aggregate signatures ______________________________
-@cc.export('aggregate', 'u4[:](i8[:, :], b1[:, :])')
-def aggregate(aggregated_ind, all_neigh_bool):
+@numba.njit(nopython=True, fastmath=True)
+@cc.export('aggregate_c', 'u4[:](i8[:, :], b1[:, :])')
+def aggregate_c(aggregated_ind, all_neigh_bool):
     where_blocks = np.empty(all_neigh_bool.shape[0], dtype=np.uint32)
     count = 0
     for index, item in enumerate(all_neigh_bool):
@@ -193,8 +209,9 @@ def aggregate(aggregated_ind, all_neigh_bool):
 
 
 # aggregate_and_count signatures ______________________________
-@cc.export('aggregate_and_count', 'u4[:](i8[:, :], b1[:, :])')
-def aggregate_and_count(aggregated_ind, all_neigh_bool):
+@numba.njit(nopython=True, fastmath=True)
+@cc.export('aggregate_and_count_c', 'u4[:](i8[:, :], b1[:, :])')
+def aggregate_and_count_c(aggregated_ind, all_neigh_bool):
     block_counts = np.empty(all_neigh_bool.shape[0], dtype=np.uint32)
     for index, item in enumerate(all_neigh_bool):
         curr_count = 0

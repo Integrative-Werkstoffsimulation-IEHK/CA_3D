@@ -293,23 +293,17 @@ class OxidantElem:
         self.extended_axis = self.cells_per_axis + self.neigh_range
         self.extended_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
 
-        # self.c3d = np.full(self.extended_shape, 0, dtype=np.ubyte)
         temp = np.full(self.extended_shape, 0, dtype=np.ubyte)
         self.c3d_shared = shared_memory.SharedMemory(create=True, size=temp.nbytes)
         self.c3d = np.ndarray(self.extended_shape, dtype=np.ubyte, buffer=self.c3d_shared.buf)
-
-        # self.c3d_shared_name = self.c3d_shared.name
-        # self.shared_shape = (self.cells_per_axis, self.cells_per_axis, self.extended_axis)
-        # self.shared_type = np.ubyte
 
         self.shm_mdata = SharedMetaData(self.c3d_shared.name, self.extended_shape, np.ubyte)
 
         self.scale = None
         self.diffuse = None
+        self.n_boost_steps = Config.N_BOOST_STEPS
 
-        # UNDO THIS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        self.utils = None
-        # self.utils = utils
+        self.utils = utils
 
         self.cells = np.array([[], [], []], dtype=np.short)
         self.dirs = np.zeros((3, len(self.cells[0])), dtype=np.byte)
@@ -585,7 +579,8 @@ class OxidantElem:
         to_boost = np.array(np.where(to_boost)[0])
 
         if len(to_boost) > 0:
-            self.cells[:, to_boost] = np.add(self.cells[:, to_boost], self.dirs[:, to_boost], casting="unsafe")
+            for _ in range(self.n_boost_steps):
+                self.cells[:, to_boost] = np.add(self.cells[:, to_boost], self.dirs[:, to_boost], casting="unsafe")
             # adjusting a coordinates of side points for correct shifting
             self.cells[0, to_boost[np.where(self.cells[0, to_boost] <= -1)]] = self.cells_per_axis - 1
             self.cells[0, to_boost[np.where(self.cells[0, to_boost] >= self.cells_per_axis)]] = 0

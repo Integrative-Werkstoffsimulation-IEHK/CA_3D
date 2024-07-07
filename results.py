@@ -30,4 +30,4 @@ visualise.plot_h()
 
 # visualise.calculate_phase_size()
 
-visualise.plot_kinetics([0, 3])
+plot_kinetics([0, 1, 2, 3, 4, 5, 15], with_kinetic=False)

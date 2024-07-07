@@ -1,12 +1,13 @@
-import configparser
-import ctypes
 import sys
+
+import numpy as np
+
 import utils
 from elements import *
 import multiprocessing
 from multiprocessing import shared_memory
 import nes_for_mp
-
+from utils import physical_data
 
 def fix_full_cells(array_3d, full_array_3d, new_precip):
     current_precip = np.array(array_3d[new_precip[0], new_precip[1], new_precip[2]], dtype=np.ubyte)
@@ -28,20 +29,17 @@ def precip_step_standard_MP(product_x_nzs_mdata, shm_mdata_product, shm_mdata_fu
     shm_p_FULL = shared_memory.SharedMemory(name=shm_mdata_full_product.name)
     full_3d = np.ndarray(shm_mdata_full_product.shape, dtype=shm_mdata_full_product.dtype, buffer=shm_p_FULL.buf)
 
-    # shm_fetch_ind = shared_memory.SharedMemory(name=fetch_ind_mdata.name)
-    # fetch_indexes = np.ndarray(fetch_ind_mdata.shape, dtype=fetch_ind_mdata.dtype, buffer=shm_fetch_ind.buf)
-
     for fetch_ind in fetch_indexes:
         oxidant_cells = oxidant[fetch_ind[0], fetch_ind[1], plane_index]
         oxidant_cells = fetch_ind[:, np.nonzero(oxidant_cells)[0]]
 
         if len(oxidant_cells[0]) != 0:
-            oxidant_cells = np.vstack((oxidant_cells, np.full(len(oxidant_cells[0]), plane_index,
-                                                              dtype=np.ushort)))
-            oxidant_cells = oxidant_cells.transpose()
+            oxidant_cells = np.vstack((oxidant_cells, np.full(len(oxidant_cells[0]), plane_index)))
+            oxidant_cells = np.array(oxidant_cells, dtype=np.short).transpose()
 
             exists = check_at_coord(full_3d, oxidant_cells)  # precip on place of oxidant!
             temp_ind = np.where(exists)[0]
+
             oxidant_cells = np.delete(oxidant_cells, temp_ind, 0)
 
             if len(oxidant_cells) > 0:
@@ -55,11 +53,6 @@ def precip_step_standard_MP(product_x_nzs_mdata, shm_mdata_product, shm_mdata_fu
 
     shm_o.close()
     shm_p_FULL.close()
-    # shm_fetch_ind.close()
-
-    # shm_o.unlink()
-    # shm_p_FULL.unlink()
-    # shm_fetch_ind.unlink()
 
 
 def ci_single_MP(seeds, oxidant, full_3d, shm_mdata_product, shm_mdata_active, shm_mdata_product_init,
@@ -82,7 +75,7 @@ def ci_single_MP(seeds, oxidant, full_3d, shm_mdata_product, shm_mdata_active, s
     all_arounds = nes_for_mp.calc_sur_ind_formation(seeds, active.shape[2] - 1)
 
     neighbours = go_around_bool(active, all_arounds[:, :-2])
-    arr_len_out = np.array([np.sum(item) for item in neighbours], dtype=np.ushort)
+    arr_len_out = np.array([np.sum(item) for item in neighbours], dtype=np.short)
 
     temp_ind = np.where(arr_len_out > 0)[0]
 
@@ -91,7 +84,6 @@ def ci_single_MP(seeds, oxidant, full_3d, shm_mdata_product, shm_mdata_active, s
         neighbours = neighbours[temp_ind]
         all_arounds = all_arounds[temp_ind]
         flat_arounds = np.concatenate((all_arounds[:, 0:5], all_arounds[:, -2:]), axis=1)
-
         arr_len_in_flat = go_around_mult_oxid_n_also_partial_neigh_aip_MP(product_init, flat_arounds)
         homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
         needed_prob = nucleation_probabilities.get_probabilities(arr_len_in_flat, seeds[0][2])
@@ -135,16 +127,10 @@ def ci_single_MP(seeds, oxidant, full_3d, shm_mdata_product, shm_mdata_active, s
 
 def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(shm_mdata, chunk_range, comb_ind, aggregated_ind,
                                                       dissolution_probabilities):
-    to_dissolve = np.array([[], [], []], dtype=np.ushort)
-
+    to_dissolve = np.array([[], [], []], dtype=np.short)
     shm = shared_memory.SharedMemory(name=shm_mdata.name)
     array_3D = np.ndarray(shm_mdata.shape, dtype=shm_mdata.dtype, buffer=shm.buf)
-
-    # shm_aggregated_ind = shared_memory.SharedMemory(name=aggregated_ind_mdata.name)
-    # aggregated_ind = np.ndarray(aggregated_ind_mdata.shape, dtype=aggregated_ind_mdata.dtype,
-    #                             buffer=shm_aggregated_ind.buf)
-
-    to_dissol_pn_buffer = np.array([[], [], []], dtype=np.ushort)
+    to_dissol_pn_buffer = np.array([[], [], []], dtype=np.short)
 
     nz_ind = np.array(np.nonzero(array_3D[chunk_range[0]:chunk_range[1], :, comb_ind]))
     nz_ind[0] += chunk_range[0]
@@ -154,7 +140,6 @@ def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(shm_mdata, chunk_range, co
     coord_buffer[2, :] = new_data
 
     if len(coord_buffer[0]) > 0:
-        # flat_arounds = utils_inst.calc_sur_ind_decompose_flat_with_zero(coord_buffer.get_buffer())
         flat_arounds = nes_for_mp.calc_sur_ind_decompose_flat_with_zero(coord_buffer)
 
         all_neigh = go_around_int(array_3D, flat_arounds)
@@ -166,10 +151,7 @@ def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(shm_mdata, chunk_range, co
         numb_in_prod_no_block = np.array([], dtype=int)
 
         where_not_null = np.unique(np.where(all_neigh[:, :6] > 0)[0])
-        # to_dissol_no_neigh = np.array(coord_buffer.get_elem_instead_ind(where_not_null), dtype=np.short)
         to_dissol_no_neigh = np.array(np.delete(coord_buffer, where_not_null, axis=1), dtype=np.short)
-
-        # coord_buffer.copy_to_buffer(coord_buffer.get_elem_at_ind(where_not_null))
         coord_buffer = coord_buffer[:, where_not_null]
 
         if len(coord_buffer[0]) > 0:
@@ -181,44 +163,35 @@ def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(shm_mdata, chunk_range, co
             arr_len_flat = np.sum(all_neigh_bool, axis=1)
 
             index_outside = np.where((arr_len_flat < 6))[0]
-            # coord_buffer.copy_to_buffer(coord_buffer.get_elem_at_ind(index_outside))
             coord_buffer = coord_buffer[:, index_outside]
 
             all_neigh_bool = all_neigh_bool[index_outside]
             arr_len_flat = arr_len_flat[index_outside]
             numb_in_prod = numb_in_prod[index_outside]
 
-            # non_flat_arounds = utils_inst.calc_sur_ind_decompose_no_flat(coord_buffer.get_buffer())
             non_flat_arounds = nes_for_mp.calc_sur_ind_decompose_no_flat(coord_buffer)
             non_flat_neigh = go_around_bool(array_3D, non_flat_arounds)
             all_neigh_bool = np.concatenate((all_neigh_bool, non_flat_neigh), axis=1)
-
             ind_where_blocks = aggregate(aggregated_ind, all_neigh_bool)
 
             if len(ind_where_blocks) > 0:
-                # to_dissol_pn_buffer.copy_to_buffer(coord_buffer.get_elem_instead_ind(ind_where_blocks))
                 to_dissol_pn_buffer = np.array(np.delete(coord_buffer, ind_where_blocks, axis=1), dtype=np.short)
 
                 all_neigh_no_block = np.delete(arr_len_flat, ind_where_blocks)
                 numb_in_prod_no_block = np.delete(numb_in_prod, ind_where_blocks, axis=0)
-
-                # coord_buffer.copy_to_buffer(coord_buffer.get_elem_at_ind(ind_where_blocks))
                 coord_buffer = coord_buffer[:, ind_where_blocks]
                 all_neigh_block = arr_len_flat[ind_where_blocks]
 
                 numb_in_prod_block = numb_in_prod[ind_where_blocks]
             else:
-                # to_dissol_pn_buffer.copy_to_buffer(coord_buffer.get_buffer())
                 to_dissol_pn_buffer = coord_buffer
                 all_neigh_no_block = arr_len_flat
                 numb_in_prod_no_block = numb_in_prod
 
-                # coord_buffer.reset_buffer()
                 coord_buffer = np.array([[], [], []], dtype=np.ushort)
                 all_neigh_block = np.array([])
                 numb_in_prod_block = np.array([], dtype=int)
 
-        # to_dissolve_no_block = to_dissol_pn_buffer.get_buffer()
         to_dissolve_no_block = to_dissol_pn_buffer
         probs_no_block = dissolution_probabilities.get_probabilities(all_neigh_no_block, to_dissolve_no_block[2])
 
@@ -231,7 +204,6 @@ def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(shm_mdata, chunk_range, co
         temp_ind = np.where(randomise < probs_no_block)[0]
         to_dissolve_no_block = to_dissolve_no_block[:, temp_ind]
 
-        # to_dissolve_block = coord_buffer.get_buffer()
         to_dissolve_block = coord_buffer
         probs_block = dissolution_probabilities.get_probabilities_block(all_neigh_block, to_dissolve_block[2])
 
@@ -252,8 +224,6 @@ def dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP(shm_mdata, chunk_range, co
         to_dissolve = np.concatenate((to_dissolve_no_block, to_dissol_no_neigh, to_dissolve_block), axis=1)
 
     shm.close()
-    # shm_aggregated_ind.close()
-
     return to_dissolve
 
 
@@ -409,6 +379,7 @@ class CellularAutomata:
                                             [13, 3, 4, 2, 21, 24, 25]], dtype=np.int64)
 
             if Config.MULTIPROCESSING:
+
                 self.precip_3d_init_shm = shared_memory.SharedMemory(create=True,
                                                                      size=self.cases.first.precip_3d_init.nbytes)
                 self.precip_3d_init = np.ndarray(self.cases.first.precip_3d_init.shape,
@@ -429,19 +400,6 @@ class CellularAutomata:
                 self.product_x_nzs_mdata = SharedMetaData(self.product_x_nzs_shm.name, product_x_nzs.shape,
                                                           product_x_nzs.dtype)
 
-                # self.fetch_ind_shm = shared_memory.SharedMemory(create=True, size=self.fetch_ind.nbytes)
-                # fetch_ind = np.ndarray(self.fetch_ind.shape, dtype=self.fetch_ind.dtype, buffer=self.fetch_ind_shm.buf)
-                # np.copyto(fetch_ind, self.fetch_ind)
-                # self.fetch_ind_mdata = SharedMetaData(self.fetch_ind_shm.name, self.fetch_ind.shape, self.fetch_ind.dtype)
-
-
-                # self.aggregated_ind_shm = shared_memory.SharedMemory(create=True, size=self.aggregated_ind.nbytes)
-                # aggregated_ind = np.ndarray(self.aggregated_ind.shape, dtype=self.aggregated_ind.dtype,
-                #                        buffer=self.aggregated_ind_shm.buf)
-                # np.copyto(aggregated_ind, self.aggregated_ind)
-                # self.aggregated_ind_mdata = SharedMetaData(self.aggregated_ind_shm.name, self.aggregated_ind.shape,
-                #                                       self.aggregated_ind.dtype)
-
                 self.numb_of_proc = Config.NUMBER_OF_PROCESSES
                 if self.cells_per_axis % self.numb_of_proc == 0:
                     chunk_size = int(self.cells_per_axis / self.numb_of_proc)
@@ -456,7 +414,7 @@ class CellularAutomata:
                     self.chunk_ranges[pos, 1] = self.chunk_ranges[pos, 0] + chunk_size
                 self.chunk_ranges[-1, 1] = self.cells_per_axis
 
-                self.pool = multiprocessing.Pool(processes=self.numb_of_proc, maxtasksperchild=100000)
+                self.pool = multiprocessing.Pool(processes=self.numb_of_proc, maxtasksperchild=50000)
 
             self.threshold_inward = Config.THRESHOLD_INWARD
             self.threshold_outward = Config.THRESHOLD_OUTWARD
@@ -505,6 +463,7 @@ class CellularAutomata:
             self.active_times = adj_lamd ** 2 / Config.GENERATED_VALUES.KINETIC_KONST ** 2
 
             self.prev_len = 0
+            self.powers = physical_data.POWERS
 
     def dissolution_zhou_wei_original(self):
         """Implementation of original not adapted Zhou and Wei approach. Only two probabilities p for block and pn
@@ -1630,11 +1589,25 @@ class CellularAutomata:
         whole_moles = matrix_moles + oxidant_moles + active_moles + product_moles
         product_c = product_moles / whole_moles
 
-        soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[:ioz_bound + 1])**1.1
+        powers = self.powers[np.arange(ioz_bound + 1)]
+
+        soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[:ioz_bound + 1]) ** powers
+        # soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[:ioz_bound + 1]) ** 1.1
+        # soll_prod = product_c
+
         self.diffs = product_c - soll_prod
 
-        # self.product_indexes = np.where((product_c <= Config.PHASE_FRACTION_LIMIT) & (self.diffs <= 0))[0]
-        self.product_indexes = np.where(self.diffs <= 0)[0]
+        if self.iteration % Config.STRIDE == 0:
+            itera = np.full(ioz_bound + 1, self.iteration) // Config.STRIDE
+            indexes = np.stack((range(ioz_bound + 1), itera))
+
+            self.cumul_prod.set_at_ind(indexes, product_c)
+            self.growth_rate.set_at_ind(indexes, soll_prod)
+
+        # self.diffs = product_c - soll_prod
+        self.product_indexes = np.where((product_c <= Config.PHASE_FRACTION_LIMIT) & (self.diffs <= 0))[0]
+        # self.product_indexes = np.where(product_c <= Config.PHASE_FRACTION_LIMIT)[0]
+        # self.product_indexes = np.where(self.diffs <= 0)[0]
 
         self.comb_indexes = self.get_active_oxidant_mutual_indexes(oxidant, active)
         self.comb_indexes = np.intersect1d(self.comb_indexes, self.product_indexes)
@@ -1905,59 +1878,12 @@ class CellularAutomata:
             self.precip_3d_init[:, :, 0:self.furthest_index + 2] =\
                 self.primary_product.c3d[:, :, 0:self.furthest_index + 2]
 
-            # new_fetch_ind = np.array(self.fetch_ind)
-
-            # primary_product_mdata = SharedMetaData(self.primary_product.shm_mdata.name,
-            #                                self.primary_product.shm_mdata.shape,
-            #                                self.primary_product.shm_mdata.dtype)
-            # product_x_nzs_mdata = SharedMetaData(self.product_x_nzs_mdata.name,
-            #                                        self.product_x_nzs_mdata.shape,
-            #                                        self.product_x_nzs_mdata.dtype)
-            # full_shm_mdata = SharedMetaData(self.primary_product.full_shm_mdata.name,
-            #                                self.primary_product.full_shm_mdata.shape,
-            #                                self.primary_product.full_shm_mdata.dtype)
-            # precip_3d_init_mdata = SharedMetaData(self.precip_3d_init_mdata.name,
-            #                                        self.precip_3d_init_mdata.shape,
-            #                                        self.precip_3d_init_mdata.dtype)
-            # primary_active = SharedMetaData(self.primary_active.shm_mdata.name,
-            #                                        self.primary_active.shm_mdata.shape,
-            #                                        self.primary_active.shm_mdata.dtype)
-            # primary_oxidant = SharedMetaData(self.primary_oxidant.shm_mdata.name,
-            #                                 self.primary_oxidant.shm_mdata.shape,
-            #                                 self.primary_oxidant.shm_mdata.dtype)
-
-            # fetch_ind_mdata = SharedMetaData(self.fetch_ind_mdata.name,
-            #                                  self.fetch_ind_mdata.shape,
-            #                                  self.fetch_ind_mdata.dtype)
-
-            # huge_shit_mdata = SharedMetaData(self.huge_shit_mdata.name,
-            #                                  self.huge_shit_mdata.shape,
-            #                                  self.huge_shit_mdata.dtype)
-
             nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY,
                                                                      Config.PRODUCTS.PRIMARY)
-            # Dynamically feed new arguments to workers for this iteration
-            # args = []
-            # for ind in self.comb_indexes:
-                # args.append((product_x_nzs_mdata, primary_product_mdata, full_shm_mdata,
-                #         precip_3d_init_mdata, primary_active, primary_oxidant, [ind],
-                #         new_fetch_ind, nucleation_probabilities, CellularAutomata.ci_single_MP,
-                #         CellularAutomata.precip_step_standard_MP))
 
             tasks = [(self.product_x_nzs_mdata, self.primary_product.shm_mdata, self.primary_product.full_shm_mdata,
                     self.precip_3d_init_mdata, self.primary_active.shm_mdata, self.primary_oxidant.shm_mdata, [ind],
                     self.fetch_ind, nucleation_probabilities, ci_single_MP, precip_step_standard_MP) for ind in self.comb_indexes]
-
-                # self.input_queue.put((huge_shit_mdata, product_x_nzs_mdata, primary_product_mdata, full_shm_mdata,
-                #         precip_3d_init_mdata, primary_active, primary_oxidant, [ind],
-                #         fetch_ind_mdata, nucleation_probabilities, ci_single_MP, precip_step_standard_MP))
-
-            # Collect results for this iteration
-            # results = []
-            # for _ in self.comb_indexes:
-            #     # self.output_queue.get()
-            #     result = self.output_queue.get()
-            #     results.append(result)
 
             self.pool.map(worker, tasks)
 
@@ -2145,15 +2071,6 @@ class CellularAutomata:
         product_c = product_moles / whole_moles
 
 
-        soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[self.product_indexes]) ** 1.1
-        if self.iteration % Config.STRIDE == 0:
-            itera = np.full(len(self.product_indexes), self.iteration) // Config.STRIDE
-            indexes = np.stack((self.product_indexes, itera))
-
-            self.cumul_prod.set_at_ind(indexes, product_c)
-            self.growth_rate.set_at_ind(indexes, soll_prod)
-
-
         temp_ind = np.where(product == 0)[0]
         self.product_x_nzs[self.product_indexes[temp_ind]] = False
 
@@ -2161,31 +2078,24 @@ class CellularAutomata:
         self.comb_indexes = np.delete(self.product_indexes, temp_ind)
 
         temp_ind = np.where(product_c > Config.PHASE_FRACTION_LIMIT)[0]
-        self.product_x_not_stab[self.comb_indexes[temp_ind]] = False
 
+        self.product_x_not_stab[self.comb_indexes[temp_ind]] = False
 
         product_c = np.delete(product_c, temp_ind)
         self.comb_indexes = np.delete(self.comb_indexes, temp_ind)
 
-        soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[self.comb_indexes]) ** 1.1
+        powers = self.powers[self.comb_indexes]
+
+        soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[self.comb_indexes]) ** powers
 
         self.diffs = product_c - soll_prod
 
         temp = np.where(self.diffs > 0)[0]
         self.comb_indexes = self.comb_indexes[temp]
 
-
         if len(self.comb_indexes) > 0:
             dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY,
                                                                        Config.PRODUCTS.PRIMARY)
-
-            # new_shm_mdata = SharedMetaData(self.primary_product.shm_mdata.name,
-            #                                self.primary_product.shm_mdata.shape,
-            #                                self.primary_product.shm_mdata.dtype)
-
-            # aggregated_ind_mdata = SharedMetaData(self.aggregated_ind_mdata.name,
-            #                                       self.aggregated_ind_mdata.shape,
-            #                                       self.aggregated_ind_mdata.dtype)
 
             tasks = [(self.primary_product.shm_mdata, chunk_range, self.comb_indexes, self.aggregated_ind,
                       dissolution_probabilities, dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP) for chunk_range in
@@ -2355,7 +2265,6 @@ class CellularAutomata:
         soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[self.product_indexes]) ** 1.1
         self.diffs = product_c - soll_prod
 
-        # temp = np.where((product_c > Config.PHASE_FRACTION_LIMIT) | (product_c > self.soll_prod))[0]
         temp = np.where((product_c > Config.PHASE_FRACTION_LIMIT) | (self.diffs > 0))[0]
         self.comb_indexes = self.product_indexes[temp]
 
@@ -2387,12 +2296,12 @@ class CellularAutomata:
 
         soll_prod = Config.PROD_INCR_CONST * (self.curr_time - self.active_times[self.product_indexes]) ** 1.1
 
-        if self.iteration % Config.STRIDE == 0:
-            itera = np.full(len(self.product_indexes), self.iteration) // Config.STRIDE
-            indexes = np.stack((self.product_indexes, itera))
-
-            self.cumul_prod.set_at_ind(indexes, product_c)
-            self.growth_rate.set_at_ind(indexes, soll_prod)
+        # if self.iteration % Config.STRIDE == 0:
+        #     itera = np.full(len(self.product_indexes), self.iteration) // Config.STRIDE
+        #     indexes = np.stack((self.product_indexes, itera))
+        #
+        #     self.cumul_prod.set_at_ind(indexes, product_c)
+        #     self.growth_rate.set_at_ind(indexes, soll_prod)
         self.diffs = product_c - soll_prod
 
         temp = np.where((product_c > Config.PHASE_FRACTION_LIMIT) | (self.diffs > 0))[0]
@@ -2401,15 +2310,6 @@ class CellularAutomata:
         if len(self.comb_indexes) > 0:
             dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY,
                                                                        Config.PRODUCTS.PRIMARY)
-            # new_comb_indexes = np.array(self.comb_indexes)
-
-            # new_shm_mdata = SharedMetaData(self.primary_product.shm_mdata.name,
-            #                                self.primary_product.shm_mdata.shape,
-            #                                self.primary_product.shm_mdata.dtype)
-
-            # aggregated_ind_mdata = SharedMetaData(self.aggregated_ind_mdata.name,
-            #                                       self.aggregated_ind_mdata.shape,
-            #                                       self.aggregated_ind_mdata.dtype)
 
             tasks = [(self.primary_product.shm_mdata, chunk_range, self.comb_indexes, self.aggregated_ind,
                       dissolution_probabilities, dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP) for chunk_range in
