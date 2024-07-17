@@ -58,7 +58,6 @@ class Utils:
                                 (1, 0, 0): [[0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1], [1, 0, 0]],
                                 (-1, 0, 0): [[0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1], [-1, 0, 0]]}
 
-
     def generate_param(self):
         Config.GENERATED_VALUES.TAU = Config.SIM_TIME / Config.N_ITERATIONS
         Config.GENERATED_VALUES.LAMBDA = Config.SIZE / Config.N_CELLS_PER_AXIS

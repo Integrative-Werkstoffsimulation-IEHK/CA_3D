@@ -9,7 +9,7 @@ if __name__ == '__main__':
 """
 
     new_system = SimulationConfigurator()
-    new_system.configurate_functions()
+    new_system.precipitation_with_td()
 
     try:
         new_system.run_simulation()

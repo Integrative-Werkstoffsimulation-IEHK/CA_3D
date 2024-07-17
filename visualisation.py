@@ -1476,7 +1476,7 @@ ELAPSED TIME: {message}
             if np.any(items):
                 primary_product = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
                 primary_product_moles = primary_product * self.Config.PRODUCTS.PRIMARY.MOLES_PER_CELL
-                # primary_product_moles_tc = primary_product * self.Config.PRODUCTS.PRIMARY.MOLES_PER_CELL_TC
+                primary_product_moles_tc = primary_product * self.Config.PRODUCTS.PRIMARY.MOLES_PER_CELL_TC
                 primary_product_mass = primary_product * self.Config.PRODUCTS.PRIMARY.MASS_PER_CELL
                 primary_product_eq_mat_moles = primary_product * self.Config.ACTIVES.PRIMARY.EQ_MATRIX_MOLES_PER_CELL
 
@@ -1485,7 +1485,7 @@ ELAPSED TIME: {message}
                 items = np.array(self.c.fetchall())
                 secondary_product = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
                 secondary_product_moles = secondary_product * self.Config.PRODUCTS.SECONDARY.MOLES_PER_CELL
-                # secondary_product_moles_tc = secondary_product * self.Config.PRODUCTS.SECONDARY.MOLES_PER_CELL_TC
+                secondary_product_moles_tc = secondary_product * self.Config.PRODUCTS.SECONDARY.MOLES_PER_CELL_TC
                 secondary_product_mass = secondary_product * self.Config.PRODUCTS.SECONDARY.MASS_PER_CELL
                 secondary_product_eq_mat_moles = secondary_product * self.Config.ACTIVES.SECONDARY.EQ_MATRIX_MOLES_PER_CELL
 
@@ -1493,14 +1493,14 @@ ELAPSED TIME: {message}
                 items = np.array(self.c.fetchall())
                 ternary_product = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
                 ternary_product_moles = ternary_product * self.Config.PRODUCTS.TERNARY.MOLES_PER_CELL
-                # ternary_product_moles_tc = ternary_product * self.Config.PRODUCTS.TERNARY.MOLES_PER_CELL_TC
+                ternary_product_moles_tc = ternary_product * self.Config.PRODUCTS.TERNARY.MOLES_PER_CELL_TC
                 ternary_product_mass = ternary_product * self.Config.PRODUCTS.TERNARY.MASS_PER_CELL
                 ternary_product_eq_mat_moles = ternary_product * self.Config.ACTIVES.PRIMARY.EQ_MATRIX_MOLES_PER_CELL
 
                 self.c.execute("SELECT * from quaternary_product_iter_{}".format(iteration))
                 items = np.array(self.c.fetchall())
                 quaternary_product = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
-                # quaternary_product_moles_tc = quaternary_product * self.Config.PRODUCTS.QUATERNARY.MOLES_PER_CELL
+                quaternary_product_moles_tc = quaternary_product * self.Config.PRODUCTS.QUATERNARY.MOLES_PER_CELL
                 quaternary_product_moles = quaternary_product * self.Config.PRODUCTS.QUATERNARY.MOLES_PER_CELL
                 quaternary_product_mass = quaternary_product * self.Config.PRODUCTS.QUATERNARY.MASS_PER_CELL
                 quaternary_product_eq_mat_moles = quaternary_product * self.Config.ACTIVES.SECONDARY.EQ_MATRIX_MOLES_PER_CELL
@@ -1511,6 +1511,7 @@ ELAPSED TIME: {message}
                 if np.any(items):
                     secondary_product = np.array([len(np.where(items[:, 2] == i)[0]) for i in range(self.axlim)])
                     secondary_product_moles = secondary_product * self.Config.PRODUCTS.SECONDARY.MOLES_PER_CELL
+                    secondary_product_moles_tc = secondary_product * self.Config.PRODUCTS.SECONDARY.MOLES_PER_CELL_TC
                     secondary_product_mass = secondary_product * self.Config.PRODUCTS.SECONDARY.MASS_PER_CELL
                     secondary_product_eq_mat_moles = primary_product * self.Config.ACTIVES.SECONDARY.EQ_MATRIX_MOLES_PER_CELL
 
@@ -1666,9 +1667,9 @@ ELAPSED TIME: {message}
             ax.plot(x, inward, color='b', linewidth=lokal_linewidth)
             # ax.plot(x, sinward, color='deeppink')
             ax.plot(x, outward, color='g', linewidth=lokal_linewidth)
-            # ax.plot(x, soutward, color='darkorange')
+            ax.plot(x, soutward, color='darkorange')
             ax.plot(x, primary_product, color='r', linewidth=lokal_linewidth)
-            # ax.plot(x, secondary_product, color='cyan')
+            ax.plot(x, secondary_product, color='cyan')
             # ax.plot(x, ternary_product, color='darkgreen')
             # ax.plot(x, quaternary_product, color='steelblue')
 

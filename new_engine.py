@@ -32,12 +32,13 @@ class SimulationConfigurator:
         self.ca.cur_case.dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY,
                                                                                     Config.PRODUCTS.PRIMARY)
 
-    def configurate_functions1(self):
+    def precipitation_with_td(self):
         self.ca.primary_oxidant.diffuse = self.ca.primary_oxidant.diffuse_bulk
         self.ca.primary_active.diffuse = self.ca.primary_active.diffuse_bulk
+        self.ca.secondary_active.diffuse = self.ca.primary_oxidant.diffuse_bulk
 
-        self.ca.precip_func = self.ca.precipitation_first_case
-        self.ca.get_combi_ind = self.ca.get_combi_ind_atomic_with_kinetic_and_KP
+        self.ca.precip_func = self.ca.precipitation_with_td
+        self.ca.get_combi_ind = None
         self.ca.precip_step = self.ca.precip_step_standard
         self.ca.check_intersection = self.ca.ci_single_no_growth
 
@@ -45,33 +46,22 @@ class SimulationConfigurator:
         # self.ca.decomposition_intrinsic = self.ca.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP
 
         self.ca.cur_case = self.ca.cases.first
-        # self.ca.cases.first.go_around_func_ref = self.ca.go_around_mult_oxid_n_also_partial_neigh_aip
-        self.ca.cases.first.fix_init_precip_func_ref = self.ca.fix_init_precip_dummy
-
-        # self.ca.cur_case.nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY,
-        #                                                                           Config.PRODUCTS.PRIMARY)
-        # self.ca.cur_case.dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY,
-        #                                                                             Config.PRODUCTS.PRIMARY)
-
-    def configurate_functions2(self):
-        self.ca.primary_oxidant.diffuse = self.ca.primary_oxidant.diffuse_with_scale
-        self.ca.primary_active.diffuse = self.ca.primary_active.diffuse_with_scale
-
-        self.ca.precip_func = self.ca.precipitation_first_case
-        self.ca.get_combi_ind = self.ca.get_combi_ind_atomic_with_kinetic_and_KP
-        self.ca.precip_step = self.ca.precip_step_standard
-        self.ca.check_intersection = self.ca.ci_single
-
-        self.ca.decomposition = self.ca.dissolution_atomic_with_kinetic_and_KP
-        self.ca.decomposition_intrinsic = self.ca.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL
-
-        self.ca.cur_case = self.ca.cases.first
         self.ca.cases.first.go_around_func_ref = self.ca.go_around_mult_oxid_n_also_partial_neigh_aip
+        # self.ca.cases.second.go_around_func_ref = self.ca.go_around_mult_oxid_n_also_partial_neigh_aip
+
+        # self.ca.cases.first.fix_init_precip_func_ref = self.ca.fix_init_precip_dummy
 
         self.ca.cur_case.nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY,
                                                                                   Config.PRODUCTS.PRIMARY)
         self.ca.cur_case.dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY,
                                                                                     Config.PRODUCTS.PRIMARY)
+
+        self.ca.cur_case = self.ca.cases.second
+        self.ca.cur_case.nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.SECONDARY,
+                                                                                  Config.PRODUCTS.SECONDARY)
+        self.ca.cur_case.dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.SECONDARY,
+                                                                                    Config.PRODUCTS.SECONDARY)
+
 
     def run_simulation(self):
         self.begin = time.time()
@@ -79,7 +69,7 @@ class SimulationConfigurator:
             if keyboard.is_pressed('ctrl+m'):
                 break
             self.ca.precip_func()
-            self.ca.decomposition()
+            # self.ca.decomposition()
             # self.precip_func()
             # self.decomposition()
             self.ca.diffusion_inward()
@@ -151,36 +141,37 @@ class SimulationConfigurator:
         # # Wait for all workers to terminate
         # for wrkr in self.ca.workers:
         #     wrkr.join()
-
-        self.ca.pool.close()
-        self.ca.pool.join()
+        if Config.MULTIPROCESSING:
+            self.ca.pool.close()
+            self.ca.pool.join()
 
         print("TERMINATED PROPERLY!")
 
     def unlink(self):
-        self.ca.precip_3d_init_shm.close()
-        self.ca.precip_3d_init_shm.unlink()
+        if Config.MULTIPROCESSING:
+            self.ca.precip_3d_init_shm.close()
+            self.ca.precip_3d_init_shm.unlink()
 
-        self.ca.product_x_nzs_shm.close()
-        self.ca.product_x_nzs_shm.unlink()
+            self.ca.product_x_nzs_shm.close()
+            self.ca.product_x_nzs_shm.unlink()
 
-        self.ca.primary_active.c3d_shared.close()
-        self.ca.primary_active.c3d_shared.unlink()
+            self.ca.primary_active.c3d_shared.close()
+            self.ca.primary_active.c3d_shared.unlink()
 
-        self.ca.primary_oxidant.c3d_shared.close()
-        self.ca.primary_oxidant.c3d_shared.unlink()
+            self.ca.primary_oxidant.c3d_shared.close()
+            self.ca.primary_oxidant.c3d_shared.unlink()
 
-        self.ca.primary_product.c3d_shared.close()
-        self.ca.primary_product.c3d_shared.unlink()
+            self.ca.primary_product.c3d_shared.close()
+            self.ca.primary_product.c3d_shared.unlink()
 
-        self.ca.primary_product.full_c3d_shared.close()
-        self.ca.primary_product.full_c3d_shared.unlink()
+            self.ca.primary_product.full_c3d_shared.close()
+            self.ca.primary_product.full_c3d_shared.unlink()
 
-        # self.ca.fetch_ind_shm.close()
-        # self.ca.fetch_ind_shm.unlink()
+            # self.ca.fetch_ind_shm.close()
+            # self.ca.fetch_ind_shm.unlink()
 
-        # self.ca.aggregated_ind_shm.close()
-        # self.ca.aggregated_ind_shm.unlink()
+            # self.ca.aggregated_ind_shm.close()
+            # self.ca.aggregated_ind_shm.unlink()
 
         print("UNLINKED PROPERLY!")
 

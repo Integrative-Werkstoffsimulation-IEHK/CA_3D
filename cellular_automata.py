@@ -1,13 +1,13 @@
 import sys
-
 import numpy as np
-
 import utils
 from elements import *
 import multiprocessing
 from multiprocessing import shared_memory
 import nes_for_mp
 from utils import physical_data
+from thermodynamics import *
+
 
 def fix_full_cells(array_3d, full_array_3d, new_precip):
     current_precip = np.array(array_3d[new_precip[0], new_precip[1], new_precip[2]], dtype=np.ubyte)
@@ -441,8 +441,15 @@ class CellularAutomata:
             self.save_flag = False
 
             self.product_x_not_stab = np.full(self.cells_per_axis, True, dtype=bool)
-            # self.TdDATA = TdDATA()
-            # self.TdDATA.fetch_look_up_from_file()
+            self.TdDATA = TdDATA()
+            self.TdDATA.fetch_look_up_from_file()
+
+            self.curr_look_up = self.TdDATA.get_look_up_data([0.4], [0.4], [0.6])
+            # self.curr_look_up = self.TdDATA.get_look_up_data(active_pure_c, secondary_active_pure_c, oxidant_pure_c)
+            # self.curr_look_up = self.TdDATA.get_look_up_data(active_pure_c, secondary_active_pure_c, oxidant_pure_c)
+            # self.curr_look_up = self.TdDATA.get_look_up_data(active_pure_c, secondary_active_pure_c, oxidant_pure_c)
+
+
             self.curr_look_up = None
 
             self.prev_stab_count = 0
@@ -1772,12 +1779,15 @@ class CellularAutomata:
 
         self.curr_look_up = self.TdDATA.get_look_up_data(active_pure_c, secondary_active_pure_c, oxidant_pure_c)
 
+        z_ind_sec = np.where(secondary_product_c == 0)[0]
+        self.curr_look_up[0, z_ind_sec] = 0.5
+
         primary_diff = self.curr_look_up[0] - product_c
-        primary_pos_ind = np.where(primary_diff >= 0)[0]
+        primary_pos_ind = np.where(primary_diff > 0)[0]
         primary_neg_ind = np.where(primary_diff < 0)[0]
 
         secondary_diff = self.curr_look_up[1] - secondary_product_c
-        secondary_pos_ind = np.where(secondary_diff >= 0)[0]
+        secondary_pos_ind = np.where(secondary_diff > 0)[0]
         secondary_neg_ind = np.where(secondary_diff < 0)[0]
 
         self.cur_case = self.cases.first
@@ -1793,7 +1803,7 @@ class CellularAutomata:
             if len(self.comb_indexes) > 0:
                 self.cur_case.fix_init_precip_func_ref(self.furthest_index)
                 self.precip_step_two_products()
-                self.dissolution_zhou_wei_no_bsf()
+                # self.dissolution_zhou_wei_no_bsf()
 
         if len(primary_neg_ind) > 0:
             self.comb_indexes = primary_neg_ind
@@ -3033,7 +3043,7 @@ class CellularAutomata:
     def ci_single_two_products(self, seeds):
         all_arounds = self.utils.calc_sur_ind_formation(seeds, self.cur_case.active.c3d.shape[2] - 1)
         neighbours = go_around_bool(self.cur_case.active.c3d, all_arounds)
-        arr_len_out = np.array([np.sum(item) for item in neighbours], dtype=np.ubyte)
+        arr_len_out = np.array([np.sum(item) for item in neighbours], dtype=np.short)
         temp_ind = np.where(arr_len_out >= self.threshold_outward)[0]
 
         # activate for dependent growth___________________________________________________________________
@@ -3041,7 +3051,10 @@ class CellularAutomata:
             seeds = seeds[temp_ind]
             neighbours = neighbours[temp_ind]
             all_arounds = all_arounds[temp_ind]
-            flat_arounds = all_arounds[:, 0:self.cur_case.product.lind_flat_arr]
+
+            # flat_arounds = all_arounds[:, 0:self.cur_case.product.lind_flat_arr]
+            flat_arounds = np.concatenate((all_arounds[:, 0:5], all_arounds[:, -2:]), axis=1)
+
             arr_len_in_flat = self.cur_case.go_around_func_ref(flat_arounds)
             homogeneous_ind = np.where(arr_len_in_flat == 0)[0]
             needed_prob = self.cur_case.nucleation_probabilities.get_probabilities(arr_len_in_flat, seeds[0][2])
@@ -3055,10 +3068,14 @@ class CellularAutomata:
                 seeds = seeds[temp_ind]
                 neighbours = neighbours[temp_ind]
                 all_arounds = all_arounds[temp_ind]
-                out_to_del = np.array(np.nonzero(neighbours))
-                start_seed_index = np.unique(out_to_del[0], return_index=True)[1]
-                to_del = np.array([out_to_del[1, indx:indx + self.threshold_outward] for indx in start_seed_index],
-                                  dtype=np.ubyte)
+                # out_to_del = np.array(np.nonzero(neighbours))
+                # start_seed_index = np.unique(out_to_del[0], return_index=True)[1]
+                # to_del = np.array([out_to_del[1, indx:indx + self.threshold_outward] for indx in start_seed_index],
+                #                   dtype=np.ubyte)
+                # coord = np.array([all_arounds[seed_ind][point_ind] for seed_ind, point_ind in enumerate(to_del)],
+                #                  dtype=np.short)
+                out_to_del = [np.array(np.nonzero(item)[0]) for item in neighbours]
+                to_del = [np.random.choice(item, self.threshold_outward, replace=False) for item in out_to_del]
                 coord = np.array([all_arounds[seed_ind][point_ind] for seed_ind, point_ind in enumerate(to_del)],
                                  dtype=np.short)
                 coord = np.reshape(coord, (len(coord) * self.threshold_outward, 3))
@@ -3079,7 +3096,6 @@ class CellularAutomata:
                 #     temp_ind = np.where(exists > 0)[0]
                 #     coord = np.delete(coord, temp_ind, 0)
                 #     seeds = np.delete(seeds, temp_ind, 0)
-
                 coord = coord.transpose()
                 seeds = seeds.transpose()
 

@@ -28,21 +28,21 @@ class Config:
     # OXIDANTS.SECONDARY.DIFFUSION_CONDITION = "N in Ni Krupp"
     # OXIDANTS.SECONDARY.CELLS_CONCENTRATION = 0.01
     # primary actives
-    ACTIVES.PRIMARY.ELEMENT = "Al"
-    ACTIVES.PRIMARY.DIFFUSION_CONDITION = "Al in Ni Krupp"
-    ACTIVES.PRIMARY.MASS_CONCENTRATION = 0.025
-    ACTIVES.PRIMARY.CELLS_CONCENTRATION = 0.2
+    ACTIVES.PRIMARY.ELEMENT = "Cr"
+    ACTIVES.PRIMARY.DIFFUSION_CONDITION = "Cr in Ni Krupp"
+    ACTIVES.PRIMARY.MASS_CONCENTRATION = 0.25
+    ACTIVES.PRIMARY.CELLS_CONCENTRATION = 0.558
     # secondary actives
-    # ACTIVES.SECONDARY.ELEMENT = "Al"
-    # ACTIVES.SECONDARY.DIFFUSION_CONDITION = "Al in Ni Krupp"
-    # ACTIVES.SECONDARY.MASS_CONCENTRATION = 0.025
-    # ACTIVES.SECONDARY.CELLS_CONCENTRATION = 0.1
+    ACTIVES.SECONDARY.ELEMENT = "Al"
+    ACTIVES.SECONDARY.DIFFUSION_CONDITION = "Al in Ni Krupp"
+    ACTIVES.SECONDARY.MASS_CONCENTRATION = 0.025
+    ACTIVES.SECONDARY.CELLS_CONCENTRATION = 0.1074666
     # matrix
     MATRIX.ELEMENT = "Ni"
 
     TEMPERATURE = 1100  # °C
-    N_CELLS_PER_AXIS = 110  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
-    N_ITERATIONS = 3000000  # must be >= n_cells_per_axis
+    N_CELLS_PER_AXIS = 102  # ONLY MULTIPLES OF 3+(neigh_range-1)*2 ARE ALLOWED
+    N_ITERATIONS = 600000  # must be >= n_cells_per_axis
     STRIDE = 40  # n_iterations / stride = n_iterations for outward diffusion
     STRIDE_MULTIPLIER = 50
     PRECIP_TRANSFORM_DEPTH = 41
@@ -53,7 +53,7 @@ class Config:
     PHASE_FRACTION_LIMIT = 0.056
     THRESHOLD_INWARD = 1
     THRESHOLD_OUTWARD = 1
-    NEIGH_RANGE = 5   # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
+    NEIGH_RANGE = 1   # neighbouring ranges    1, 2, 3, 4, 5,  6,  7,  8,  9,  10
                       #          and           |  |  |  |  |   |   |   |   |   |
                       # corresponding divisors 3, 5, 7, 9, 11, 13, 15, 17, 19, 21
     N_BOOST_STEPS = 3
@@ -73,7 +73,7 @@ class Config:
     SAVE_POST_PROCESSED_INPUT = True
 
     # Execution___________________________________________________________________
-    MULTIPROCESSING = True
+    MULTIPROCESSING = False
     NUMBER_OF_PROCESSES = 20
 
     # PROBABILITIES_______________________________________________________________
@@ -88,7 +88,7 @@ class Config:
     PROBABILITIES.PRIMARY.p0_A_const = 1
     PROBABILITIES.PRIMARY.p0_B_const = 1
     PROBABILITIES.PRIMARY.p1 = 0.7
-    PROBABILITIES.PRIMARY.p1_f = 1
+    PROBABILITIES.PRIMARY.p1_f = 0.9
     PROBABILITIES.PRIMARY.p1_A_const = 1
     PROBABILITIES.PRIMARY.p1_B_const = 1
     PROBABILITIES.PRIMARY.global_A = 1
@@ -97,15 +97,15 @@ class Config:
     PROBABILITIES.PRIMARY.max_neigh_numb = None
     PROBABILITIES.PRIMARY.nucl_adapt_function = 3
     # dissolution primary_________________________
-    PROBABILITIES.PRIMARY.p0_d = 1*10**-1
+    PROBABILITIES.PRIMARY.p0_d = 1*10**-2
     PROBABILITIES.PRIMARY.p0_d_f = 1
     PROBABILITIES.PRIMARY.p0_d_A_const = 1
     PROBABILITIES.PRIMARY.p0_d_B_const = 1
-    PROBABILITIES.PRIMARY.p1_d = 1*10**-2
+    PROBABILITIES.PRIMARY.p1_d = 1*10**-4
     PROBABILITIES.PRIMARY.p1_d_f = 0.9999
     PROBABILITIES.PRIMARY.p1_d_A_const = 1
     PROBABILITIES.PRIMARY.p1_d_B_const = 1
-    PROBABILITIES.PRIMARY.p6_d = 1e-4
+    PROBABILITIES.PRIMARY.p6_d = 1e-6
     PROBABILITIES.PRIMARY.p6_d_f = 0.01
     PROBABILITIES.PRIMARY.p6_d_A_const = 1
     PROBABILITIES.PRIMARY.p6_d_B_const = 1
@@ -118,38 +118,38 @@ class Config:
     # ________________________
 
     # nucleation SECONDARY
-    # PROBABILITIES.SECONDARY.p0 = 0.1
-    # PROBABILITIES.SECONDARY.p0_f = 1
-    # PROBABILITIES.SECONDARY.p0_A_const = 1
-    # PROBABILITIES.SECONDARY.p0_B_const = 1
-    # PROBABILITIES.SECONDARY.p1 = 0.999999
-    # PROBABILITIES.SECONDARY.p1_f = 1
-    # PROBABILITIES.SECONDARY.p1_A_const = 1
-    # PROBABILITIES.SECONDARY.p1_B_const = 1
-    # PROBABILITIES.SECONDARY.global_A = 1
-    # PROBABILITIES.SECONDARY.global_B = 0.001
-    # PROBABILITIES.SECONDARY.global_B_f = -20
-    # PROBABILITIES.SECONDARY.max_neigh_numb = None
-    # PROBABILITIES.SECONDARY.nucl_adapt_function = 3
-    # # dissolution SECONDARY
-    # PROBABILITIES.SECONDARY.p0_d = 0.001
-    # PROBABILITIES.SECONDARY.p0_d_f = 1
-    # PROBABILITIES.SECONDARY.p0_d_A_const = 1
-    # PROBABILITIES.SECONDARY.p0_d_B_const = 1
-    # PROBABILITIES.SECONDARY.p1_d = 0.0001
-    # PROBABILITIES.SECONDARY.p1_d_f = 1
-    # PROBABILITIES.SECONDARY.p1_d_A_const = 1
-    # PROBABILITIES.SECONDARY.p1_d_B_const = 1
-    # PROBABILITIES.SECONDARY.p6_d = 1 * 10 ** -10
-    # PROBABILITIES.SECONDARY.p6_d_f = 0.1
-    # PROBABILITIES.SECONDARY.p6_d_A_const = 1
-    # PROBABILITIES.SECONDARY.p6_d_B_const = 1
-    # PROBABILITIES.SECONDARY.global_d_A = 1
-    # PROBABILITIES.SECONDARY.global_d_B = -1.15
-    # PROBABILITIES.SECONDARY.global_d_B_f = -0.001
-    # PROBABILITIES.SECONDARY.n = 2
-    # PROBABILITIES.SECONDARY.bsf = 1
-    # PROBABILITIES.SECONDARY.dissol_adapt_function = 3
+    PROBABILITIES.SECONDARY.p0 = 0.5
+    PROBABILITIES.SECONDARY.p0_f = 1
+    PROBABILITIES.SECONDARY.p0_A_const = 1
+    PROBABILITIES.SECONDARY.p0_B_const = 1
+    PROBABILITIES.SECONDARY.p1 = 0.7
+    PROBABILITIES.SECONDARY.p1_f = 1
+    PROBABILITIES.SECONDARY.p1_A_const = 1
+    PROBABILITIES.SECONDARY.p1_B_const = 1
+    PROBABILITIES.SECONDARY.global_A = 1
+    PROBABILITIES.SECONDARY.global_B = 0.001
+    PROBABILITIES.SECONDARY.global_B_f = -20
+    PROBABILITIES.SECONDARY.max_neigh_numb = None
+    PROBABILITIES.SECONDARY.nucl_adapt_function = 3
+    # dissolution SECONDARY
+    PROBABILITIES.SECONDARY.p0_d = 0.001
+    PROBABILITIES.SECONDARY.p0_d_f = 1
+    PROBABILITIES.SECONDARY.p0_d_A_const = 1
+    PROBABILITIES.SECONDARY.p0_d_B_const = 1
+    PROBABILITIES.SECONDARY.p1_d = 0.0001
+    PROBABILITIES.SECONDARY.p1_d_f = 1
+    PROBABILITIES.SECONDARY.p1_d_A_const = 1
+    PROBABILITIES.SECONDARY.p1_d_B_const = 1
+    PROBABILITIES.SECONDARY.p6_d = 1 * 10 ** -6
+    PROBABILITIES.SECONDARY.p6_d_f = 0.1
+    PROBABILITIES.SECONDARY.p6_d_A_const = 1
+    PROBABILITIES.SECONDARY.p6_d_B_const = 1
+    PROBABILITIES.SECONDARY.global_d_A = 1
+    PROBABILITIES.SECONDARY.global_d_B = -1.15
+    PROBABILITIES.SECONDARY.global_d_B_f = -0.001
+    PROBABILITIES.SECONDARY.n = 2
+    PROBABILITIES.SECONDARY.bsf = 1
+    PROBABILITIES.SECONDARY.dissol_adapt_function = 3
     # ________________________
 
     GENERATED_VALUES = GeneratedValues()
