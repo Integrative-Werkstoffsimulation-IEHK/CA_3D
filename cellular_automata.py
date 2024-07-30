@@ -2952,7 +2952,7 @@ class CellularAutomata:
 
     def ci_single_no_growth(self, seeds):
         all_arounds = self.utils.calc_sur_ind_formation(seeds, self.cur_case.active.c3d.shape[2] - 1)
-        neighbours = go_around_bool(self.cur_case.active.c3d, all_arounds)
+        neighbours = go_around_bool(self.cur_case.active.c3d, all_arounds[:, :-2])
         arr_len_out = np.array([np.sum(item) for item in neighbours], dtype=np.ushort)
         temp_ind = np.where(arr_len_out >= self.threshold_outward)[0]
 
@@ -2982,7 +2982,7 @@ class CellularAutomata:
 
             # mark the x-plane where the precipitate has happened, so the index of this plane can be called in the
             # dissolution function
-            self.product_x_nzs[seeds[2][0]] = True
+            # self.product_x_nzs[seeds[2][0]] = True
 
     def ci_single_no_growth_solub_prod_test(self, seeds):
         """

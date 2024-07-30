@@ -52,9 +52,9 @@ class ActiveElem:
         self.cells = np.random.randint(self.cells_per_axis, size=(3, int(self.n_per_page * self.cells_per_axis)),
                                        dtype=np.short)
 
-        if settings.ELEMENT == "Al":
-            ind = np.where(self.cells[2] < 5)[0]
-            self.cells = np.delete(self.cells, ind, axis=1)
+        # if settings.ELEMENT == "Al":
+        #     ind = np.where(self.cells[2] < 5)[0]
+        #     self.cells = np.delete(self.cells, ind, axis=1)
         # ____________________________________________
 
         # delete first and second page

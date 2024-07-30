@@ -13,24 +13,26 @@ class SimulationConfigurator:
         self.elapsed_time = None
 
     def configurate_functions(self):
-        self.ca.primary_oxidant.diffuse = self.ca.primary_oxidant.diffuse_with_scale
-        self.ca.primary_active.diffuse = self.ca.primary_active.diffuse_with_scale
+        self.ca.primary_oxidant.diffuse = self.ca.primary_oxidant.diffuse_bulk
+        self.ca.primary_active.diffuse = self.ca.primary_active.diffuse_bulk
 
-        self.ca.precip_func = self.ca.precipitation_first_case_MP
-        self.ca.get_combi_ind = self.ca.get_combi_ind_atomic_with_kinetic_and_KP
-        # self.ca.precip_step = self.ca.precip_step_standard_MP
-        # self.ca.check_intersection = self.ca.ci_single_MP
+        self.ca.precip_func = self.ca.precipitation_first_case
+        self.ca.get_combi_ind = self.ca.get_combi_ind_standard
+        self.ca.precip_step = self.ca.precip_step_standard
+        self.ca.check_intersection = self.ca.ci_single_no_growth
 
-        self.ca.decomposition = self.ca.dissolution_atomic_stop_if_stable_MP
+        self.ca.cases.first.fix_init_precip_func_ref = self.ca.fix_init_precip_dummy
+        self.ca.cur_case = self.ca.cases.first
+        # self.ca.decomposition = self.ca.dissolution_atomic_stop_if_stable_MP
         # self.ca.decomposition_intrinsic = self.ca.dissolution_zhou_wei_with_bsf_aip_UPGRADE_BOOL_MP
 
-        self.ca.cur_case = self.ca.cases.first
+        # self.ca.cur_case = self.ca.cases.first
         # self.ca.cases.first.go_around_func_ref = self.ca.go_around_mult_oxid_n_also_partial_neigh_aip_MP
 
-        self.ca.cur_case.nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY,
-                                                                                  Config.PRODUCTS.PRIMARY)
-        self.ca.cur_case.dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY,
-                                                                                    Config.PRODUCTS.PRIMARY)
+        # self.ca.cur_case.nucleation_probabilities = utils.NucleationProbabilities(Config.PROBABILITIES.PRIMARY,
+        #                                                                           Config.PRODUCTS.PRIMARY)
+        # self.ca.cur_case.dissolution_probabilities = utils.DissolutionProbabilities(Config.PROBABILITIES.PRIMARY,
+        #                                                                             Config.PRODUCTS.PRIMARY)
 
     def precipitation_with_td(self):
         self.ca.primary_oxidant.diffuse = self.ca.primary_oxidant.diffuse_bulk
